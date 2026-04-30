@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="urdu_learning_app">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>urdu_learning_app</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+
+  <!--
+    Native Web Speech API wrapper.
+    Called from Flutter via dart:js — bypasses the flutter_tts web binding
+    which silently fails inside Flutter's canvas context on Chrome.
+  -->
+  <script>
+    /* ── Urdu Learning App — Web Audio Bootstrap ───────────────────────────
+       Chrome blocks speechSynthesis until the user has interacted with the
+       page. Flutter renders inside a <canvas>, so its tap events don't
+       always count as a "user gesture" for audio purposes.
+       Fix: intercept the FIRST pointerdown at the document level (capture
+       phase, before Flutter sees it) and silently prime speechSynthesis.
+    ──────────────────────────────────────────────────────────────────────── */
+
+    var _ttsReady = false;
+    var _ttsLang  = 'hi-IN';
+
+    // Pre-load voice list immediately (Chrome needs a moment to populate it).
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = function() {
+        var voices = window.speechSynthesis.getVoices();
+        var langs  = voices.map(function(v){ return v.lang; });
+        if      (langs.indexOf('ur-PK') >= 0)          _ttsLang = 'ur-PK';
+        else if (langs.some(function(l){ return l && l.startsWith('ur'); }))
+          _ttsLang = langs.find(function(l){ return l && l.startsWith('ur'); });
+        else if (langs.indexOf('hi-IN') >= 0)          _ttsLang = 'hi-IN';
+        else if (langs.some(function(l){ return l && l.startsWith('hi'); }))
+          _ttsLang = langs.find(function(l){ return l && l.startsWith('hi'); });
+        console.log('[TTS] selected lang:', _ttsLang);
+      };
+    }
+
+    // Unlock audio on FIRST touch — capture phase catches Flutter canvas taps.
+    document.addEventListener('pointerdown', function unlockTTS() {
+      if (_ttsReady) return;
+      _ttsReady = true;
+      document.removeEventListener('pointerdown', unlockTTS, true);
+      if (!window.speechSynthesis) return;
+      // Speak a zero-width space silently to prime the audio engine.
+      try {
+        var wake = new SpeechSynthesisUtterance('​');
+        wake.volume = 0;
+        wake.rate   = 10;
+        window.speechSynthesis.speak(wake);
+        console.log('[TTS] audio unlocked on first touch');
+      } catch(e) { console.warn('[TTS] unlock error:', e); }
+    }, true /* capture */);
+
+    // ── Main speak function called from Flutter Dart ──────────────────────
+    window.flutterSpeak = function(text, lang) {
+      if (!window.speechSynthesis) { console.warn('[TTS] not supported'); return; }
+
+      var useLang = lang || _ttsLang || 'hi-IN';
+      window.speechSynthesis.cancel();
+
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang   = useLang;
+      u.rate   = 0.80;
+      u.pitch  = 1.05;
+      u.volume = 1.0;
+
+      u.onerror = function(e) { console.warn('[TTS] error:', e.error, text); };
+      u.onstart = function()  { console.log('[TTS] speaking:', text, 'lang:', useLang); };
+
+      // resume() + short delay reliably clears Chrome's silent-pause state.
+      setTimeout(function() {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.speak(u);
+      }, 50);
+    };
+
+    window.flutterSpeakStop = function() {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    };
+  </script>
+</body>
+</html>

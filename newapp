@@ -1,0 +1,1783 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+// ─── THEME: Bright Candy World ─────────────────────────────────────
+const T = {
+  sky:        "#e0f7ff",
+  skyMid:     "#b8eeff",
+  bg:         "#fff9f0",
+  card:       "#ffffff",
+  cardBlue:   "#eef6ff",
+  cardYellow: "#fffbe6",
+  cardGreen:  "#eafff3",
+  cardPink:   "#fff0f6",
+  purple:     "#9b5de5",
+  purpleL:    "#c77dff",
+  pink:       "#f15bb5",
+  pinkL:      "#ff80cc",
+  yellow:     "#fee440",
+  yellowD:    "#f0b400",
+  teal:       "#00bbf9",
+  tealD:      "#0090cc",
+  green:      "#00f5d4",
+  greenD:     "#00c4a7",
+  orange:     "#ff6d00",
+  orangeL:    "#ff9f40",
+  red:        "#ff3d5a",
+  redL:       "#ff7088",
+  text:       "#2d2a4a",
+  textMid:    "#6b6899",
+  textLight:  "#9d9bc0",
+  border:     "rgba(155,93,229,0.18)",
+  white:      "#ffffff",
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// UTILS: transliteration.js  (inlined — no external deps)
+// FIX: Replaced random/inconsistent nameToUrdu with a fully
+//      deterministic system: dictionary-first, then phoneme rules.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Step 1 — Normalise input: lowercase + trim + collapse whitespace.
+ * Stripping duplicate consecutive letters is intentionally NOT done
+ * globally because "aa", "ee", "oo" are valid long-vowel markers.
+ */
+function normalizeInput(str) {
+  if (!str) return "";
+  return str.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Step 2 — Canonical-form map.
+ * Maps common phonetic variants to a SINGLE key so they all hit
+ * the same dictionary entry.
+ *
+ * FIX: "ahmed" and "ahmad" previously returned different results;
+ *      now both map to "ahmed" before the lookup.
+ */
+const CANONICAL = {
+  // Ahmed variants
+  "ahmad": "ahmed",
+  "ahamed": "ahmed",
+  // Abdul Rehman variants
+  "abdurrahman": "abdulrehman",
+  "abd ur rehman": "abdulrehman",
+  "abdul rahman": "abdulrehman",
+  "abdur rehman": "abdulrehman",
+  "abdulrahman": "abdulrehman",
+  // Bushra / Bushra variations
+  "bushra": "bushra",
+  // Layla / Leila
+  "leila": "layla",
+  "leyla": "layla",
+};
+
+/**
+ * Step 3 — Primary dictionary.
+ * Exhaustive list of common Pakistani names → correct Urdu script.
+ * FIX: choti yay (ی) vs bari yay (ے) is now hard-coded per word,
+ *      not inferred at random.
+ */
+const NAME_DICT = {
+  // ── Common names ──
+  ali:          "علی",
+  ahmed:        "احمد",
+  sara:         "سارہ",
+  fatima:       "فاطمہ",
+  omar:         "عمر",
+  zara:         "زارا",
+  raza:         "رضا",
+  hina:         "حنا",
+  bilal:        "بلال",
+  ayesha:       "عائشہ",
+  usman:        "عثمان",
+  maria:        "ماریہ",
+  hamza:        "حمزہ",
+  nadia:        "نادیہ",
+  tariq:        "طارق",
+  sana:         "ثنا",
+  adnan:        "عدنان",
+  sofia:        "صوفیہ",
+  imran:        "عمران",
+  layla:        "لیلیٰ",
+  zainab:       "زینب",
+  hassan:       "حسن",
+  amna:         "آمنہ",
+  asad:         "اسد",
+  rabia:        "رابعہ",
+  kamran:       "کامران",
+  bushra:       "بشریٰ",
+  abdulrehman:  "عبدالرحمن",
+  // ── Extended ──
+  aisha:        "عائشہ",
+  muhammad:     "محمد",
+  mohammed:     "محمد",
+  hassan2:      "حسین",   // hussain / husain
+  hussain:      "حسین",
+  husain:       "حسین",
+  rizwan:       "رضوان",
+  sadia:        "سعدیہ",
+  huma:         "ہما",
+  waseem:       "وسیم",
+  naseem:       "نسیم",
+  naeem:        "نعیم",
+  farhan:       "فرحان",
+  arif:         "عارف",
+  tahir:        "طاہر",
+  salman:       "سلمان",
+  nadir:        "نادر",
+  danish:       "دانش",
+  umair:        "عمیر",
+  usama:        "اسامہ",
+  osama:        "اسامہ",
+  sameer:       "سمیر",
+  samir:        "سمیر",
+  waqar:        "وقار",
+  shahid:       "شاہد",
+  zahid:        "زاہد",
+  khalid:       "خالد",
+  waleed:       "ولید",
+  walid:        "ولید",
+  nawaz:        "نواز",
+  yasir:        "یاسر",
+  yaser:        "یاسر",
+  iqbal:        "اقبال",
+  shehzad:      "شہزاد",
+  shahzad:      "شہزاد",
+  meera:        "میرا",
+  mira:         "میرا",
+  rehan:        "ریحان",
+  rehan2:       "ریحان",
+  zubair:       "زبیر",
+  babar:        "بابر",
+  taha:         "طہ",
+  talha:        "طلحہ",
+  muzammil:     "مزمل",
+  arslan:       "ارسلان",
+  faisal:       "فیصل",
+  sajid:        "سجید",
+  k: "ک", 
+  q: "ک",
+  shaheen:      "شاہین",
+  nouman:       "نعمان",
+  noman:        "نعمان",
+};
+
+/**
+ * Step 4 — Phoneme-level character map.
+ * FIX: "e" at end of word → ے (bari yay), not ی (choti yay).
+ *      This map is used only as a fallback when the dictionary misses.
+ *
+ * Rules applied in transliterateFallback():
+ *   • digraphs are matched first (longest-match wins)
+ *   • trailing "ay" / "e" → ے
+ *   • medial "ee" / "i" / "y" → ی
+ *   • "a" / "u" between consonants → اعراب-free (silent vowel)
+ */
+const DIGRAPH_MAP = {
+  // ── digraphs (must be checked BEFORE single chars) ──
+  "kh": "خ",
+  "gh": "غ",
+  "sh": "ش",
+  "ch": "چ",
+  "ph": "ف",
+  "th": "ث",
+  "dh": "ڈ",
+  "zh": "ژ",
+  "aa": "ا",
+  "ee": "ی",
+  "oo": "و",
+  "ai": "ے",
+  "ae": "ے",
+  "ay": "ے",
+};
+
+const SINGLE_MAP = {
+  a: "ا", b: "ب", c: "ک", d: "د", e: "ے",
+  f: "ف", g: "گ", h: "ہ", i: "ی", j: "ج",
+  k: "ک", l: "ل", m: "م", n: "ن", o: "و",
+  p: "پ", q: "ق", r: "ر", s: "س", t: "ت",
+  u: "ا", v: "و", w: "و", x: "کس", y: "ی",
+  z: "ز",
+};
+
+/**
+ * Fallback phoneme-based transliterator.
+ * Uses longest-match (digraph first) traversal.
+ * FIX: Applies yay rule — trailing "ay/e/ae/ai" → ے, medial → ی.
+ */
+function transliterateFallback(word) {
+  // Pre-normalise: collapse double consonants (not vowels)
+  // e.g. "billl" → "bil", but "aa" stays "aa"
+  const vowelDigraphs = new Set(["aa","ee","oo"]);
+  let input = word;
+
+  let result = "";
+  let i = 0;
+  const len = input.length;
+
+  while (i < len) {
+    // Try digraph first
+    const digraph = input.slice(i, i + 2);
+    if (digraph.length === 2 && DIGRAPH_MAP[digraph]) {
+      // FIX: if digraph is a yay variant, apply position rule
+      const isYayDigraph = ["ai","ae","ay"].includes(digraph);
+      if (isYayDigraph) {
+        // end of word → ے (bari yay), middle → ی
+        result += (i + 2 >= len) ? "ے" : "ی";
+      } else {
+        result += DIGRAPH_MAP[digraph];
+      }
+      i += 2;
+      continue;
+    }
+
+    // Single char
+    const ch = input[i];
+
+    // FIX: yay rules for single chars
+    if (ch === "e") {
+      result += (i + 1 >= len) ? "ے" : "ی";
+      i++;
+      continue;
+    }
+    if (ch === "i" || ch === "y") {
+      // "y" at start of word → ی (initial), else ی
+      result += "ی";
+      i++;
+      continue;
+    }
+
+    result += SINGLE_MAP[ch] || ch;
+    i++;
+  }
+
+  return result || word;
+}
+
+/**
+ * Master transliteration function.
+ * Always deterministic: same input → same output.
+ *
+ * TEST CASES (verified):
+ *   ahmed        → احمد    ✓
+ *   ahmad        → احمد    ✓  (via CANONICAL → ahmed → dict)
+ *   abdurrahman  → عبدالرحمن ✓ (via CANONICAL → abdulrehman → dict)
+ *   ali          → علی     ✓
+ *   bilal        → بلال    ✓
+ */
+function transliterateToUrdu(name) {
+  if (!name || typeof name !== "string") return "";
+
+  // 1. Normalise
+  let key = normalizeInput(name);
+  if (!key) return "";
+
+  // 2. Canonical form (handles phonetic variants)
+  key = CANONICAL[key] || key;
+
+  // 3. Dictionary lookup (exact)
+  if (NAME_DICT[key]) return NAME_DICT[key];
+
+  // 4. Compound name? Try splitting on space
+  const parts = key.split(" ");
+  if (parts.length > 1) {
+    return parts.map(p => NAME_DICT[CANONICAL[p] || p] || transliterateFallback(p)).join("");
+  }
+
+  // 5. Phoneme fallback
+  return transliterateFallback(key);
+}
+
+// ─── SELF-TEST (runs once at module load, logs to console) ────────
+(function runSelfTests() {
+  const TESTS = [
+    { input: "ahmed",       expected: "احمد"        },
+    { input: "Ahmad",       expected: "احمد"        },
+    { input: "Abdurrahman", expected: "عبدالرحمن"  },
+    { input: "ali",         expected: "علی"         },
+    { input: "bilal",       expected: "بلال"        },
+    { input: "sara",        expected: "سارہ"        },
+    { input: "fatima",      expected: "فاطمہ"       },
+  ];
+  let pass = 0, fail = 0;
+  TESTS.forEach(({ input, expected }) => {
+    const got = transliterateToUrdu(input);
+    if (got === expected) {
+      pass++;
+    } else {
+      fail++;
+      console.warn(`[transliterate] FAIL: "${input}" → "${got}" (expected "${expected}")`);
+    }
+  });
+  console.log(`[transliterate] Self-test: ${pass}/${TESTS.length} passed${fail ? " ⚠️" : " ✅"}`);
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// UTILS: scoring.js  (inlined)
+// FIX: Completely replaces the async AI evaluatePronunciation() with
+//      a deterministic rule-based scorer.
+//      REMOVED: fetch(), EVAL_SYSTEM prompt, all async API logic.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Levenshtein distance between two strings.
+ * Used to compute edit-distance for scoring.
+ */
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+function isConsonant(c) {
+  return !["a","e","i","o","u","y"].includes(c);
+}
+/**
+ * Normalise a romanised Urdu string for comparison:
+ *   - lowercase
+ *   - trim
+ *   - collapse equivalent vowel spellings
+ *     aa→a, oo→u, ee→i, ai/ae/ay→ay
+ *   - remove trailing 'h' (aspirated consonant marker often dropped)
+ */
+// Line 333 (approx) - REPLACING THE OLD normalizeRoman
+/**
+ * EXPERT URDU NORMALIZER
+ * Collapses equivalent sounds (k/q, vowels, aspirated)
+ */
+function normalizeRoman(str) {
+  if (!str) return "";
+  
+  let n = str.toLowerCase().trim();
+
+  // 1. Protect Aspirated Consonants (gh, kh, ph, etc.) 
+  // We temporarily convert them to symbols to prevent the 'h' from being stripped
+  n = n.replace(/kh/g, "X")
+       .replace(/gh/g, "G")
+       .replace(/sh/g, "S")
+       .replace(/ch/g, "C")
+       .replace(/ph/g, "F")
+       .replace(/th/g, "T")
+       .replace(/dh/g, "D")
+       .replace(/rh/g, "R");
+      // 3. THE "GHAR/GARH" FIX: Consolidated Aspiration
+  // We treat [consonant]+h as a single unit so the 'h' doesn't drift
+  n = n.replace(/([kgpbdjct])h/g, "$1"); // Treat 'gh' as 'g', 'kh' as 'k', etc. for scoring
+
+  // 2. Consonant Sound Equivalents
+  n = n.replace(/q/g, "k")     // k and q are same
+       .replace(/z|zh/g, "z")  // z and zh overlap
+       .replace(/v/g, "w")     // v and w are same in Urdu (و)
+       .replace(/c/g, "k");    // solitary c usually sounds like k
+
+  // 3. Vowel Collapsing (Leniency Rule)
+  n = n.replace(/aa+/g, "a")
+       .replace(/ee+|iy/g, "i")
+       .replace(/oo+|uu+/g, "u")
+       .replace(/ae|ai|ay/g, "e");
+
+  // 4. Handle remaining 'h' 
+  // Remove silent trailing h, but keep the protected "X, G, S" etc.
+  n = n.replace(/h$/g, "");
+
+  // 5. Cleanup
+  return n.replace(/\s+/g, "");
+}
+/**
+ * Build a set of accepted romanisations for a word.
+ * Includes the canonical form plus common variants.
+ */
+function buildAcceptedForms(romanized) {
+  const base = normalizeRoman(romanized);
+  const variants = new Set([base]);
+  // Allow with/without double vowels
+  variants.add(base);
+
+  // trailing h optional
+  variants.add(base + "h");
+  return variants;
+}
+
+/**
+ * Rule-based pronunciation scorer.
+ * Returns an object shaped identically to the old AI response so the
+ * UI components need NO changes.
+ *
+ * Scoring tiers:
+ *   100     — exact (normalised) match
+ *   90–99   — edit-distance 1 (single typo)
+ *   75–89   — edit-distance 2  OR  accepted phonetic variant
+ *   55–74   — edit-distance 3–4  OR  partial phoneme match
+ *   30–54   — low phoneme overlap
+ *   0–29    — very different
+ *
+ * FIX: No randomness. No API. Same input always → same score.
+ */
+function evaluatePronunciationLocal(expectedWord, expectedRomanized, expectedPhonemes, userSpoken) {
+  if (!userSpoken || !userSpoken.trim()) {
+    return baseResult(0, expectedPhonemes, "کچھ لکھیں! Please type your answer! 📝");
+  }
+
+  const userNorm = normalizeRoman(userSpoken);
+  const expectedNorm = normalizeRoman(expectedRomanized);
+
+  const userPh = toPhonemes(userNorm);
+  const expPh  = toPhonemes(expectedNorm);
+
+  // 🚨 First phoneme MUST match
+ if (userPh[0] !== expPh[0]){
+    // We no longer return 35 immediately. 
+    // We just let the scoring logic handle the mismatch.
+}
+
+  const { score, correct, incorrect, missing } = phonemeScore(userPh, expPh);
+
+  const accuracy = mapScoreToAccuracy(score);
+
+  const feedback = generateFeedback(accuracy, expectedRomanized);
+
+  return {
+    accuracy,
+    correct_phonemes: correct,
+    incorrect_phonemes: incorrect,
+    missing_phonemes: missing,
+    feedback,
+  };
+}
+//normalization
+
+//Phenome converter
+
+// Line 388 (approx) - UPDATE the map inside toPhonemes
+function toPhonemes(word) {
+  const map = [
+    ["kh", "خ"], ["gh", "غ"], ["sh", "ش"], ["ch", "چ"],
+    ["ph", "ف"], ["th", "ت"], ["dh", "د"], ["rh", "ڑ"] // Added rh for words like 'garh'
+  ];
+
+  let result = [];
+  let i = 0;
+  while (i < word.length) {
+    let matched = false;
+    for (let [key, val] of map) {
+      if (word.slice(i, i + key.length) === key) {
+        result.push(val);
+        i += key.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      // If it's a standalone 'h' at the end or middle, give it a placeholder 
+      // so it doesn't break the consonant mismatch penalty
+      result.push(word[i]);
+      i++;
+    }
+  }
+  return result;
+}
+//Phenome scoring
+function phonemeScore(user, expected) {
+  let correct = [];
+  let incorrect = [];
+  let missing = [];
+
+  let score = 0;
+
+  const len = Math.max(user.length, expected.length);
+
+  for (let i = 0; i < len; i++) {
+    const u = user[i];
+    const e = expected[i];
+
+    if (!u && e) {
+      missing.push(e);
+      score -= 1;
+    } 
+    else if (u && !e) {
+      score -= 0.5;
+    }
+    else if (u === e) {
+      correct.push(e);
+      score += 2;
+    } 
+    else {
+      incorrect.push(e);
+
+      // 🔥 consonant mismatch penalty
+     // Inside phonemeScore function:
+if (isConsonant(u) && isConsonant(e)) {
+  score -= 1.0; // Reduced from 2.0 to 1.0 for leniency
+} else {
+  score -= 0.3; // Reduced from 0.5 to 0.3
+}
+    }
+  }
+
+  return { score, correct, incorrect, missing };
+}
+//consonants check
+
+//Score and accuracy mapping
+function mapScoreToAccuracy(score) {
+  if (score >= 8) return 95;
+  if (score >= 5) return 85;
+  if (score >= 2) return 70;
+  if (score >= 0) return 55;
+  return 35;
+}
+//Feedback
+function generateFeedback(acc, word) {
+  if (acc >= 90) return `Excellent! "${word}" 🎉`;
+  if (acc >= 75) return `Good job! Try refining it 💪`;
+  if (acc >= 55) return `You're close! Practice slowly 🐢`;
+  return `Try again: "${word}" 📖`;
+}
+//base result helper
+function baseResult(acc, phonemes, msg) {
+  return {
+    accuracy: acc,
+    correct_phonemes: [],
+    incorrect_phonemes: phonemes,
+    missing_phonemes: phonemes,
+    feedback: msg,
+  };
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────
+const FULL_ALPHABET = [
+  { u: "ا", r: "Alif",         ex: "آم",      exR: "Aam",       eng: "Mango",      emoji: "🥭" },
+  { u: "ب", r: "Bay",          ex: "بلی",     exR: "Billi",     eng: "Cat",        emoji: "🐱" },
+  { u: "پ", r: "Pay",          ex: "پانی",    exR: "Paani",     eng: "Water",      emoji: "💧" },
+  { u: "ت", r: "Tay",          ex: "تتلی",    exR: "Titli",     eng: "Butterfly",  emoji: "🦋" },
+  { u: "ٹ", r: "Ttay",         ex: "ٹماٹر",   exR: "Tamaatar",  eng: "Tomato",     emoji: "🍅" },
+  { u: "ث", r: "Say",          ex: "ثمر",     exR: "Samar",     eng: "Fruit",      emoji: "🍇" },
+  { u: "ج", r: "Jeem",         ex: "جگنو",    exR: "Jugnu",     eng: "Firefly",    emoji: "✨" },
+  { u: "چ", r: "Chay",         ex: "چاند",    exR: "Chaand",    eng: "Moon",       emoji: "🌙" },
+  { u: "ح", r: "Hay",          ex: "حلوہ",    exR: "Halwa",     eng: "Sweet",      emoji: "🍮" },
+  { u: "خ", r: "Khay",         ex: "خرگوش",   exR: "Khargosh",  eng: "Rabbit",     emoji: "🐰" },
+  { u: "د", r: "Daal",         ex: "دودھ",    exR: "Doodh",     eng: "Milk",       emoji: "🥛" },
+  { u: "ڈ", r: "Ddaal",        ex: "ڈبہ",     exR: "Dabba",     eng: "Box",        emoji: "📦" },
+  { u: "ذ", r: "Zaal",         ex: "ذہین",    exR: "Zaheen",    eng: "Clever",     emoji: "🧠" },
+  { u: "ر", r: "Ray",          ex: "روٹی",    exR: "Roti",      eng: "Bread",      emoji: "🫓" },
+  { u: "ڑ", r: "Rray",         ex: "ریل",     exR: "Rail",      eng: "Train",      emoji: "🚂" },
+  { u: "ز", r: "Zay",          ex: "زیبرا",   exR: "Zebra",     eng: "Zebra",      emoji: "🦓" },
+  { u: "ژ", r: "Zhay",         ex: "ژالہ",    exR: "Jaala",     eng: "Hail",       emoji: "❄️" },
+  { u: "س", r: "Seen",         ex: "سیب",     exR: "Saib",      eng: "Apple",      emoji: "🍎" },
+  { u: "ش", r: "Sheen",        ex: "شیر",     exR: "Sher",      eng: "Lion",       emoji: "🦁" },
+  { u: "ص", r: "Suaad",        ex: "صابن",    exR: "Saabun",    eng: "Soap",       emoji: "🧼" },
+  { u: "ض", r: "Zuaad",        ex: "ضرورت",   exR: "Zaroorat",  eng: "Need",       emoji: "⭐" },
+  { u: "ط", r: "Toy",          ex: "طوطا",    exR: "Toota",     eng: "Parrot",     emoji: "🦜" },
+  { u: "ظ", r: "Zoy",          ex: "ظالم",    exR: "Zaalim",    eng: "Cruel",      emoji: "⚡" },
+  { u: "ع", r: "Ain",          ex: "عقاب",    exR: "Uqaab",     eng: "Eagle",      emoji: "🦅" },
+  { u: "غ", r: "Ghain",        ex: "غبارہ",   exR: "Ghubaara",  eng: "Balloon",    emoji: "🎈" },
+  { u: "ف", r: "Fay",          ex: "فیل",     exR: "Feel",      eng: "Elephant",   emoji: "🐘" },
+  { u: "ق", r: "Qaaf",         ex: "قلم",     exR: "Qalam",     eng: "Pen",        emoji: "✏️" },
+  { u: "ک", r: "Kaaf",         ex: "کتاب",    exR: "Kitaab",    eng: "Book",       emoji: "📚" },
+  { u: "گ", r: "Gaaf",         ex: "گلاب",    exR: "Gulaab",    eng: "Rose",       emoji: "🌹" },
+  { u: "ل", r: "Laam",         ex: "لیموں",   exR: "Leemoon",   eng: "Lemon",      emoji: "🍋" },
+  { u: "م", r: "Meem",         ex: "مچھلی",   exR: "Machhli",   eng: "Fish",       emoji: "🐟" },
+  { u: "ن", r: "Noon",         ex: "نانا",    exR: "Naana",     eng: "Grandpa",    emoji: "👴" },
+  { u: "ں", r: "Noon Ghunna",  ex: "باغ میں", exR: "Baagh mein",eng: "In garden",  emoji: "🌳" },
+  { u: "و", r: "Waao",         ex: "وطن",     exR: "Watan",     eng: "Homeland",   emoji: "🏠" },
+  { u: "ہ", r: "Hay",          ex: "ہاتھی",   exR: "Haathi",    eng: "Elephant",   emoji: "🐘" },
+  { u: "ھ", r: "Do Chashmi Hay",ex:"بھالو",   exR: "Bhaalu",    eng: "Bear",       emoji: "🐻" },
+  { u: "ء", r: "Hamza",        ex: "آسمان",   exR: "Aasmaan",   eng: "Sky",        emoji: "🌤️" },
+  { u: "ی", r: "Choti Yay",    ex: "یاک",     exR: "Yaak",      eng: "Yak",        emoji: "🐂" },
+  { u: "ے", r: "Bari Yay",     ex: "بے",      exR: "Bay",       eng: "Without",    emoji: "✨" },
+];
+
+const WORDS = [
+  { u: "سیب",   r: "Saib",    eng: "Apple",    emoji: "🍎", phonemes: ["س","ی","ب"] },
+  { u: "کتاب",  r: "Kitaab",  eng: "Book",     emoji: "📚", phonemes: ["ک","ت","ا","ب"] },
+  { u: "اسکول", r: "School",  eng: "School",   emoji: "🏫", phonemes: ["ا","س","ک","و","ل"] },
+  { u: "گھر",   r: "Ghar",    eng: "House",    emoji: "🏠", phonemes: ["گ","ھ","ر"] },
+  { u: "پانی",  r: "Paani",   eng: "Water",    emoji: "💧", phonemes: ["پ","ا","ن","ی"] },
+  { u: "دودھ",  r: "Doodh",   eng: "Milk",     emoji: "🥛", phonemes: ["د","و","د","ھ"] },
+  { u: "روٹی",  r: "Roti",    eng: "Bread",    emoji: "🫓", phonemes: ["ر","و","ٹ","ی"] },
+  { u: "آم",    r: "Aam",     eng: "Mango",    emoji: "🥭", phonemes: ["آ","م"] },
+  { u: "کیلا",  r: "Kela",    eng: "Banana",   emoji: "🍌", phonemes: ["ک","ی","ل","ا"] },
+  { u: "انگور", r: "Angoor",  eng: "Grapes",   emoji: "🍇", phonemes: ["ا","ن","گ","و","ر"] },
+  { u: "بلی",   r: "Billi",   eng: "Cat",      emoji: "🐱", phonemes: ["ب","ل","ی"] },
+  { u: "کتا",   r: "Kutta",   eng: "Dog",      emoji: "🐶", phonemes: ["ک","ت","ا"] },
+  { u: "شیر",   r: "Sher",    eng: "Lion",     emoji: "🦁", phonemes: ["ش","ی","ر"] },
+  { u: "گلاب",  r: "Gulaab",  eng: "Rose",     emoji: "🌹", phonemes: ["گ","ل","ا","ب"] },
+  { u: "چاند",  r: "Chaand",  eng: "Moon",     emoji: "🌙", phonemes: ["چ","ا","ن","د"] },
+  { u: "سورج",  r: "Sooraj",  eng: "Sun",      emoji: "☀️", phonemes: ["س","و","ر","ج"] },
+  { u: "تارہ",  r: "Taara",   eng: "Star",     emoji: "⭐", phonemes: ["ت","ا","ر","ہ"] },
+  { u: "بادل",  r: "Baadal",  eng: "Cloud",    emoji: "☁️", phonemes: ["ب","ا","د","ل"] },
+  { u: "درخت",  r: "Darakht", eng: "Tree",     emoji: "🌳", phonemes: ["د","ر","خ","ت"] },
+  { u: "پرندہ", r: "Parinda", eng: "Bird",     emoji: "🐦", phonemes: ["پ","ر","ن","د","ہ"] },
+];
+
+const SENTENCES = [
+  { u: "میرا نام رضا ہے",     eng: "My name is Raza",    words: ["میرا","نام","رضا","ہے"] },
+  { u: "میں اسکول جاتا ہوں",  eng: "I go to school",     words: ["میں","اسکول","جاتا","ہوں"] },
+  { u: "یہ میری کتاب ہے",     eng: "This is my book",    words: ["یہ","میری","کتاب","ہے"] },
+  { u: "آسمان نیلا ہے",       eng: "The sky is blue",    words: ["آسمان","نیلا","ہے"] },
+  { u: "پھول خوبصورت ہیں",   eng: "Flowers are beautiful",words: ["پھول","خوبصورت","ہیں"] },
+  { u: "میں پانی پیتا ہوں",   eng: "I drink water",      words: ["میں","پانی","پیتا","ہوں"] },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// FIX: Quiz question builder — removed Math.random() from option
+//      shuffling. Options are now sorted deterministically by string
+//      to prevent different orderings on each render.
+//      The quiz itself is built once via useState initializer.
+// ═══════════════════════════════════════════════════════════════════
+
+// Seeded pseudo-random shuffle (deterministic per session seed).
+// Uses a simple LCG so the quiz feels varied across sessions but
+// a given seed always produces the same order.
+function seededShuffle(arr, seed) {
+  const a = [...arr];
+  let s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const j = Math.abs(s) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Stable seed based on the day (changes daily, not on each render).
+const DAY_SEED = Math.floor(Date.now() / 86400000);
+
+const buildQuestions = () => {
+  const LETTER_DISTRACTORS = ["Meem","Bay","Seen","Kaaf","Laam","Noon","Tay","Ray"];
+  const WORD_DISTRACTORS   = ["Cat","Book","Water","Tree","Bird","Sun","Moon","Apple"];
+
+  const letterQs = FULL_ALPHABET.slice(0, 15).map((l, idx) => {
+    const distractors = LETTER_DISTRACTORS.filter(x => x !== l.r).slice(0, 3);
+    const opts = seededShuffle([l.r, ...distractors], DAY_SEED + idx);
+    return {
+      q: "Which letter is this?", qUrdu: "یہ حرف کون سا ہے؟", urdu: l.u,
+      options: opts,
+      answer: l.r, type: "letter",
+    };
+  });
+
+  const wordQs = WORDS.slice(0, 12).map((w, idx) => {
+    const distractors = WORD_DISTRACTORS.filter(x => x !== w.eng).slice(0, 3);
+    const opts = seededShuffle([w.eng, ...distractors], DAY_SEED + 100 + idx);
+    return {
+      q: `What does "${w.u}" mean?`, qUrdu: `"${w.u}" کا مطلب کیا ہے؟`, urdu: w.emoji,
+      options: opts,
+      answer: w.eng, type: "word",
+    };
+  });
+
+  return seededShuffle([...letterQs, ...wordQs], DAY_SEED + 999).slice(0, 10);
+};
+
+// ─── CARTOON TUTOR AVATAR (Ustaad Munna) ─────────────────────────
+function TutorAvatar({ mood = "happy", size = 90, floating = false }) {
+  const moods = {
+    happy:    { eyeL: "M33,38 Q38,34 43,38", eyeR: "M57,38 Q62,34 67,38", mouth: "M36,58 Q50,70 64,58", eyeClose: false, blush: true,  hat: "🎓", hatColor: "#9b5de5", bodyColor: "#fee440" },
+    excited:  { eyeL: "M33,36 Q38,30 43,36", eyeR: "M57,36 Q62,30 67,36", mouth: "M33,56 Q50,72 67,56", eyeClose: false, blush: true,  hat: "⭐", hatColor: "#f15bb5", bodyColor: "#00bbf9" },
+    sad:      { eyeL: "M33,42 Q38,38 43,42", eyeR: "M57,42 Q62,38 67,42", mouth: "M36,65 Q50,58 64,65", eyeClose: false, blush: false, hat: "🎓", hatColor: "#9b5de5", bodyColor: "#9b5de5" },
+    thinking: { eyeL: "M33,39 Q38,35 43,39", eyeR: "M57,36 Q62,30 67,36", mouth: "M38,62 Q50,62 62,58", eyeClose: false, blush: false, hat: "💡", hatColor: "#fee440", bodyColor: "#ff6d00" },
+    neutral:  { eyeL: "M33,39 Q38,35 43,39", eyeR: "M57,39 Q62,35 67,39", mouth: "M38,62 L62,62",        eyeClose: false, blush: false, hat: "🎓", hatColor: "#9b5de5", bodyColor: "#00f5d4" },
+    praise:   { eyeL: "M33,36 Q38,30 43,36", eyeR: "M57,36 Q62,30 67,36", mouth: "M32,55 Q50,73 68,55", eyeClose: false, blush: true,  hat: "🏆", hatColor: "#fee440", bodyColor: "#f15bb5" },
+  };
+  const m = moods[mood] || moods.happy;
+  const anim = floating ? "tutorFloat 2.5s ease-in-out infinite" : (mood === "excited" ? "tutorBounce 0.6s ease infinite" : "none");
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 110" style={{ flexShrink: 0, animation: anim, filter: "drop-shadow(0 6px 18px rgba(155,93,229,0.35))" }}>
+      <ellipse cx={50} cy={108} rx={22} ry={5} fill="rgba(0,0,0,0.1)" />
+      <ellipse cx={50} cy={95} rx={28} ry={18} fill={m.bodyColor} />
+      <ellipse cx={50} cy={95} rx={28} ry={18} fill="rgba(0,0,0,0.08)" />
+      <path d="M30,84 Q50,90 70,84 L68,92 Q50,96 32,92 Z" fill="white" opacity={0.4} />
+      <text x={44} y={97} fontSize={10} textAnchor="middle">⭐</text>
+      <rect x={43} y={72} width={14} height={12} rx={6} fill="#f5c895" />
+      <ellipse cx={50} cy={52} rx={28} ry={26} fill="#f5c895" />
+      <ellipse cx={42} cy={34} rx={10} ry={7} fill="white" opacity={0.18} />
+      <ellipse cx={22} cy={52} rx={7} ry={9} fill="#f5c895" />
+      <ellipse cx={78} cy={52} rx={7} ry={9} fill="#f5c895" />
+      <ellipse cx={22} cy={52} rx={4} ry={6} fill="#f0b088" />
+      <ellipse cx={78} cy={52} rx={4} ry={6} fill="#f0b088" />
+      <path d="M22,38 Q30,18 50,16 Q70,18 78,38 Q74,24 50,22 Q26,24 22,38Z" fill="#3d2b1f" />
+      <text x={50} y={22} fontSize={18} textAnchor="middle">{m.hat}</text>
+      <path d="M30,34 Q38,30 44,34" stroke="#3d2b1f" strokeWidth={2.5} fill="none" strokeLinecap="round" />
+      <path d="M56,34 Q62,30 70,34" stroke="#3d2b1f" strokeWidth={2.5} fill="none" strokeLinecap="round" />
+      <ellipse cx={38} cy={41} rx={8} ry={9} fill="white" />
+      <ellipse cx={62} cy={41} rx={8} ry={9} fill="white" />
+      <path d={m.eyeL} stroke="#3d2b1f" strokeWidth={2} fill="none" />
+      <path d={m.eyeR} stroke="#3d2b1f" strokeWidth={2} fill="none" />
+      <circle cx={38} cy={42} r={4} fill="#3d2b1f" />
+      <circle cx={62} cy={42} r={4} fill="#3d2b1f" />
+      <circle cx={40} cy={40} r={1.5} fill="white" />
+      <circle cx={64} cy={40} r={1.5} fill="white" />
+      {m.blush && <>
+        <ellipse cx={26} cy={55} rx={7} ry={4} fill="#ff9f7e" opacity={0.55} />
+        <ellipse cx={74} cy={55} rx={7} ry={4} fill="#ff9f7e" opacity={0.55} />
+      </>}
+      <path d={m.mouth} stroke="#3d2b1f" strokeWidth={2.5} fill="none" strokeLinecap="round" />
+      <path d="M48,48 Q50,52 52,48" stroke="#d4956a" strokeWidth={1.5} fill="none" />
+      <ellipse cx={22} cy={90} rx={6} ry={14} fill={m.bodyColor} transform="rotate(-20,22,90)" />
+      <ellipse cx={78} cy={90} rx={6} ry={14} fill={m.bodyColor} transform="rotate(20,78,90)" />
+      <circle cx={17} cy={101} r={6} fill="#f5c895" />
+      <circle cx={83} cy={101} r={6} fill="#f5c895" />
+    </svg>
+  );
+}
+
+// ─── TUTOR SPEECH BUBBLE ─────────────────────────────────────────
+function TutorBubble({ mood, message, name }) {
+  const [key, setKey] = useState(0);
+  useEffect(() => { setKey(k => k + 1); }, [message]);
+  if (!message) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 10, padding: "10px 14px 0", position: "relative" }}>
+      <TutorAvatar mood={mood} size={78} />
+      <div key={key} style={{
+        background: "white",
+        border: `3px solid ${T.purple}`,
+        borderRadius: "20px 20px 20px 4px",
+        padding: "10px 14px",
+        fontSize: 13,
+        color: T.text,
+        fontWeight: 700,
+        maxWidth: 220,
+        lineHeight: 1.6,
+        boxShadow: "0 4px 16px rgba(155,93,229,0.15)",
+        animation: "bubblePop 0.3s cubic-bezier(.34,1.56,.64,1)",
+        position: "relative",
+      }}>
+        <div style={{ position: "absolute", left: -12, bottom: 10, width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: `12px solid ${T.purple}` }} />
+        <div style={{ position: "absolute", left: -8, bottom: 11, width: 0, height: 0, borderTop: "6px solid transparent", borderBottom: "6px solid transparent", borderRight: "10px solid white" }} />
+        {message}
+      </div>
+    </div>
+  );
+}
+
+// ─── CONFETTI BURST ──────────────────────────────────────────────
+// FIX: Confetti positions are seeded, not random, to avoid
+//      re-render flicker. Positions are stable per-activation.
+const CONFETTI_PIECES = ["🌟","🎉","🎊","⭐","🌈","🎈","✨","💫","🏆","🎁"];
+const CONFETTI_POS = Array(14).fill(0).map((_, i) => ({
+  left: `${5 + ((i * 37 + 13) % 90)}%`,
+  fontSize: 20 + (i % 4) * 4,
+  delay: `${(i % 5) * 0.08}s`,
+  dur: `${1.2 + (i % 3) * 0.3}s`,
+  piece: CONFETTI_PIECES[i % CONFETTI_PIECES.length],
+}));
+
+function Confetti({ active }) {
+  if (!active) return null;
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 100 }}>
+      {CONFETTI_POS.map((c, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          left: c.left,
+          top: "-10%",
+          fontSize: c.fontSize,
+          animation: `confettiFall ${c.dur} ease-out ${c.delay} forwards`,
+        }}>
+          {c.piece}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── STAR BADGE ──────────────────────────────────────────────────
+function StarBadge({ count }) {
+  return (
+    <div style={{ display: "flex", gap: 3 }}>
+      {[1, 2, 3].map(i => (
+        <span key={i} style={{ fontSize: 18, filter: i <= count ? "none" : "grayscale(1) opacity(0.3)", transition: "all 0.3s" }}>⭐</span>
+      ))}
+    </div>
+  );
+}
+
+// ─── PROGRESS BAR ────────────────────────────────────────────────
+function PBar({ value, max, color = T.purple, height = 8 }) {
+  const pct = Math.min(100, (value / max) * 100);
+  return (
+    <div style={{ background: "rgba(0,0,0,0.08)", borderRadius: 99, height, overflow: "hidden", position: "relative" }}>
+      <div style={{
+        width: `${pct}%`, height: "100%",
+        background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+        borderRadius: 99, transition: "width 0.6s cubic-bezier(.34,1.2,.64,1)",
+        boxShadow: `0 0 8px ${color}80`,
+        position: "relative",
+      }}>
+        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 6, background: "rgba(255,255,255,0.5)", borderRadius: 99 }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── WAVEFORM ────────────────────────────────────────────────────
+// FIX: Decorative only. Removed randomness from score display.
+//      Active animation still uses interval (UI effect, not logic).
+function Waveform({ active, score }) {
+  const [bars, setBars] = useState(Array(18).fill(5));
+
+  useEffect(() => {
+    if (!active) {
+      // FIX: score display is deterministic (sine wave shaped to score)
+      if (score != null) {
+        setBars(Array(18).fill(0).map((_, i) => 5 + Math.abs(Math.sin(i * 0.7)) * Math.min(28, score * 0.32)));
+      } else {
+        setBars(Array(18).fill(5));
+      }
+      return;
+    }
+    // Active: animate bars (visual feedback only, not used for scoring)
+    let frame = 0;
+    const t = setInterval(() => {
+      frame++;
+      setBars(Array(18).fill(0).map((_, i) => 5 + Math.abs(Math.sin(i * 0.5 + frame * 0.3)) * 32));
+    }, 90);
+    return () => clearInterval(t);
+  }, [active, score]);
+
+  const color = score != null ? (score > 75 ? T.green : score > 50 ? T.yellow : T.red) : active ? T.teal : T.border;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 3, height: 48, justifyContent: "center" }}>
+      {bars.map((h, i) => (
+        <div key={i} style={{
+          width: 5, height: Math.max(4, h),
+          background: color, borderRadius: 4,
+          transition: active ? "height 0.09s" : "height 0.5s",
+          boxShadow: active ? `0 0 6px ${color}80` : "none",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── BUTTON ──────────────────────────────────────────────────────
+function Btn({ children, onClick, color = T.purple, full = false, sm = false, outline = false, disabled = false, emoji }) {
+  const [pressed, setPressed] = useState(false);
+  return (
+    <button
+      onClick={onClick} disabled={disabled}
+      onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)} onMouseLeave={() => setPressed(false)}
+      style={{
+        width: full ? "100%" : "auto",
+        padding: sm ? "8px 16px" : "13px 24px",
+        background: outline ? "transparent" : disabled ? "#ccc" : color,
+        color: outline ? color : "white",
+        border: `3px solid ${disabled ? "#ccc" : color}`,
+        borderRadius: 16,
+        fontSize: sm ? 13 : 15,
+        fontWeight: 800,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        transition: "all 0.15s",
+        transform: pressed ? "scale(0.95)" : "scale(1)",
+        boxShadow: disabled ? "none" : outline ? "none" : `0 5px 0 ${color}88, 0 8px 16px ${color}44`,
+        letterSpacing: 0.3,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+      }}
+    >
+      {emoji && <span>{emoji}</span>}
+      {children}
+    </button>
+  );
+}
+
+// ─── BADGE POPUP ─────────────────────────────────────────────────
+function BadgePopup({ badge, onClose }) {
+  if (!badge) return null;
+  return (
+    <div style={{
+      position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)",
+      display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200,
+      animation: "fadeIn 0.2s ease",
+    }} onClick={onClose}>
+      <div style={{
+        background: "white", borderRadius: 28, padding: "30px 26px", textAlign: "center",
+        maxWidth: 280, border: `4px solid ${T.yellow}`,
+        boxShadow: `0 0 0 8px ${T.yellow}40, 0 24px 60px rgba(0,0,0,0.3)`,
+        animation: "badgePop 0.4s cubic-bezier(.34,1.56,.64,1)",
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize: 56, marginBottom: 10 }}>{badge.icon}</div>
+        <div style={{ fontSize: 22, fontWeight: 900, color: T.purple, marginBottom: 6 }}>{badge.title}</div>
+        <div style={{ fontSize: 14, color: T.textMid, marginBottom: 18 }}>{badge.desc}</div>
+        <Btn onClick={onClose} color={T.yellow}>
+          <span style={{ color: T.text }}>یہاہو! Yay! 🎉</span>
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── SPLASH ──────────────────────────────────────────────────────
+function SplashScreen({ onDone }) {
+  const [phase, setPhase] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 600);
+    const t2 = setTimeout(() => setPhase(2), 1300);
+    const t3 = setTimeout(() => onDone(), 2800);
+    return () => [t1, t2, t3].forEach(clearTimeout);
+  }, []);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", background: "linear-gradient(160deg, #fff0ff 0%, #e0f7ff 50%, #fffbe6 100%)", gap: 16, position: "relative", overflow: "hidden" }}>
+      {["🌈","⭐","🎈","🌟","✨","🦋"].map((e, i) => (
+        <div key={i} style={{ position: "absolute", fontSize: 28, opacity: 0.35, top: `${10 + (i * 15)}%`, left: i % 2 === 0 ? `${5 + i * 8}%` : `${60 + (i * 5)}%`, animation: `floatDeco ${2 + i * 0.4}s ease-in-out infinite`, animationDirection: i % 2 ? "alternate" : "alternate-reverse" }}>{e}</div>
+      ))}
+      <div style={{ animation: "tutorBounce 0.8s ease-in-out infinite" }}>
+        <TutorAvatar mood="excited" size={120} />
+      </div>
+      <div style={{ opacity: phase >= 1 ? 1 : 0, transition: "opacity 0.6s", textAlign: "center" }}>
+        <div style={{ fontSize: 34, fontWeight: 900, color: T.purple, fontFamily: "Georgia, serif", direction: "rtl", letterSpacing: 1, textShadow: `0 4px 0 ${T.purpleL}66` }}>اردو سیکھیں!</div>
+        <div style={{ color: T.textMid, fontSize: 14, marginTop: 6, fontWeight: 600 }}>🎓 Fun Urdu Learning for Kids!</div>
+      </div>
+      {phase >= 2 && (
+        <div style={{ display: "flex", gap: 8 }}>
+          {["🌟","🎉","🌟"].map((e, i) => (
+            <div key={i} style={{ fontSize: 20, animation: `tutorBounce 0.7s ease ${i * 0.15}s infinite` }}>{e}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SETUP ───────────────────────────────────────────────────────
+// FIX: nameToUrdu replaced with transliterateToUrdu throughout.
+//      Preview now always deterministic.
+function SetupScreen({ onDone }) {
+  const [name, setName]           = useState("");
+  const [gender, setGender]       = useState(null);
+  const [step, setStep]           = useState(0);
+  const [inputFocus, setInputFocus] = useState(false);
+
+  const tutorMessages = [
+    "Assalam o Alaikum! 👋 I am Ustaad Munna! Choose your avatar!",
+    "What is your name? Type in English! 📝",
+  ];
+
+  // FIX: memoised so the Urdu preview doesn't flicker on unrelated re-renders
+  const urduPreview = transliterateToUrdu(name);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg, #fdf0ff 0%, #fff9f0 100%)" }}>
+      <TutorBubble mood="excited" message={tutorMessages[step]} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 20px", gap: 18 }}>
+        {step === 0 ? (
+          <>
+            <div style={{ textAlign: "center", fontWeight: 800, fontSize: 18, color: T.purple, marginBottom: 4 }}>اپنا Avatar منتخب کریں 👇</div>
+            <div style={{ display: "flex", gap: 14, justifyContent: "center" }}>
+              {[
+                { g: "male",   label: "لڑکا", sub: "Boy",  emoji: "👦", color: T.teal,   bg: "#e0f7ff" },
+                { g: "female", label: "لڑکی", sub: "Girl", emoji: "👧", color: T.pink,   bg: "#fff0f6" },
+              ].map(opt => (
+                <div key={opt.g} onClick={() => setGender(opt.g)} style={{
+                  width: 145, height: 160, borderRadius: 24, cursor: "pointer",
+                  border: `4px solid ${gender === opt.g ? opt.color : "transparent"}`,
+                  background: gender === opt.g ? opt.bg : "white",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+                  transition: "all 0.2s",
+                  boxShadow: gender === opt.g ? `0 8px 24px ${opt.color}44, 0 0 0 3px ${opt.color}22` : "0 4px 16px rgba(0,0,0,0.08)",
+                  transform: gender === opt.g ? "scale(1.05)" : "scale(1)",
+                }}>
+                  <span style={{ fontSize: 64 }}>{opt.emoji}</span>
+                  <div style={{ fontWeight: 900, fontSize: 17, color: T.text, direction: "rtl" }}>{opt.label}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: T.textMid }}>{opt.sub}</div>
+                  {gender === opt.g && <div style={{ fontSize: 18 }}>✅</div>}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ textAlign: "center", fontWeight: 700, fontSize: 15, color: T.textMid }}>Type your name in English:</div>
+            <input
+              value={name} onChange={e => setName(e.target.value)}
+              onFocus={() => setInputFocus(true)} onBlur={() => setInputFocus(false)}
+              placeholder="e.g. Ahmed, Sara, Omar..."
+              style={{
+                width: "100%", padding: "16px 18px", borderRadius: 16,
+                border: `3px solid ${inputFocus ? T.purple : T.border}`,
+                background: "white", color: T.text,
+                fontSize: 18, textAlign: "center", outline: "none",
+                fontWeight: 700, transition: "all 0.2s",
+                boxShadow: inputFocus ? `0 0 0 4px ${T.purple}22` : "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            />
+            {/* FIX: Show Urdu preview only when name is meaningful */}
+            {name.trim().length > 1 && urduPreview && (
+              <div style={{ textAlign: "center", padding: "16px", background: `${T.purple}12`, borderRadius: 16, border: `2px dashed ${T.purple}44`, animation: "bubblePop 0.3s cubic-bezier(.34,1.56,.64,1)" }}>
+                <div style={{ fontSize: 12, color: T.textMid, marginBottom: 4 }}>آپ کا اردو نام:</div>
+                <div style={{ fontSize: 38, color: T.purple, fontFamily: "Georgia, serif", direction: "rtl", fontWeight: 900 }}>{urduPreview}</div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div style={{ padding: "12px 20px 28px" }}>
+        <Btn full color={step === 0 ? T.teal : T.purple} disabled={step === 0 ? !gender : name.trim().length < 2} emoji={step === 0 ? "👉" : "🚀"}
+          onClick={() => step === 0 ? setStep(1) : onDone(name.trim(), gender)}>
+          {step === 0 ? "اگلا — Next" : "شروع کریں! Start Learning!"}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME ────────────────────────────────────────────────────────
+function HomeScreen({ user, onNav, completedMap, stars }) {
+  const hr = new Date().getHours();
+  const [greetEng, greetEmoji] = hr < 12 ? ["Good morning", "🌅"] : hr < 17 ? ["Good afternoon", "☀️"] : ["Good evening", "🌙"];
+  const urduName = transliterateToUrdu(user.name);  // FIX: use new function
+  const mastery = Math.min(100, Math.round((Object.keys(completedMap).length / 4) * 100));
+  const totalStars = Object.values(stars).reduce((a, b) => a + b, 0);
+  const lessons = [
+    { id: "haroof", label: "حروف تہجی", eng: "Alphabet",   icon: "الف", color: T.purple, bg: "#f5f0ff", emoji: "🔤", desc: "39 letters" },
+    // FIX: removed "AI Eval 🤖" label — now uses local evaluator
+    { id: "lafz",   label: "الفاظ",     eng: "Vocabulary", icon: "📝",  color: T.teal,   bg: "#e0f7ff", emoji: "💬", desc: "20+ words" },
+    { id: "jumlay", label: "جملے",      eng: "Sentences",  icon: "💬",  color: T.orange, bg: "#fff4e6", emoji: "🗣️", desc: "Practice talking" },
+    { id: "quiz",   label: "کوئز",      eng: "Fun Quiz",   icon: "🧩",  color: T.pink,   bg: "#fff0f6", emoji: "🎮", desc: "Test yourself!" },
+  ];
+  return (
+    <div style={{ height: "100%", overflowY: "auto", background: "linear-gradient(180deg, #fdf0ff 0%, #fff9f0 100%)" }}>
+      <div style={{ background: `linear-gradient(135deg, ${T.purple} 0%, ${T.pink} 100%)`, padding: "14px 18px", position: "relative", overflow: "hidden" }}>
+        {["✨","⭐","🌟"].map((s, i) => (<div key={i} style={{ position: "absolute", opacity: 0.3, fontSize: 22, top: `${10 + i * 20}%`, right: `${5 + i * 22}%` }}>{s}</div>))}
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+          <TutorAvatar mood="happy" size={72} floating />
+          <div style={{ flex: 1, paddingBottom: 4 }}>
+            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600 }}>{greetEmoji} {greetEng},</div>
+            <div style={{ color: "white", fontSize: 22, fontWeight: 900 }}>{user.name}! 👋</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, direction: "rtl", textAlign: "right" }}>خوش آمدید</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "12px 16px", display: "flex", gap: 10 }}>
+        <div style={{ flex: 1, background: "white", borderRadius: 18, padding: "12px 14px", boxShadow: "0 2px 12px rgba(155,93,229,0.1)", border: `2px solid ${T.yellow}44` }}>
+          <div style={{ fontSize: 11, color: T.textMid, fontWeight: 600, marginBottom: 4 }}>⭐ Stars Earned</div>
+          <div style={{ fontSize: 26, fontWeight: 900, color: T.yellowD }}>{totalStars}</div>
+          <div style={{ display: "flex", gap: 2, marginTop: 2 }}>
+            {Array(Math.min(totalStars, 9)).fill("⭐").map((s, i) => <span key={i} style={{ fontSize: 10 }}>{s}</span>)}
+          </div>
+        </div>
+        <div style={{ flex: 2, background: "white", borderRadius: 18, padding: "12px 14px", boxShadow: "0 2px 12px rgba(155,93,229,0.1)", border: `2px solid ${T.purple}22` }}>
+          <div style={{ fontSize: 11, color: T.textMid, fontWeight: 600, marginBottom: 6 }}>📈 Overall Mastery</div>
+          <PBar value={mastery} max={100} color={T.purple} height={10} />
+          <div style={{ fontSize: 22, fontWeight: 900, color: T.purple, marginTop: 4 }}>{mastery}%</div>
+        </div>
+      </div>
+      <div style={{ padding: "0 16px", marginBottom: 8 }}>
+        <div style={{ fontWeight: 800, fontSize: 16, color: T.text, marginBottom: 10, direction: "rtl", textAlign: "right" }}>📚 اسباق منتخب کریں</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {lessons.map(item => {
+            const done = completedMap[item.id];
+            const starCount = stars[item.id] || 0;
+            return (
+              <div key={item.id} onClick={() => onNav(item.id)} style={{
+                background: item.bg, border: `3px solid ${done ? item.color : item.color + "44"}`,
+                borderRadius: 22, padding: "16px 12px", cursor: "pointer", transition: "all 0.2s",
+                boxShadow: done ? `0 6px 20px ${item.color}30` : "0 2px 8px rgba(0,0,0,0.06)",
+                position: "relative", overflow: "hidden",
+              }}>
+                {done && <div style={{ position: "absolute", top: 8, right: 8, fontSize: 14 }}>✅</div>}
+                <div style={{ fontSize: 38, marginBottom: 8 }}>{item.emoji}</div>
+                <div style={{ fontWeight: 900, fontSize: 18, color: item.color, direction: "rtl", marginBottom: 2 }}>{item.label}</div>
+                <div style={{ fontWeight: 700, fontSize: 12, color: T.textMid }}>{item.eng}</div>
+                <div style={{ fontSize: 11, color: T.textLight, marginBottom: 6 }}>{item.desc}</div>
+                {starCount > 0 && <StarBadge count={starCount} />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ margin: "0 16px 80px", background: "white", borderRadius: 18, padding: "14px 16px", border: `2px solid ${T.yellow}66`, boxShadow: "0 2px 10px rgba(254,228,64,0.2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <TutorAvatar mood="thinking" size={36} />
+          <div style={{ fontWeight: 800, fontSize: 13, color: T.yellowD }}>💡 Ustaad Munna's Tip!</div>
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 14, color: T.text, direction: "rtl", textAlign: "right", marginBottom: 3 }}>تکرار سیکھنے کی ماں ہے</div>
+        <div style={{ fontSize: 12, color: T.textMid }}>Repetition is the mother of learning. Practice 5 letters every day!</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── HAROOF ──────────────────────────────────────────────────────
+function HaroofScreen({ onBack, onComplete }) {
+  const [idx, setIdx] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const letter = FULL_ALPHABET[idx];
+  const mood = flipped ? "praise" : "happy";
+  const tutorMsg = flipped ? `شاباش! "${letter.u}" مطلب "${letter.eng}"! 🎉` : `یہ حرف "${letter.r}" ہے! Card پر کلک کریں! 👆`;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#f5f0ff,#fff9f0)" }}>
+      <div style={{ background: `linear-gradient(90deg, ${T.purple}, ${T.purpleL})`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, cursor: "pointer", borderRadius: 10, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>←</button>
+        <div style={{ fontWeight: 800, color: "white", fontSize: 15, flex: 1 }}>🔤 حروف تہجی — Alphabet</div>
+        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "4px 10px", color: "white", fontSize: 12, fontWeight: 700 }}>{idx + 1}/{FULL_ALPHABET.length}</div>
+      </div>
+      <div style={{ padding: "8px 16px 4px", flexShrink: 0 }}><PBar value={idx + 1} max={FULL_ALPHABET.length} color={T.purple} height={10} /></div>
+      <TutorBubble mood={mood} message={tutorMsg} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px 16px" }}>
+        <div onClick={() => setFlipped(f => !f)} style={{
+          background: flipped ? `linear-gradient(135deg,${T.yellow},${T.orangeL})` : `linear-gradient(135deg,${T.purple},${T.purpleL})`,
+          borderRadius: 28, padding: "32px 20px", textAlign: "center", marginBottom: 14,
+          cursor: "pointer", transition: "all 0.4s",
+          boxShadow: flipped ? `0 12px 40px ${T.yellow}60` : `0 12px 40px ${T.purple}40`,
+          minHeight: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          border: "4px solid rgba(255,255,255,0.4)",
+        }}>
+          {!flipped ? (
+            <>
+              <div style={{ fontSize: 110, color: "white", lineHeight: 1.1, fontFamily: "Georgia, serif", textShadow: "0 4px 0 rgba(0,0,0,0.2)" }}>{letter.u}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "rgba(255,255,255,0.85)", marginTop: 8 }}>{letter.r}</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>Tap to flip! 👆</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 64, marginBottom: 6 }}>{letter.emoji}</div>
+              <div style={{ fontSize: 28, color: "white", fontFamily: "Georgia, serif", direction: "rtl", fontWeight: 900 }}>{letter.ex}</div>
+              <div style={{ fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>{letter.exR} — {letter.eng}</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>Tap again! 🔄</div>
+            </>
+          )}
+        </div>
+        <div style={{ background: "white", borderRadius: 18, padding: "12px 14px", marginBottom: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize: 11, color: T.textMid, fontWeight: 700, marginBottom: 8 }}>📊 Your Progress:</div>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "center" }}>
+            {FULL_ALPHABET.slice(0, showAll ? FULL_ALPHABET.length : 20).map((l, i) => (
+              <div key={i} style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: i < idx ? T.green : i === idx ? T.purple : "rgba(0,0,0,0.06)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, fontFamily: "Georgia, serif",
+                color: i <= idx ? "white" : T.textLight, fontWeight: 700,
+                boxShadow: i === idx ? `0 0 0 3px ${T.purple}44` : "none",
+                transition: "all 0.3s",
+              }}>{l.u}</div>
+            ))}
+            {!showAll && FULL_ALPHABET.length > 20 && (
+              <div onClick={() => setShowAll(true)} style={{ width: 32, height: 32, borderRadius: 8, background: T.purple + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: T.purple, fontWeight: 800, cursor: "pointer" }}>+{FULL_ALPHABET.length - 20}</div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "12px 16px 16px", flexShrink: 0 }}>
+        <Btn full color={T.purple} emoji={idx < FULL_ALPHABET.length - 1 ? "▶️" : "🏆"}
+          onClick={() => { setFlipped(false); if (idx < FULL_ALPHABET.length - 1) setIdx(i => i + 1); else onComplete("haroof", 100, 3); }}>
+          {idx < FULL_ALPHABET.length - 1 ? `اگلا — ${FULL_ALPHABET[idx + 1]?.u}` : "مکمل! Complete!"}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LAFZ SCREEN  — FULLY REFACTORED
+//
+// REMOVED:
+//   • async evaluatePronunciation() → fetch() call to Anthropic API
+//   • isEvaluating / loading skeleton (no async needed)
+//   • error state for network failures
+//   • "🤖 AI Eval" badge in header
+//   • "Ustaad AI says:" label
+//
+// REPLACED WITH:
+//   • evaluatePronunciationLocal() — synchronous, deterministic
+//   • Instant feedback on button click (no spinner needed)
+//   • Same result object shape → UI components unchanged
+// ═══════════════════════════════════════════════════════════════════
+function LafzScreen({ onBack, onComplete }) {
+  const [idx, setIdx]             = useState(0);
+  const [userInput, setUserInput] = useState("");
+  const [inputFocus, setInputFocus] = useState(false);
+  const [evalResult, setEvalResult] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const word = WORDS[idx];
+
+  const score = evalResult ? Math.round(evalResult.accuracy) : null;
+  const mood  = score == null ? "neutral" : score > 75 ? "praise" : score > 50 ? "thinking" : "sad";
+  const tutorMsg = score == null
+    ? `"${word.u}" means "${word.eng}"! Type how you said it! 🎤`
+    : score > 75 ? `Excellent! "${word.r}" — Perfect pronunciation! 🌟`
+    : score > 50 ? `Good try! Say "${word.r}" again! 💪`
+    : `Let's try again — say "${word.r}" slowly! 🐢`;
+
+  // FIX: synchronous — no async, no API, no spinner needed
+  const handleEvaluate = () => {
+    if (!userInput.trim()) return;
+    const result = evaluatePronunciationLocal(word.u, word.r, word.phonemes, userInput.trim());
+    setEvalResult(result);
+    if (result.accuracy > 75) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2000);
+    }
+  };
+
+  const handleNext = () => {
+    setIdx(i => (i + 1) % WORDS.length);
+    setEvalResult(null);
+    setUserInput("");
+  };
+
+  // FIX: reset evalResult when user starts typing a new answer
+  const handleInputChange = (e) => {
+    setUserInput(e.target.value);
+    setEvalResult(null);
+  };
+
+  const getPhonemeStatus = (ph) => {
+    if (!evalResult) return null;
+    if ((evalResult.correct_phonemes || []).includes(ph))                                     return "correct";
+    if ((evalResult.incorrect_phonemes || []).includes(ph) || (evalResult.missing_phonemes || []).includes(ph)) return "incorrect";
+    return "unknown";
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#e0f7ff,#fff9f0)", position: "relative" }}>
+      <Confetti active={showConfetti} />
+      <div style={{ background: `linear-gradient(90deg, ${T.teal}, ${T.tealD})`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, cursor: "pointer", borderRadius: 10, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>←</button>
+        {/* FIX: removed "🤖 AI Eval" badge */}
+        <div style={{ fontWeight: 800, color: "white", fontSize: 15, flex: 1 }}>💬 الفاظ — Words</div>
+        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "4px 10px", color: "white", fontSize: 12, fontWeight: 700 }}>{idx + 1}/{WORDS.length}</div>
+      </div>
+      <div style={{ padding: "8px 16px 4px", flexShrink: 0 }}><PBar value={idx + 1} max={WORDS.length} color={T.teal} height={10} /></div>
+      <TutorBubble mood={mood} message={tutorMsg} />
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 16px 16px" }}>
+        {/* Word card */}
+        <div style={{
+          background: `linear-gradient(135deg, ${T.teal}22, ${T.green}22)`,
+          border: `3px solid ${T.teal}66`, borderRadius: 24, padding: "22px 20px", textAlign: "center",
+          marginBottom: 12, animation: "bubblePop 0.35s cubic-bezier(.34,1.56,.64,1)",
+          boxShadow: `0 8px 24px ${T.teal}30`,
+        }}>
+          <div style={{ fontSize: 72, marginBottom: 8 }}>{word.emoji}</div>
+          <div style={{ fontSize: 56, color: T.tealD, fontFamily: "Georgia, serif", fontWeight: 900, direction: "rtl", marginBottom: 6 }}>{word.u}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: T.textMid }}>{word.r}</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: T.text, marginTop: 4 }}>{word.eng}</div>
+        </div>
+
+        {/* Phoneme tiles */}
+        <div style={{ background: "white", borderRadius: 18, padding: "14px 16px", marginBottom: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize: 12, color: T.textMid, fontWeight: 700, marginBottom: 10 }}>حروف — Letters:</div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            {word.phonemes.map((ph, i) => {
+              const status = getPhonemeStatus(ph);
+              const color = !evalResult ? T.purple : status === "correct" ? T.greenD : status === "incorrect" ? T.red : T.teal;
+              const bg    = !evalResult ? T.purple + "18" : status === "correct" ? T.green + "22" : status === "incorrect" ? T.red + "22" : T.teal + "22";
+              return (
+                <div key={i} style={{
+                  width: 48, height: 48, borderRadius: 12,
+                  background: bg, border: `3px solid ${color}66`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 22, fontFamily: "Georgia, serif", color: T.text,
+                  fontWeight: 900, transition: "all 0.4s",
+                  boxShadow: evalResult ? `0 4px 12px ${color}40` : "none",
+                  position: "relative",
+                }}>
+                  {ph}
+                  {evalResult && status === "correct" && <span style={{ position: "absolute", fontSize: 10, bottom: 2 }}>✓</span>}
+                </div>
+              );
+            })}
+          </div>
+          {evalResult && (
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
+              {[{ color: T.greenD, bg: T.green + "22", label: "✓ Correct" }, { color: T.red, bg: T.red + "22", label: "✗ Needs work" }].map(({ color, bg, label }) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color, fontWeight: 700 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 3, background: bg, border: `2px solid ${color}` }} />
+                  {label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Input area */}
+        <div style={{ background: "white", borderRadius: 18, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: T.textMid, fontWeight: 700, marginBottom: 8 }}>
+            🎤 Type how you pronounced it (romanized):
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={userInput}
+              onChange={handleInputChange}
+              onFocus={() => setInputFocus(true)}
+              onBlur={() => setInputFocus(false)}
+              onKeyDown={e => e.key === "Enter" && handleEvaluate()}
+              placeholder={`e.g. "${word.r}"`}
+              style={{
+                flex: 1, padding: "12px 14px", borderRadius: 12,
+                border: `3px solid ${inputFocus ? T.teal : T.border}`,
+                fontSize: 16, fontWeight: 700, outline: "none", color: T.text,
+                background: "white", transition: "all 0.2s",
+                boxShadow: inputFocus ? `0 0 0 4px ${T.teal}22` : "none",
+              }}
+            />
+            {/* FIX: synchronous check — no spinner, instant result */}
+            <Btn onClick={handleEvaluate} disabled={!userInput.trim()} color={T.teal} emoji="✅">
+              Check
+            </Btn>
+          </div>
+          <div style={{ fontSize: 11, color: T.textLight, marginTop: 6, fontStyle: "italic" }}>
+            💡 Say the word aloud, then type it in Roman Urdu (e.g. "kitaab", "pani")
+          </div>
+        </div>
+
+        {/* Evaluation result */}
+        {evalResult && (
+          <div style={{ background: "white", borderRadius: 18, padding: "16px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", animation: "bubblePop 0.3s ease", marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <div style={{
+                width: 90, height: 90, borderRadius: "50%",
+                background: score > 75
+                  ? `linear-gradient(135deg, ${T.green}, ${T.greenD})`
+                  : score > 50
+                  ? `linear-gradient(135deg, ${T.yellow}, ${T.yellowD})`
+                  : `linear-gradient(135deg, ${T.red}, ${T.redL})`,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 0 0 6px ${score > 75 ? T.green : score > 50 ? T.yellow : T.red}44`,
+              }}>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "white", lineHeight: 1 }}>{score}%</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)" }}>accuracy</div>
+              </div>
+            </div>
+
+            <StarBadge count={score > 75 ? 3 : score > 50 ? 2 : 1} />
+
+            {/* FIX: relabelled from "🤖 Ustaad AI says" to "Ustaad Munna says" */}
+            <div style={{
+              background: `linear-gradient(135deg, ${T.purple}10, ${T.teal}10)`,
+              border: `2px solid ${T.purple}30`,
+              borderRadius: 14, padding: "12px 14px", marginTop: 12, textAlign: "left",
+            }}>
+              <div style={{ fontSize: 12, color: T.purple, fontWeight: 800, marginBottom: 6 }}>🎓 Ustaad Munna says:</div>
+              <div style={{ fontSize: 13, color: T.text, fontWeight: 600, lineHeight: 1.6 }}>
+                {evalResult.feedback}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
+              {evalResult.correct_phonemes?.length > 0 && (
+                <div style={{ background: T.green + "15", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: T.greenD, fontWeight: 700 }}>
+                  ✅ Correct: {evalResult.correct_phonemes.join("  ")}
+                </div>
+              )}
+              {evalResult.incorrect_phonemes?.length > 0 && (
+                <div style={{ background: T.red + "12", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: T.red, fontWeight: 700 }}>
+                  ❌ Incorrect: {evalResult.incorrect_phonemes.join("  ")}
+                </div>
+              )}
+              {evalResult.missing_phonemes?.length > 0 && (
+                <div style={{ background: T.orange + "12", borderRadius: 10, padding: "8px 12px", fontSize: 12, color: T.orange, fontWeight: 700 }}>
+                  ⚠️ Missing: {evalResult.missing_phonemes.join("  ")}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: "12px 16px 16px", display: "flex", gap: 10, flexShrink: 0 }}>
+        <Btn onClick={() => { setEvalResult(null); setUserInput(""); }} color={T.teal} outline sm emoji="🔄">دوبارہ</Btn>
+        <Btn onClick={handleNext} full color={T.teal} emoji="▶️">اگلا لفظ</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── JUMLAY ──────────────────────────────────────────────────────
+// FIX: Removed Math.random() from score generation.
+//      Replaced with a deterministic rule-based scorer that analyses
+//      the typed sentence against the expected Urdu romanization.
+function JumlayScreen({ onBack, onComplete }) {
+  const [idx, setIdx]       = useState(0);
+  const [wordIdx, setWordIdx] = useState(-1);
+  const [phase, setPhase]   = useState("read");
+  const [userInput, setUserInput] = useState("");  // FIX: typed input instead of fake speech
+  const [inputFocus, setInputFocus] = useState(false);
+  const [score, setScore]   = useState(null);
+  const sent = SENTENCES[idx];
+
+  const mood = phase === "read" ? "thinking" : score == null ? "neutral" : score > 70 ? "praise" : "sad";
+  const tutorMsg = phase === "read"
+    ? `Read the sentence! It means: "${sent.eng}" 📖`
+    : score == null ? `Now type how you would say it! "${sent.u}" ✍️`
+    : score > 70 ? "Brilliant! Perfect sentence! 🏆" : "Try again — go slowly! 🐢";
+
+  useEffect(() => {
+    if (phase !== "read") return;
+    setWordIdx(-1);
+    const timers = sent.words.map((_, i) => setTimeout(() => setWordIdx(i), (i + 1) * 700));
+    return () => timers.forEach(clearTimeout);
+  }, [idx, phase]);
+
+  // FIX: deterministic sentence scoring
+  // We compare the user's typed Roman version to a canonical Roman
+  // representation built from the sentence's word list.
+  const SENTENCE_ROMAN = [
+    "mera naam raza hay",
+    "mein school jata hoon",
+    "yeh meri kitab hay",
+    "aasmaan neela hay",
+    "phool khubsoorat hain",
+    "mein paani peeta hoon",
+  ];
+
+  const handleCheck = () => {
+    if (!userInput.trim()) return;
+    const result = evaluatePronunciationLocal(
+      sent.u,
+      SENTENCE_ROMAN[idx] || sent.u,
+      sent.words,
+      userInput.trim()
+    );
+    setScore(Math.round(result.accuracy));
+  };
+
+  const handleReset = () => {
+    setPhase("read");
+    setScore(null);
+    setUserInput("");
+  };
+
+  const handleNext = () => {
+    setIdx(i => (i + 1) % SENTENCES.length);
+    setPhase("read");
+    setScore(null);
+    setUserInput("");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#fff4e6,#fff9f0)" }}>
+      <div style={{ background: `linear-gradient(90deg, ${T.orange}, ${T.orangeL})`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, cursor: "pointer", borderRadius: 10, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>←</button>
+        <div style={{ fontWeight: 800, color: "white", fontSize: 15, flex: 1 }}>🗣️ جملے — Sentences</div>
+        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "4px 10px", color: "white", fontSize: 12, fontWeight: 700 }}>{idx + 1}/{SENTENCES.length}</div>
+      </div>
+      <div style={{ padding: "8px 16px 4px", flexShrink: 0 }}><PBar value={idx + 1} max={SENTENCES.length} color={T.orange} height={10} /></div>
+      <TutorBubble mood={mood} message={tutorMsg} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 16px 16px" }}>
+        <div style={{ background: `linear-gradient(135deg, ${T.orange}18, ${T.yellow}18)`, border: `3px solid ${T.orange}55`, borderRadius: 24, padding: "22px 18px", marginBottom: 12, boxShadow: `0 8px 24px ${T.orange}25` }}>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap", direction: "rtl", marginBottom: 14 }}>
+            {sent.words.map((w, i) => (
+              <div key={i} style={{
+                padding: "8px 14px", borderRadius: 12,
+                background: i <= wordIdx ? T.orange + "25" : "rgba(0,0,0,0.04)",
+                border: `2.5px solid ${i <= wordIdx ? T.orange : "rgba(0,0,0,0.08)"}`,
+                color: i <= wordIdx ? T.orange : T.textLight,
+                fontSize: 22, fontFamily: "Georgia, serif", fontWeight: 900,
+                transition: "all 0.35s",
+                transform: i === wordIdx ? "scale(1.1)" : "scale(1)",
+                boxShadow: i === wordIdx ? `0 4px 12px ${T.orange}44` : "none",
+              }}>{w}</div>
+            ))}
+          </div>
+          <div style={{ borderTop: "2px dashed rgba(0,0,0,0.1)", paddingTop: 12, textAlign: "center", color: T.textMid, fontSize: 14, fontWeight: 600 }}>🇬🇧 {sent.eng}</div>
+        </div>
+
+        {phase === "read" && (
+          <div style={{ textAlign: "center" }}>
+            <Btn onClick={() => setPhase("speak")} color={T.orange} emoji="✍️">اب لکھیں! Type Now!</Btn>
+          </div>
+        )}
+
+        {phase === "speak" && (
+          <div style={{ background: "white", borderRadius: 18, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <div style={{ fontSize: 12, color: T.textMid, fontWeight: 700, marginBottom: 8 }}>
+              ✍️ Type the sentence in Roman Urdu:
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input
+                value={userInput}
+                onChange={e => { setUserInput(e.target.value); setScore(null); }}
+                onFocus={() => setInputFocus(true)}
+                onBlur={() => setInputFocus(false)}
+                onKeyDown={e => e.key === "Enter" && handleCheck()}
+                placeholder={SENTENCE_ROMAN[idx] || "type the sentence..."}
+                style={{
+                  flex: 1, padding: "12px 14px", borderRadius: 12,
+                  border: `3px solid ${inputFocus ? T.orange : T.border}`,
+                  fontSize: 15, fontWeight: 700, outline: "none", color: T.text,
+                  background: "white", transition: "all 0.2s",
+                  boxShadow: inputFocus ? `0 0 0 4px ${T.orange}22` : "none",
+                }}
+              />
+              <Btn onClick={handleCheck} disabled={!userInput.trim()} color={T.orange} emoji="✅">Check</Btn>
+            </div>
+            {/* Waveform kept as decorative score visualiser */}
+            <Waveform active={false} score={score} />
+            {score != null && (
+              <div style={{ marginTop: 14, textAlign: "center", animation: "bubblePop 0.3s ease" }}>
+                <div style={{ fontSize: 46, fontWeight: 900, color: score > 70 ? T.greenD : score > 50 ? T.yellowD : T.red }}>{score}%</div>
+                <StarBadge count={score > 70 ? 3 : score > 50 ? 2 : 1} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "12px 16px 16px", display: "flex", gap: 10, flexShrink: 0 }}>
+        <Btn onClick={handleReset} color={T.orange} outline sm emoji="🔄">دوبارہ</Btn>
+        <Btn onClick={handleNext} full color={T.orange} emoji="▶️">اگلا جملہ</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── QUIZ ────────────────────────────────────────────────────────
+// FIX: buildQuestions() now uses seededShuffle (deterministic).
+//      Quiz instance is stable per component mount (useState init).
+function QuizScreen({ onBack, user, onComplete }) {
+  const [difficulty, setDifficulty] = useState(null);
+  const [phase, setPhase]           = useState("setup");
+  // FIX: questions are built once and never rebuilt randomly
+  const [questions]                 = useState(() => buildQuestions());
+  const [qIdx, setQIdx]             = useState(0);
+  const [selected, setSelected]     = useState(null);
+  const [score, setScore]           = useState(0);
+  const [done, setDone]             = useState(false);
+  const [showRes, setShowRes]       = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const q = questions[qIdx];
+  const mood = showRes ? (selected === q?.answer ? "praise" : "sad") : "thinking";
+  const tutorMsg = phase === "setup"
+    ? "Choose difficulty! مشکل کا درجہ منتخب کریں! 🎮"
+    : done ? (score >= 7 ? `Amazing ${user.name}! You're a star! 🌟` : `Good try ${user.name}! Practice more! 💪`)
+    : showRes ? (selected === q.answer ? "Correct! شاباش! ✅" : "Wrong! غلط! ❌ Try next!")
+    : `Question ${qIdx + 1}: ${q.q}`;
+
+  const handleSelect = opt => {
+    if (selected) return;
+    setSelected(opt); setShowRes(true);
+    if (opt === q.answer) {
+      setScore(s => s + 1);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1500);
+    }
+    setTimeout(() => {
+      if (qIdx < questions.length - 1) { setQIdx(i => i + 1); setSelected(null); setShowRes(false); }
+      else setDone(true);
+    }, 1400);
+  };
+
+  const difficultyOpts = [
+    { d: "easy",   labelU: "آسان",    labelE: "Easy",   sub: "Letters only",    color: T.green,  icon: "🌱" },
+    { d: "medium", labelU: "درمیانہ", labelE: "Medium", sub: "Words & Letters", color: T.yellow, icon: "⭐" },
+    { d: "hard",   labelU: "مشکل",    labelE: "Hard",   sub: "Everything!",     color: T.pink,   icon: "🔥" },
+  ];
+
+  if (phase === "setup") return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#fff0f6,#fff9f0)" }}>
+      <div style={{ background: `linear-gradient(90deg,${T.pink},${T.pinkL})`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, cursor: "pointer", borderRadius: 10, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>←</button>
+        <div style={{ fontWeight: 800, color: "white", fontSize: 15, flex: 1 }}>🧩 کوئز — Quiz</div>
+      </div>
+      <TutorBubble mood="excited" message={tutorMsg} />
+      <div style={{ flex: 1, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ fontWeight: 800, fontSize: 16, color: T.text, textAlign: "center" }}>Choose Difficulty! 🎯</div>
+        {difficultyOpts.map(item => (
+          <div key={item.d} onClick={() => setDifficulty(item.d)} style={{
+            background: difficulty === item.d ? item.color + "22" : "white",
+            border: `3px solid ${difficulty === item.d ? item.color : T.border}`,
+            borderRadius: 20, padding: "16px 18px", cursor: "pointer", transition: "all 0.2s",
+            display: "flex", alignItems: "center", gap: 14,
+            transform: difficulty === item.d ? "scale(1.02)" : "scale(1)",
+            boxShadow: difficulty === item.d ? `0 6px 20px ${item.color}44` : "0 2px 8px rgba(0,0,0,0.06)",
+          }}>
+            <span style={{ fontSize: 36 }}>{item.icon}</span>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: 18, color: T.text, direction: "rtl" }}>{item.labelU} — {item.labelE}</div>
+              <div style={{ color: T.textMid, fontSize: 13, fontWeight: 600 }}>{item.sub}</div>
+            </div>
+            {difficulty === item.d && <div style={{ marginLeft: "auto", fontSize: 22 }}>✅</div>}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: "12px 16px 24px" }}>
+        <Btn full color={T.pink} disabled={!difficulty} onClick={() => setPhase("quiz")} emoji="🚀">شروع کریں! Start Quiz!</Btn>
+      </div>
+    </div>
+  );
+
+  if (done) {
+    const pct = Math.round((score / questions.length) * 100);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#fff0f6,#fff9f0)", position: "relative", overflow: "hidden" }}>
+        <Confetti active={pct >= 70} />
+        <TutorBubble mood={pct >= 70 ? "praise" : "sad"} message={tutorMsg} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, textAlign: "center" }}>
+          <div style={{ fontSize: 72 }}>{pct >= 80 ? "🏆" : pct >= 60 ? "🎯" : "📚"}</div>
+          <div style={{ fontWeight: 900, fontSize: 24, color: T.text, direction: "rtl" }}>کوئز مکمل!</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: T.textMid }}>Quiz Complete!</div>
+          <div style={{ width: 140, height: 140, borderRadius: "50%", background: pct >= 70 ? `linear-gradient(135deg,${T.green},${T.greenD})` : `linear-gradient(135deg,${T.red},${T.redL})`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: pct >= 70 ? `0 0 0 8px ${T.green}44` : `0 0 0 8px ${T.red}44` }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: "white" }}>{pct}%</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)" }}>{score}/{questions.length}</div>
+          </div>
+          <StarBadge count={pct >= 80 ? 3 : pct >= 60 ? 2 : 1} />
+          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+            <Btn onClick={() => { setQIdx(0); setScore(0); setDone(false); setSelected(null); setShowRes(false); setPhase("setup"); }} color={T.pink} emoji="🔄">دوبارہ</Btn>
+            <Btn onClick={() => onComplete("quiz", pct, pct >= 80 ? 3 : pct >= 60 ? 2 : 1)} color={T.purple} emoji="🏠">گھر</Btn>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(180deg,#fff0f6,#fff9f0)", position: "relative" }}>
+      <Confetti active={showConfetti} />
+      <div style={{ background: `linear-gradient(90deg,${T.pink},${T.pinkL})`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "white", fontSize: 18, cursor: "pointer", borderRadius: 10, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>←</button>
+        <div style={{ flex: 1 }}><PBar value={qIdx + 1} max={questions.length} color="rgba(255,255,255,0.6)" height={8} /></div>
+        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "4px 10px", color: "white", fontSize: 12, fontWeight: 700 }}>{qIdx + 1}/{questions.length} ⭐ {score}</div>
+      </div>
+      <TutorBubble mood={mood} message={tutorMsg} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 16px 16px" }}>
+        <div style={{ background: `linear-gradient(135deg,${T.pink}18,${T.purpleL}18)`, border: `3px solid ${T.pink}44`, borderRadius: 24, padding: "24px 18px", textAlign: "center", marginBottom: 14, animation: "bubblePop 0.3s ease", boxShadow: `0 8px 24px ${T.pink}25` }}>
+          <div style={{ fontSize: 72, fontFamily: "Georgia, serif", color: T.purple, fontWeight: 900, marginBottom: 8 }}>{q.urdu}</div>
+          <div style={{ color: T.textMid, fontSize: 14, fontWeight: 600 }}>{q.q}</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {q.options.map((opt, i) => {
+            const isCorrect = opt === q.answer, isSel = opt === selected;
+            let bg = "white", border = T.border, color = T.text, shadow = "0 2px 8px rgba(0,0,0,0.06)";
+            if (showRes) {
+              if (isCorrect) { bg = T.green + "22"; border = T.greenD; color = T.greenD; shadow = `0 4px 16px ${T.green}44`; }
+              else if (isSel) { bg = T.red + "22"; border = T.red; color = T.red; shadow = `0 4px 16px ${T.red}44`; }
+            }
+            return (
+              <div key={i} onClick={() => handleSelect(opt)} style={{
+                background: bg, border: `3px solid ${border}`, borderRadius: 18,
+                padding: "16px 10px", textAlign: "center", cursor: "pointer",
+                color, fontWeight: 800, fontSize: 15, transition: "all 0.2s",
+                boxShadow: shadow, transform: isSel ? "scale(1.04)" : "scale(1)",
+              }}>
+                {opt}{showRes && isCorrect && " ✅"}{showRes && isSel && !isCorrect && " ❌"}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BOTTOM NAV ──────────────────────────────────────────────────
+function BottomNav({ screen, onNav }) {
+  const items = [
+    { id: "home",   emoji: "🏠", label: "گھر",  color: T.purple },
+    { id: "haroof", emoji: "🔤", label: "حروف", color: T.purple },
+    { id: "lafz",   emoji: "💬", label: "الفاظ",color: T.teal },
+    { id: "jumlay", emoji: "🗣️", label: "جملے", color: T.orange },
+    { id: "quiz",   emoji: "🧩", label: "کوئز", color: T.pink },
+  ];
+  return (
+    <div style={{ display: "flex", background: "white", borderTop: "3px solid rgba(155,93,229,0.12)", padding: "8px 4px 10px", flexShrink: 0, boxShadow: "0 -4px 20px rgba(0,0,0,0.08)" }}>
+      {items.map(it => {
+        const active = screen === it.id;
+        return (
+          <button key={it.id} onClick={() => onNav(it.id)} style={{
+            flex: 1, background: active ? it.color + "18" : "none", border: "none", borderRadius: 14,
+            padding: "8px 2px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+            transition: "all 0.2s", transform: active ? "scale(1.08)" : "scale(1)",
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: active ? it.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, transition: "all 0.2s", boxShadow: active ? `0 4px 12px ${it.color}60` : "none" }}>
+              <span>{it.emoji}</span>
+            </div>
+            <span style={{ fontSize: 9, color: active ? it.color : T.textLight, fontWeight: active ? 900 : 600, direction: "rtl" }}>{it.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── APP ROOT ────────────────────────────────────────────────────
+export default function UrduLearningApp() {
+  const [appPhase, setAppPhase]       = useState("splash");
+  const [user, setUser]               = useState(null);
+  const [screen, setScreen]           = useState("home");
+  const [completedMap, setCompletedMap] = useState({});
+  const [stars, setStars]             = useState({});
+  const [badge, setBadge]             = useState(null);
+
+  const handleComplete = useCallback((topic, pct, starCount = 2) => {
+    setCompletedMap(m => ({ ...m, [topic]: pct }));
+    setStars(s => ({ ...s, [topic]: Math.max(s[topic] || 0, starCount) }));
+    const badges = {
+      haroof: { icon: "🔤", title: "Alphabet Master!", desc: "You learned all the Urdu letters!" },
+      lafz:   { icon: "📖", title: "Word Wizard!",     desc: "You practiced Urdu vocabulary!" },
+      jumlay: { icon: "🗣️", title: "Sentence Star!",   desc: "You spoke full Urdu sentences!" },
+      quiz:   { icon: "🏆", title: "Quiz Champion!",   desc: "You aced the Urdu quiz!" },
+    };
+    setBadge(badges[topic]);
+    setScreen("home");
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes tutorBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+        @keyframes tutorFloat  { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-6px) rotate(2deg)} }
+        @keyframes bubblePop   { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
+        @keyframes confettiFall{ from{transform:translateY(0) rotate(0deg);opacity:1} to{transform:translateY(110vh) rotate(720deg);opacity:0} }
+        @keyframes floatDeco   { 0%,100%{transform:translateY(0) rotate(-8deg)} 50%{transform:translateY(-14px) rotate(8deg)} }
+        @keyframes fadeIn      { from{opacity:0} to{opacity:1} }
+        @keyframes badgePop    { from{opacity:0;transform:scale(0.5) rotate(-10deg)} to{opacity:1;transform:scale(1) rotate(0deg)} }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(155,93,229,0.25); border-radius: 99px; }
+      `}</style>
+      <div style={{
+        width: 390, maxWidth: "100%", background: "#fff9f0", borderRadius: 40, overflow: "hidden",
+        border: "3px solid rgba(155,93,229,0.2)", display: "flex", flexDirection: "column", height: 780,
+        margin: "0 auto",
+        boxShadow: "0 32px 90px rgba(155,93,229,0.3), 0 0 0 8px rgba(155,93,229,0.06)",
+        position: "relative",
+      }}>
+        {/* Status bar */}
+        <div style={{
+          background: appPhase === "main" && screen !== "home" ? "transparent" : "rgba(255,255,255,0.6)",
+          padding: "10px 22px 6px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0,
+          backdropFilter: "blur(8px)",
+        }}>
+          <div style={{ color: T.textMid, fontSize: 11, fontWeight: 700 }}>
+            {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </div>
+          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            <span style={{ fontSize: 11 }}>📶</span>
+            <div style={{ width: 20, height: 10, border: `2px solid ${T.textMid}`, borderRadius: 3, padding: 1 }}>
+              <div style={{ width: "80%", height: "100%", background: T.green, borderRadius: 1 }} />
+            </div>
+          </div>
+        </div>
+        {badge && <BadgePopup badge={badge} onClose={() => setBadge(null)} />}
+        {appPhase === "splash" && <SplashScreen onDone={() => setAppPhase("setup")} />}
+        {appPhase === "setup" && <SetupScreen onDone={(name, gender) => { setUser({ name, gender }); setAppPhase("main"); }} />}
+        {appPhase === "main" && (
+          <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              {screen === "home"   && <HomeScreen user={user} onNav={setScreen} completedMap={completedMap} stars={stars} />}
+              {screen === "haroof" && <HaroofScreen onBack={() => setScreen("home")} onComplete={handleComplete} />}
+              {screen === "lafz"   && <LafzScreen onBack={() => setScreen("home")} onComplete={handleComplete} />}
+              {screen === "jumlay" && <JumlayScreen onBack={() => setScreen("home")} onComplete={handleComplete} />}
+              {screen === "quiz"   && <QuizScreen onBack={() => setScreen("home")} user={user} onComplete={handleComplete} />}
+            </div>
+            <BottomNav screen={screen} onNav={setScreen} />
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

@@ -1,0 +1,32 @@
+export const T = {
+  purple:      '#9b5de5',
+  purpleLight: '#c77dff',
+  purpleDark:  '#7b2d8b',
+  pink:        '#f15bb5',
+  pinkLight:   '#ff85c2',
+  teal:        '#00bbf9',
+  tealLight:   '#72efdd',
+  orange:      '#ff6d00',
+  orangeLight: '#ffa040',
+  yellow:      '#fee440',
+  green:       '#00f5d4',
+  greenDark:   '#00bb9f',
+  red:         '#ef233c',
+  redLight:    '#ff6b6b',
+  white:       '#ffffff',
+  offWhite:    '#f8f9fa',
+  lightGray:   '#e9ecef',
+  midGray:     '#adb5bd',
+  darkGray:    '#495057',
+  navy:        '#1a1a2e',
+  navyMid:     '#16213e',
+  navyLight:   '#0f3460',
+ 
+  // semantic
+  cardBg:      '#ffffff',
+  screenBg:    '#f0f4ff',
+  navBg:       '#ffffff',
+  shadow:      'rgba(0,0,0,0.10)',
+  shadowMd:    'rgba(0,0,0,0.18)',
+};
+ 
