@@ -15,44 +15,20 @@ class LafzScreen extends StatefulWidget {
   State<LafzScreen> createState() => _LafzScreenState();
 }
 
-class _LafzScreenState extends State<LafzScreen>
-    with SingleTickerProviderStateMixin {
-  AvatarEmotion _emotion = AvatarEmotion.happy;
+class _LafzScreenState extends State<LafzScreen> {
+  AvatarEmotion _emotion = AvatarEmotion.neutral;
   String _selectedCategory = 'سب';
   late List<UrduWord> _filtered;
+
+  // Collect unique categories from data
   late final List<String> _categories;
-  int _idx = 0;
-  double? _lastScore;
-
-  late final AnimationController _slideCtrl;
-  late Animation<Offset> _slideAnim;
-
-  static const List<Color> _accentColors = [
-    Color(0xFF7C3AED), Color(0xFFDB2777), Color(0xFF059669),
-    Color(0xFFD97706), Color(0xFF2563EB), Color(0xFF7C3AED),
-    Color(0xFFDC2626), Color(0xFF0891B2), Color(0xFF65A30D),
-    Color(0xFF9333EA),
-  ];
-
-  Color get _accent => _accentColors[_idx % _accentColors.length];
 
   @override
   void initState() {
     super.initState();
-    _slideCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 280));
-    _slideAnim = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
-        .animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
-
     final cats = WORDS.map((w) => w.category).toSet().toList();
     _categories = ['سب', ...cats];
     _applyFilter();
-  }
-
-  @override
-  void dispose() {
-    _slideCtrl.dispose();
-    super.dispose();
   }
 
   void _applyFilter() {
@@ -61,34 +37,15 @@ class _LafzScreenState extends State<LafzScreen>
     } else {
       _filtered = WORDS.where((w) => w.category == _selectedCategory).toList();
     }
-    _idx = 0;
-    _lastScore = null;
   }
 
-  Future<void> _animateTo(int newIdx, bool toRight) async {
-    _slideAnim = Tween<Offset>(
-      begin: Offset(toRight ? 1.0 : -1.0, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
-
-    setState(() {
-      _idx = newIdx;
-      _lastScore = null;
-    });
-    _slideCtrl.forward(from: 0);
-  }
-
-  Future<void> _speakWord() async {
-    if (_filtered.isEmpty) return;
-    final word = _filtered[_idx];
-    setState(() => _emotion = AvatarEmotion.speaking);
-    await TtsService.instance.speak(word.urdu);
+  Future<void> _speakWord(UrduWord word) async {
+    setState(() => _emotion = AvatarEmotion.thinking);
+    await TtsService.instance.speak('${word.urdu}۔');
     if (mounted) setState(() => _emotion = AvatarEmotion.happy);
   }
 
-  void _openMic() {
-    if (_filtered.isEmpty) return;
-    final word = _filtered[_idx];
+  void _openMic(BuildContext context, UrduWord word) {
     MicRecorderWidget.show(
       context,
       targetText: word.urdu,
@@ -96,48 +53,66 @@ class _LafzScreenState extends State<LafzScreen>
       onScore: (score, transcript) {
         final provider = context.read<AppProvider>();
         provider.recordResult(word.urdu, score);
+        if (score >= 70) {
+          // progress recorded via recordResult above
+        }
         Navigator.of(context).pop();
-        setState(() {
-          _lastScore = score;
-          _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
-        });
-        final name = provider.userName;
-        TtsService.instance.speak(
-          score >= 70
-              ? (name.isNotEmpty ? 'شاباش $name!' : 'شاباش!')
-              : 'دوبارہ کوشش کریں۔',
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                score >= 70
+                    ? 'شاباش! آپ کا تلفظ ${score.toInt()}% درست ہے۔'
+                    : 'دوبارہ کوشش کریں۔ اسکور: ${score.toInt()}%',
+                style: const TextStyle(fontFamily: 'NotoNastaliqUrdu'),
+              ),
+            ),
+            backgroundColor:
+                score >= 70 ? Colors.green.shade600 : Colors.red.shade600,
+          ),
         );
       },
     );
   }
 
-  String _levelLabel(String level) {
+  Color _levelColor(String level) {
     switch (level) {
-      case 'easy':   return 'آسان';
-      case 'medium': return 'درمیانہ';
-      case 'hard':   return 'مشکل';
-      default:       return level;
+      case 'easy':
+        return Colors.green.shade600;
+      case 'medium':
+        return Colors.orange.shade600;
+      case 'hard':
+        return Colors.red.shade600;
+      default:
+        return Colors.grey;
     }
   }
 
-  Color _levelColor(String level) {
+  String _levelUrdu(String level) {
     switch (level) {
-      case 'easy':   return Colors.green.shade600;
-      case 'medium': return Colors.orange.shade600;
-      default:       return Colors.red.shade600;
+      case 'easy':
+        return 'آسان';
+      case 'medium':
+        return 'درمیانہ';
+      case 'hard':
+        return 'مشکل';
+      default:
+        return level;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
         title: const Directionality(
           textDirection: TextDirection.rtl,
-          child: Text('الفاظ',
-              style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 22)),
+          child: Text(
+            'الفاظ',
+            style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 22),
+          ),
         ),
         backgroundColor: AppTheme.pink,
         foregroundColor: Colors.white,
@@ -145,44 +120,27 @@ class _LafzScreenState extends State<LafzScreen>
       ),
       body: Column(
         children: [
-          // ── Avatar banner ──────────────────────────────────────────────
+          // ── Avatar banner ────────────────────────────────────────────
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.pink, AppTheme.pink.withOpacity(0.75)],
+                colors: [AppTheme.pink, AppTheme.pink.withOpacity(0.7)],
               ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              children: [
-                ProfessorAvatar(emotion: _emotion, size: 80),
-                const SizedBox(height: 6),
-                if (provider.userName.isNotEmpty)
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      'آؤ ${provider.userName}، آج کچھ نئے الفاظ سیکھیں!',
-                      style: const TextStyle(
-                        fontFamily: 'NotoNastaliqUrdu',
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: ProfessorAvatar(emotion: _emotion, size: 80)),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // ── Category filter chips ──────────────────────────────────────
+          // ── Category filter chips ─────────────────────────────────────
           SizedBox(
-            height: 42,
+            height: 44,
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: ListView.builder(
@@ -195,24 +153,30 @@ class _LafzScreenState extends State<LafzScreen>
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: FilterChip(
-                      label: Text(cat,
-                          style: TextStyle(
-                            fontFamily: 'NotoNastaliqUrdu',
-                            fontSize: 13,
-                            color: selected ? Colors.white : AppTheme.navy,
-                            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                          )),
+                      label: Text(
+                        cat,
+                        style: TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 14,
+                          color: selected ? Colors.white : AppTheme.navy,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
                       selected: selected,
-                      onSelected: (_) => setState(() {
-                        _selectedCategory = cat;
-                        _applyFilter();
-                      }),
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedCategory = cat;
+                          _applyFilter();
+                        });
+                      },
                       selectedColor: AppTheme.pink,
                       backgroundColor: Colors.white,
                       checkmarkColor: Colors.white,
                       side: BorderSide(
-                          color: selected ? AppTheme.pink : Colors.grey.shade300),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                        color: selected ? AppTheme.pink : Colors.grey.shade300,
+                      ),
                     ),
                   );
                 },
@@ -222,90 +186,27 @@ class _LafzScreenState extends State<LafzScreen>
 
           const SizedBox(height: 8),
 
-          // ── Word counter ───────────────────────────────────────────────
-          if (_filtered.isNotEmpty)
-            Text(
-              '${_idx + 1} / ${_filtered.length}',
-              style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
-            ),
-
-          const SizedBox(height: 8),
-
-          // ── Main word card ─────────────────────────────────────────────
+          // ── Word grid ─────────────────────────────────────────────────
           Expanded(
-            child: _filtered.isEmpty
-                ? const Center(
-                    child: Text('کوئی لفظ نہیں',
-                        style: TextStyle(
-                            fontFamily: 'NotoNastaliqUrdu', fontSize: 18)))
-                : SlideTransition(
-                    position: _slideAnim,
-                    child: _WordCard(
-                      word: _filtered[_idx],
-                      accent: _accent,
-                      score: _lastScore,
-                      levelLabel: _levelLabel(_filtered[_idx].level),
-                      levelColor: _levelColor(_filtered[_idx].level),
-                      onSpeak: _speakWord,
-                      onMic: _openMic,
-                    ),
-                  ),
-          ),
-
-          // ── Navigation row ─────────────────────────────────────────────
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: Row(
-              children: [
-                // Previous
-                _NavBtn(
-                  label: '← پچھلا',
-                  enabled: _idx > 0,
-                  color: _accent,
-                  onTap: () => _animateTo(_idx - 1, false),
-                ),
-                // Dot indicators (up to 10 dots)
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(
-                          _filtered.length > 20 ? 20 : _filtered.length,
-                          (i) {
-                            final realIdx = _filtered.length > 20
-                                ? (i * (_filtered.length / 20)).round()
-                                : i;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: realIdx == _idx ? 18 : 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: realIdx == _idx
-                                    ? _accent
-                                    : Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Next
-                _NavBtn(
-                  label: 'اگلا →',
-                  enabled: _idx < _filtered.length - 1,
-                  color: _accent,
-                  onTap: () => _animateTo(_idx + 1, true),
-                ),
-              ],
+            child: GridView.builder(
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.72,
+              ),
+              itemCount: _filtered.length,
+              itemBuilder: (ctx, i) {
+                return _WordCard(
+                  word: _filtered[i],
+                  onSpeak: () => _speakWord(_filtered[i]),
+                  onMic: () => _openMic(context, _filtered[i]),
+                  levelColor: _levelColor(_filtered[i].level),
+                  levelUrdu: _levelUrdu(_filtered[i].level),
+                  onTap: () => _speakWord(_filtered[i]),
+                );
+              },
             ),
           ),
         ],
@@ -314,165 +215,146 @@ class _LafzScreenState extends State<LafzScreen>
   }
 }
 
-// ─── Word card ────────────────────────────────────────────────────────────────
 class _WordCard extends StatelessWidget {
   final UrduWord word;
-  final Color accent;
-  final double? score;
-  final String levelLabel;
-  final Color levelColor;
   final VoidCallback onSpeak;
   final VoidCallback onMic;
+  final VoidCallback onTap;
+  final Color levelColor;
+  final String levelUrdu;
 
   const _WordCard({
     required this.word,
-    required this.accent,
-    required this.score,
-    required this.levelLabel,
-    required this.levelColor,
     required this.onSpeak,
     required this.onMic,
+    required this.onTap,
+    required this.levelColor,
+    required this.levelUrdu,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
             BoxShadow(
-              color: accent.withOpacity(0.18),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: Color(0x1A000000),
+              blurRadius: 8,
+              offset: Offset(0, 4),
             ),
           ],
-          border: Border.all(color: accent.withOpacity(0.3), width: 2),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Level badge
+            const SizedBox(height: 16),
+
+            // ── Emoji square ──────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: levelColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: levelColor.withOpacity(0.4)),
+                color: AppTheme.pink.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                    color: AppTheme.pink.withOpacity(0.3), width: 1.5),
               ),
-              child: Text(
-                levelLabel,
-                style: TextStyle(
+              child: Center(
+                child:
+                    Text(word.emoji, style: const TextStyle(fontSize: 44)),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Urdu word ─────────────────────────────────────────────
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  word.urdu,
+                  style: const TextStyle(
+                    fontFamily: 'NotoNastaliqUrdu',
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.navy,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── English meaning ───────────────────────────────────────
+            Text(
+              word.english,
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── Level badge ───────────────────────────────────────────
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: levelColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: levelColor.withOpacity(0.5), width: 1),
+              ),
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text(
+                  levelUrdu,
+                  style: TextStyle(
                     fontFamily: 'NotoNastaliqUrdu',
                     fontSize: 12,
                     color: levelColor,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            // Big emoji
-            Text(word.emoji, style: const TextStyle(fontSize: 90)),
-
-            // Urdu word
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                word.urdu,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'NotoNastaliqUrdu',
-                  fontSize: 56,
-                  fontWeight: FontWeight.bold,
-                  color: accent,
-                  height: 1.3,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
 
-            // Roman + English
-            Column(
-              children: [
-                Text(word.roman,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87)),
-                const SizedBox(height: 2),
-                Text(word.english,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
-              ],
-            ),
+            const SizedBox(height: 10),
 
-            // Score ring (if attempted)
-            if (score != null)
-              SizedBox(
-                width: 60,
-                height: 60,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: score! / 100,
-                      strokeWidth: 6,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        score! >= 70 ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                    Text('${score!.toInt()}%',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: score! >= 70 ? Colors.green : Colors.orange,
-                        )),
-                  ],
-                ),
-              ),
-
-            // Buttons
+            // ── Listen / Speak row ────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onSpeak,
-                      icon: const Text('🔊', style: TextStyle(fontSize: 20)),
-                      label: const Text('سنیں',
-                          style: TextStyle(
-                              fontFamily: 'NotoNastaliqUrdu', fontSize: 16)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.teal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
+                    child: _ActionBtn(
+                      label: 'سنیں',
+                      icon: '🔊',
+                      color: AppTheme.teal,
+                      onTap: onSpeak,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 6),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onMic,
-                      icon: const Text('🎤', style: TextStyle(fontSize: 20)),
-                      label: const Text('بولیں',
-                          style: TextStyle(
-                              fontFamily: 'NotoNastaliqUrdu', fontSize: 16)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.purple,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
+                    child: _ActionBtn(
+                      label: 'بولیں',
+                      icon: '🎤',
+                      color: AppTheme.pink,
+                      onTap: onMic,
                     ),
                   ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -480,38 +362,48 @@ class _WordCard extends StatelessWidget {
   }
 }
 
-// ─── Nav button ───────────────────────────────────────────────────────────────
-class _NavBtn extends StatelessWidget {
+class _ActionBtn extends StatelessWidget {
   final String label;
-  final bool enabled;
+  final String icon;
   final Color color;
   final VoidCallback onTap;
-  const _NavBtn(
-      {required this.label,
-      required this.enabled,
-      required this.color,
-      required this.onTap});
+
+  const _ActionBtn({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
-          color: enabled ? color.withOpacity(0.12) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: enabled ? color.withOpacity(0.4) : Colors.grey.shade200),
+          color: color.withOpacity(0.13),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.4)),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'NotoNastaliqUrdu',
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: enabled ? color : Colors.grey.shade400,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 3),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'NotoNastaliqUrdu',
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

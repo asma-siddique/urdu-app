@@ -112,10 +112,10 @@ class _GrammarScreenState extends State<GrammarScreen> {
                 child: ProfessorAvatar(emotion: _emotion, size: 80)),
           ),
           // Header row
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
             child: Row(
-              children: [
+              children: const [
                 Expanded(
                   child: Center(
                     child: Text('واحد',

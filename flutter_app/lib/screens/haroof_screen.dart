@@ -10,69 +10,49 @@ import '../widgets/mic_recorder_widget.dart';
 
 class HaroofScreen extends StatefulWidget {
   const HaroofScreen({super.key});
+
   @override
   State<HaroofScreen> createState() => _HaroofScreenState();
 }
 
-class _HaroofScreenState extends State<HaroofScreen>
-    with SingleTickerProviderStateMixin {
+class _HaroofScreenState extends State<HaroofScreen> {
   AvatarEmotion _emotion = AvatarEmotion.happy;
-  int _idx = 0;
+  int _selectedIndex = 0;
+  late final PageController _pageController;
+
+  // Per-letter pronunciation score (null = not yet attempted)
   final Map<int, double> _scores = {};
 
-  late AnimationController _slideCtrl;
-  late Animation<Offset> _slideAnim;
-
-  static const List<Color> _palette = [
-    Color(0xFF7C3AED), Color(0xFFDB2777), Color(0xFF059669),
-    Color(0xFFD97706), Color(0xFF2563EB), Color(0xFF0891B2),
-    Color(0xFF65A30D), Color(0xFF9333EA), Color(0xFFDC2626),
-    Color(0xFF0D9488),
+  static const List<Color> _circleColors = [
+    Color(0xFF9b5de5), Color(0xFFf15bb5), Color(0xFF00bbf9),
+    Color(0xFFff6d00), Color(0xFF00f5d4), Color(0xFFfee440),
+    Color(0xFF3a86ff), Color(0xFFfb5607),
   ];
-
-  Color get _accent => _palette[_idx % _palette.length];
 
   @override
   void initState() {
     super.initState();
-    _slideCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 280));
-    _slideAnim = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
-        .animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
+    _pageController = PageController(viewportFraction: 0.88, initialPage: 0);
   }
 
   @override
   void dispose() {
-    _slideCtrl.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _goTo(int newIdx, bool forward) async {
-    _slideAnim = Tween<Offset>(
-      begin: Offset(forward ? 1.0 : -1.0, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
-    setState(() => _idx = newIdx);
-    _slideCtrl.forward(from: 0);
-  }
+  Color _circleColor(int index) =>
+      _circleColors[index % _circleColors.length];
 
-  Future<void> _speakLetter() async {
-    final letter = FULL_ALPHABET[_idx];
+  // ── TTS: only called from explicit tap ─────────────────────────────────
+  Future<void> _speakLetter(UrduLetter letter) async {
     setState(() => _emotion = AvatarEmotion.speaking);
-    // Speak letter name + all example words
-    final words = letter.examples.map((e) => e.word).join('۔ ');
-    await TtsService.instance.speak('${letter.urdu}۔ ${letter.roman}۔ $words');
+    await TtsService.instance.speak('${letter.urdu}۔ ${letter.example}۔');
     if (mounted) setState(() => _emotion = AvatarEmotion.happy);
   }
 
-  Future<void> _speakExample(LetterExample ex) async {
-    setState(() => _emotion = AvatarEmotion.speaking);
-    await TtsService.instance.speak(ex.word);
-    if (mounted) setState(() => _emotion = AvatarEmotion.happy);
-  }
-
-  void _openMic() {
-    final letter = FULL_ALPHABET[_idx];
+  // ── Mic: open bottom sheet, show score ─────────────────────────────────
+  void _openMic(int index, UrduLetter letter) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -82,16 +62,15 @@ class _HaroofScreenState extends State<HaroofScreen>
         targetRoman: letter.roman,
         onScore: (score, transcript) {
           Navigator.pop(context);
+          // save score for this letter
           setState(() {
-            _scores[_idx] = score;
+            _scores[index] = score;
             _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
           });
+          // record to provider for adaptive quiz
           context.read<AppProvider>().recordResult(letter.urdu, score);
-          final name = context.read<AppProvider>().userName;
           TtsService.instance.speak(
-            score >= 70
-                ? (name.isNotEmpty ? 'شاباش $name!' : 'شاباش! بہت اچھا!')
-                : 'دوبارہ کوشش کریں۔',
+            score >= 70 ? 'شاباش! تلفظ درست ہے۔' : 'دوبارہ کوشش کریں۔',
           );
         },
       ),
@@ -100,275 +79,129 @@ class _HaroofScreenState extends State<HaroofScreen>
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final letter = FULL_ALPHABET[_idx];
-    final score = _scores[_idx];
-
     return Scaffold(
-      backgroundColor: _accent.withOpacity(0.06),
+      backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
         title: const Directionality(
           textDirection: TextDirection.rtl,
-          child: Text('حروف تہجی',
-              style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 22)),
+          child: Text(
+            'حروف تہجی',
+            style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 22),
+          ),
         ),
-        backgroundColor: _accent,
+        backgroundColor: AppTheme.purple,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // ── Teacher banner ─────────────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
+          // ── Professor Avatar banner ────────────────────────────────────
+          Container(
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: _accent,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
+            decoration: const BoxDecoration(
+              gradient: AppTheme.headerGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              children: [
-                ProfessorAvatar(emotion: _emotion, size: 80),
-                if (provider.userName.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      'آؤ ${provider.userName}، حروف سیکھیں!',
-                      style: const TextStyle(
-                        fontFamily: 'NotoNastaliqUrdu',
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: ProfessorAvatar(emotion: _emotion, size: 90),
             ),
           ),
 
-          // Progress bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-            child: Row(
-              children: [
-                Text('${_idx + 1}/${FULL_ALPHABET.length}',
-                    style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: (_idx + 1) / FULL_ALPHABET.length,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation<Color>(_accent),
-                      minHeight: 5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 16),
 
-          // ── Main content (scrollable) ──────────────────────────────────
-          Expanded(
-            child: SlideTransition(
-              position: _slideAnim,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                child: Column(
-                  children: [
-                    // ── Big letter card ─────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _accent.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                        border:
-                            Border.all(color: _accent.withOpacity(0.3), width: 2),
-                      ),
+          // ── Letter selector chips ──────────────────────────────────────
+          SizedBox(
+            height: 40,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: FULL_ALPHABET.length,
+                itemBuilder: (ctx, i) {
+                  final selected = i == _selectedIndex;
+                  return GestureDetector(
+                    onTap: () => _pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      child: Column(
-                        children: [
-                          // Huge letter
-                          Text(
-                            letter.urdu,
-                            textDirection: TextDirection.rtl,
-                            style: TextStyle(
-                              fontFamily: 'NotoNastaliqUrdu',
-                              fontSize: 110,
-                              fontWeight: FontWeight.bold,
-                              color: _accent,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Roman name
-                          Text(
-                            letter.roman,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade600,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          // Score ring
-                          if (score != null) ...[
-                            SizedBox(
-                              width: 64, height: 64,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: score / 100,
-                                    strokeWidth: 6,
-                                    backgroundColor: Colors.grey.shade200,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        score >= 70
-                                            ? Colors.green
-                                            : Colors.orange),
-                                  ),
-                                  Text('${score.toInt()}%',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: score >= 70
-                                            ? Colors.green
-                                            : Colors.orange,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                          // Listen + Speak buttons
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: _speakLetter,
-                                  icon: const Text('🔊',
-                                      style: TextStyle(fontSize: 20)),
-                                  label: const Text('سنیں',
-                                      style: TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 16)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.teal,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14)),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: _openMic,
-                                  icon: const Text('🎤',
-                                      style: TextStyle(fontSize: 20)),
-                                  label: const Text('بولیں',
-                                      style: TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 16)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _accent,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: selected ? AppTheme.purple : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? AppTheme.purple
+                              : Colors.grey.shade300,
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Example words label ─────────────────────────────
-                    Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          '${letter.urdu} سے شروع ہونے والے الفاظ',
-                          style: TextStyle(
-                            fontFamily: 'NotoNastaliqUrdu',
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: _accent,
-                          ),
+                      child: Text(
+                        FULL_ALPHABET[i].urdu,
+                        style: TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 16,
+                          color: selected ? Colors.white : AppTheme.navy,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 8),
-
-                    // ── Example word cards ──────────────────────────────
-                    ...letter.examples.map((ex) => _ExampleCard(
-                          example: ex,
-                          accent: _accent,
-                          onSpeak: () => _speakExample(ex),
-                        )),
-
-                    const SizedBox(height: 8),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
 
-          // ── Navigation bar ─────────────────────────────────────────────
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: Row(
-              children: [
-                _NavBtn(
-                  label: '← پچھلا',
-                  enabled: _idx > 0,
-                  color: _accent,
-                  onTap: () => _goTo(_idx - 1, false),
+          const SizedBox(height: 12),
+
+          // ── Letter Cards PageView ──────────────────────────────────────
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: FULL_ALPHABET.length,
+              onPageChanged: (i) => setState(() => _selectedIndex = i),
+              itemBuilder: (ctx, i) {
+                final letter = FULL_ALPHABET[i];
+                final isActive = i == _selectedIndex;
+                return AnimatedScale(
+                  scale: isActive ? 1.0 : 0.88,
+                  duration: const Duration(milliseconds: 300),
+                  child: _LetterCard(
+                    letter: letter,
+                    circleColor: _circleColor(i),
+                    score: _scores[i],
+                    onSpeak: () => _speakLetter(letter),
+                    onMic: () => _openMic(i, letter),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── Page counter (force LTR so it doesn't flip) ───────────────
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                '${_selectedIndex + 1} / ${FULL_ALPHABET.length}',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
                 ),
-                const Spacer(),
-                // Dot indicators (show up to 12, compressed)
-                _DotRow(
-                    total: FULL_ALPHABET.length,
-                    current: _idx,
-                    color: _accent),
-                const Spacer(),
-                _NavBtn(
-                  label: 'اگلا →',
-                  enabled: _idx < FULL_ALPHABET.length - 1,
-                  color: _accent,
-                  onTap: () => _goTo(_idx + 1, true),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -377,162 +210,239 @@ class _HaroofScreenState extends State<HaroofScreen>
   }
 }
 
-// ─── Example word card ────────────────────────────────────────────────────────
-class _ExampleCard extends StatelessWidget {
-  final LetterExample example;
-  final Color accent;
+// ── Letter Card ────────────────────────────────────────────────────────────
+class _LetterCard extends StatelessWidget {
+  final UrduLetter letter;
+  final Color circleColor;
+  final double? score;       // null = not attempted yet
   final VoidCallback onSpeak;
+  final VoidCallback onMic;
 
-  const _ExampleCard({
-    required this.example,
-    required this.accent,
+  const _LetterCard({
+    required this.letter,
+    required this.circleColor,
     required this.onSpeak,
+    required this.onMic,
+    this.score,
   });
+
+  Color get _scoreColor {
+    if (score == null) return Colors.grey;
+    if (score! >= 70) return Colors.green;
+    if (score! >= 50) return Colors.orange;
+    return Colors.red;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
           BoxShadow(
-              color: accent.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
+            color: Color(0x22000000),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
         ],
-        border: Border.all(color: accent.withOpacity(0.2)),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onSpeak,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Top row: emoji + letter + name ──────────────────────────
+            Row(
               children: [
-                // Tap-to-listen hint
+                // Emoji circle
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.1),
+                    color: circleColor.withOpacity(0.15),
                     shape: BoxShape.circle,
+                    border: Border.all(color: circleColor, width: 2),
                   ),
-                  child: Icon(Icons.volume_up_rounded,
-                      color: accent, size: 18),
+                  child: Center(
+                    child: Text(letter.emoji,
+                        style: const TextStyle(fontSize: 26)),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                // Big emoji
-                Text(example.emoji, style: const TextStyle(fontSize: 40)),
-                const SizedBox(width: 14),
-                // Word + meaning
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          example.word,
-                          style: TextStyle(
-                            fontFamily: 'NotoNastaliqUrdu',
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: accent,
-                            height: 1.3,
-                          ),
+                const SizedBox(width: 16),
+                // Big Urdu letter
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Text(
+                    letter.urdu,
+                    style: TextStyle(
+                      fontFamily: 'NotoNastaliqUrdu',
+                      fontSize: 56,
+                      fontWeight: FontWeight.bold,
+                      color: circleColor,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Roman name + example column
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      letter.roman,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.navy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        letter.example,
+                        style: const TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 20,
+                          color: AppTheme.navy,
                         ),
                       ),
-                      Text(
-                        example.meaning,
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade500),
+                    ),
+                    Text(
+                      letter.exampleMeaning,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Score badge (shown after mic attempt) ────────────────────
+            if (score != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _scoreColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: _scoreColor.withOpacity(0.5), width: 1.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Circular accuracy ring
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: score! / 100,
+                            strokeWidth: 5,
+                            backgroundColor: _scoreColor.withOpacity(0.2),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(_scoreColor),
+                          ),
+                          Text(
+                            '${score!.toInt()}%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _scoreColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'تلفظ کی درستگی',
+                          style: TextStyle(
+                            fontFamily: 'NotoNastaliqUrdu',
+                            fontSize: 13,
+                            color: _scoreColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textDirection: TextDirection.rtl,
+                        ),
+                        Text(
+                          'Wav2Vec2 + BiLSTM model',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _scoreColor.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+            if (score != null) const SizedBox(height: 12),
+
+            // ── Listen + Speak buttons ───────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onSpeak,
+                    icon: const Text('🔊',
+                        style: TextStyle(fontSize: 18)),
+                    label: const Text(
+                      'سنیں',
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.teal,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onMic,
+                    icon: const Text('🎤',
+                        style: TextStyle(fontSize: 18)),
+                    label: const Text(
+                      'بولیں',
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.purple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-// ─── Navigation button ────────────────────────────────────────────────────────
-class _NavBtn extends StatelessWidget {
-  final String label;
-  final bool enabled;
-  final Color color;
-  final VoidCallback onTap;
-  const _NavBtn(
-      {required this.label,
-      required this.enabled,
-      required this.color,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          color: enabled ? color : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: enabled
-              ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8)]
-              : [],
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'NotoNastaliqUrdu',
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: enabled ? Colors.white : Colors.grey.shade400,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Dot row ──────────────────────────────────────────────────────────────────
-class _DotRow extends StatelessWidget {
-  final int total;
-  final int current;
-  final Color color;
-  const _DotRow({required this.total, required this.current, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    // Show at most 7 dots around current position
-    const visible = 7;
-    int start = (current - visible ~/ 2).clamp(0, total - visible);
-    if (start + visible > total) start = (total - visible).clamp(0, total);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(visible.clamp(0, total), (i) {
-        final idx = start + i;
-        final isActive = idx == current;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: isActive ? 18 : 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: isActive ? color : Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
     );
   }
 }

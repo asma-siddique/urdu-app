@@ -112,19 +112,19 @@ class UrduLearningApp extends StatelessWidget {
               screenTitle: 'جملہ کوئز',
             ),
         '/matching-quiz': (_) => const MatchingQuizScreen(),
-        '/animals-quiz':  (_) => const QuizScreen(
+        '/animals-quiz':  (_) => QuizScreen(
               wordList: ANIMALS,
               screenTitle: 'جانور کوئز',
             ),
-        '/fruits-quiz':   (_) => const QuizScreen(
+        '/fruits-quiz':   (_) => QuizScreen(
               wordList: FRUITS,
               screenTitle: 'پھل کوئز',
             ),
-        '/body-quiz':     (_) => const QuizScreen(
+        '/body-quiz':     (_) => QuizScreen(
               wordList: BODY_PARTS,
               screenTitle: 'جسم کوئز',
             ),
-        '/colors-quiz':   (_) => const QuizScreen(
+        '/colors-quiz':   (_) => QuizScreen(
               wordList: COLORS_WORDS,
               screenTitle: 'رنگ کوئز',
             ),
