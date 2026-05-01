@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../theme/app_theme.dart';
 import '../providers/app_provider.dart';
 import '../services/tts_service.dart';
-import '../widgets/professor_avatar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,8 +10,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  AvatarEmotion _emotion = AvatarEmotion.happy;
-
   @override
   void initState() {
     super.initState();
@@ -21,341 +17,373 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _greetUser() async {
-    final user = context.read<AppProvider>().currentUser;
-    final name = (user?.name ?? '').isEmpty ? '' : user!.name;
+    final name = context.read<AppProvider>().userName;
     if (name.isNotEmpty && name != 'طالب علم') {
-      setState(() => _emotion = AvatarEmotion.speaking);
-      await TtsService.instance.speak('صبح بخیر $name! آج کیا سیکھیں گے؟');
-      if (mounted) setState(() => _emotion = AvatarEmotion.happy);
+      await TtsService.instance.speak('خوش آمدید $name!');
     }
   }
 
-  Future<void> _onAvatarTap() async {
-    final user = context.read<AppProvider>().currentUser;
-    final name = (user?.name ?? 'دوست');
-    setState(() => _emotion = AvatarEmotion.speaking);
-    await TtsService.instance.speak('$name، اردو سیکھنے میں خوش آمدید!');
-    if (mounted) setState(() => _emotion = AvatarEmotion.happy);
-  }
-
-  static const List<_Item> _lessons = [
-    _Item(emoji: '🔤', urdu: 'حروف',        sub: 'Alphabet',       route: '/haroof',         colors: [Color(0xFF9b5de5), Color(0xFF7b3fc4)]),
-    _Item(emoji: '🔗', urdu: 'جوڑ توڑ',     sub: 'Word Building',  route: '/jor-tor',        colors: [Color(0xFFf15bb5), Color(0xFFc73d8f)]),
-    _Item(emoji: '📝', urdu: 'الفاظ',        sub: 'Words',          route: '/lafz',           colors: [Color(0xFF00bbf9), Color(0xFF0090c7)]),
-    _Item(emoji: '💬', urdu: 'جملے',         sub: 'Sentences',      route: '/jumlay',         colors: [Color(0xFF3a86ff), Color(0xFF2563eb)]),
-    _Item(emoji: '🐄', urdu: 'جانور',        sub: 'Animals',        route: '/animals-lesson', colors: [Color(0xFF059669), Color(0xFF047857)]),
-    _Item(emoji: '🎨', urdu: 'رنگ',          sub: 'Colors',         route: '/rang',           colors: [Color(0xFFff6d00), Color(0xFFcc5700)]),
-    _Item(emoji: '🍎', urdu: 'پھل',          sub: 'Fruits',         route: '/fruits-lesson',  colors: [Color(0xFFdc2626), Color(0xFFb91c1c)]),
-    _Item(emoji: '🫀', urdu: 'جسمانی اعضاء', sub: 'Body Parts',     route: '/body-lesson',    colors: [Color(0xFF7c3aed), Color(0xFF6d28d9)]),
-    _Item(emoji: '🔢', urdu: 'گنتی',          sub: 'Counting',       route: '/counting',       colors: [Color(0xFF0d9488), Color(0xFF0f766e)]),
-    _Item(emoji: '📖', urdu: 'واحد جمع',      sub: 'Singular Plural',route: '/grammar',        colors: [Color(0xFFd97706), Color(0xFFb45309)]),
-  ];
-
-  static const List<_Item> _quizzes = [
-    _Item(emoji: '🎤', urdu: 'حروف کوئز',  sub: 'Speak Letters',   route: '/haroof-quiz',    colors: [Color(0xFF9b5de5), Color(0xFF7b3fc4)]),
-    _Item(emoji: '📝', urdu: 'الفاظ کوئز', sub: 'Words Quiz',      route: '/words-quiz',     colors: [Color(0xFF3a86ff), Color(0xFF2563eb)]),
-    _Item(emoji: '💬', urdu: 'جملہ کوئز',  sub: 'Sentence Quiz',   route: '/sentences-quiz', colors: [Color(0xFF00bbf9), Color(0xFF0090c7)]),
-    _Item(emoji: '🔗', urdu: 'ملائیں',     sub: 'Matching',        route: '/matching-quiz',  colors: [Color(0xFFf15bb5), Color(0xFFc73d8f)]),
-    _Item(emoji: '🎨', urdu: 'رنگ کوئز',   sub: 'Colors Quiz',     route: '/colors-quiz',    colors: [Color(0xFFff6d00), Color(0xFFcc5700)]),
-    _Item(emoji: '🐄', urdu: 'جانور کوئز', sub: 'Animals Quiz',    route: '/animals-quiz',   colors: [Color(0xFF059669), Color(0xFF047857)]),
-    _Item(emoji: '🍎', urdu: 'پھل کوئز',   sub: 'Fruits Quiz',     route: '/fruits-quiz',    colors: [Color(0xFFdc2626), Color(0xFFb91c1c)]),
-    _Item(emoji: '🫀', urdu: 'جسم کوئز',   sub: 'Body Parts Quiz', route: '/body-quiz',      colors: [Color(0xFF7c3aed), Color(0xFF6d28d9)]),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final user = provider.currentUser;
-    final totalStars = user?.totalStars ?? 0;
-    const maxStars = 100;
-    final progress = (totalStars / maxStars).clamp(0.0, 1.0);
-    final userName = user?.name ?? 'طالب علم';
-
+    final name = context.watch<AppProvider>().userName;
     return Scaffold(
-      backgroundColor: AppTheme.lightGray,
-      body: CustomScrollView(
-        slivers: [
-
-          // ── Header ─────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppTheme.headerGradient,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: _onAvatarTap,
-                            child: ProfessorAvatar(
-                                emotion: _emotion, size: 76),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Directionality(
-                              textDirection: TextDirection.rtl,
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text('صبح بخیر، $userName',
-                                      style: const TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white)),
-                                  const Text('آپ کا ذہین استاد',
-                                      style: TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 13,
-                                          color: Colors.white70)),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(children: [
-                              const Text('⭐',
-                                  style: TextStyle(fontSize: 16)),
-                              const SizedBox(width: 4),
-                              Text('$totalStars',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14)),
-                            ]),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 8,
-                          backgroundColor:
-                              Colors.white.withOpacity(0.3),
-                          valueColor:
-                              const AlwaysStoppedAnimation<Color>(
-                                  AppTheme.yellow),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // ── Lessons ─────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              emoji: '📚',
-              title: 'سبق',
-              actionLabel: 'سب دیکھیں',
-              onAction: () =>
-                  Navigator.pushNamed(context, '/lessons-hub'),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 110,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _lessons.length,
-                itemBuilder: (ctx, i) => _SmallCard(item: _lessons[i]),
-              ),
-            ),
-          ),
-
-          // ── Quiz ─────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              emoji: '🎮',
-              title: 'کوئز',
-              actionLabel: 'سب دیکھیں',
-              onAction: () =>
-                  Navigator.pushNamed(context, '/quiz-hub'),
-              color: AppTheme.orange,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-            sliver: SliverGrid(
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                mainAxisExtent: 120,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => _BigCard(item: _quizzes[i]),
-                childCount: _quizzes.length,
-              ),
-            ),
-          ),
-        ],
+      backgroundColor: const Color(0xFFF5F0E8),
+      body: SafeArea(child: _HomeBody(userName: name)),
+      bottomNavigationBar: _BottomNav(
+        onProfileTap: () => Navigator.pushNamed(context, '/profile'),
       ),
     );
   }
 }
 
-// ── Section header ────────────────────────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  final String emoji, title, actionLabel;
-  final VoidCallback onAction;
-  final Color color;
-  const _SectionHeader({
-    required this.emoji,
-    required this.title,
-    required this.actionLabel,
-    required this.onAction,
-    this.color = AppTheme.purple,
+// ── Body ────────────────────────────────────────────────────────────────────
+
+class _HomeBody extends StatelessWidget {
+  final String userName;
+  const _HomeBody({required this.userName});
+
+  static const _darkGreen  = Color(0xFF1B5E4B);
+  static const _blueGreen  = Color(0xFF0d9488);
+  static const _amber      = Color(0xFFD97706);
+  static const _blue       = Color(0xFF2563EB);
+  static const _orange     = Color(0xFFE07B2A);
+
+  @override
+  Widget build(BuildContext context) {
+    final greeting = userName.isNotEmpty ? 'خوش آمدید، $userName!' : 'خوش آمدید';
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 32),
+
+            // ── Header ────────────────────────────────────────────────
+            const Text(
+              'Welcome',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                greeting,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'NotoNastaliqUrdu',
+                  fontSize: 20,
+                  color: Color(0xFF2D2D2D),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // ── 2 × 2 grid ────────────────────────────────────────────
+            GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.0,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                _Tile(
+                  label: 'Lessons',
+                  urduLabel: 'سبق',
+                  icon: Icons.menu_book_rounded,
+                  bg: _darkGreen,
+                  routeName: '/lessons-hub',
+                ),
+                _Tile(
+                  label: 'Quizzes',
+                  urduLabel: 'کوئز',
+                  icon: Icons.quiz_rounded,
+                  bg: _blue,
+                  routeName: '/quiz-hub',
+                ),
+                _Tile(
+                  label: 'Vocabulary',
+                  urduLabel: 'لغت',
+                  icon: Icons.library_books_rounded,
+                  bg: _amber,
+                  routeName: '/vocabulary-bank',
+                ),
+                _Tile(
+                  label: 'Progress',
+                  urduLabel: 'پیش رفت',
+                  icon: Icons.bar_chart_rounded,
+                  bg: _orange,
+                  routeName: '/progress',
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+
+            // ── Quick-access strip ─────────────────────────────────────
+            const _SectionHeader('Quick Lessons'),
+            const SizedBox(height: 10),
+            _QuickStrip(items: const [
+              _QuickItem('حروف', '🔤', '/haroof',         _darkGreen),
+              _QuickItem('گنتی',  '🔢', '/counting',       _blueGreen),
+              _QuickItem('الفاظ', '📖', '/lafz',           _blue),
+              _QuickItem('جملے', '💬', '/jumlay',          _amber),
+              _QuickItem('جوڑ توڑ','🔗','/jor-tor',       Color(0xFF7c3aed)),
+              _QuickItem('رنگ',   '🎨', '/rang',           _orange),
+            ]),
+
+            const SizedBox(height: 28),
+
+            // ── Quick quiz strip ───────────────────────────────────────
+            const _SectionHeader('Quick Quizzes'),
+            const SizedBox(height: 10),
+            _QuickStrip(items: const [
+              _QuickItem('حروف',  '🎤', '/haroof-quiz',    Color(0xFF9b5de5)),
+              _QuickItem('الفاظ', '📝', '/words-quiz',     _blue),
+              _QuickItem('ملائیں','🔗', '/matching-quiz',  Color(0xFFf15bb5)),
+              _QuickItem('جانور', '🐄', '/animals-quiz',   Color(0xFF059669)),
+              _QuickItem('پھل',   '🍎', '/fruits-quiz',    Color(0xFFdc2626)),
+            ]),
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tile card ────────────────────────────────────────────────────────────────
+
+class _Tile extends StatelessWidget {
+  final String label;
+  final String urduLabel;
+  final IconData icon;
+  final Color bg;
+  final String routeName;
+
+  const _Tile({
+    required this.label,
+    required this.urduLabel,
+    required this.icon,
+    required this.bg,
+    required this.routeName,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 8, 8),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
-          const SizedBox(width: 8),
-          Text(title,
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, routeName),
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: bg.withOpacity(0.38),
+              blurRadius: 14,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.white, size: 30),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
               style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                urduLabel,
+                style: const TextStyle(
                   fontFamily: 'NotoNastaliqUrdu',
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.navy)),
-          const Spacer(),
-          TextButton(
-            onPressed: onAction,
-            child: Text(actionLabel,
-                style: TextStyle(
-                    fontFamily: 'NotoNastaliqUrdu',
-                    fontSize: 13,
-                    color: color)),
+                  color: Colors.white70,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Section header ───────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String text;
+  const _SectionHeader(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(width: 4, height: 18, color: const Color(0xFF1B5E4B),
+            margin: const EdgeInsets.only(right: 8)),
+        Text(text, style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF1A1A1A),
+          letterSpacing: 0.3,
+        )),
+      ],
+    );
+  }
+}
+
+// ── Quick horizontal strip ───────────────────────────────────────────────────
+
+class _QuickStrip extends StatelessWidget {
+  final List<_QuickItem> items;
+  const _QuickStrip({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 86,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (ctx, i) {
+          final item = items[i];
+          return GestureDetector(
+            onTap: () => Navigator.pushNamed(ctx, item.route),
+            child: Container(
+              width: 72,
+              decoration: BoxDecoration(
+                color: item.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: item.color.withOpacity(0.3)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(item.emoji, style: const TextStyle(fontSize: 26)),
+                  const SizedBox(height: 4),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      item.label,
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 12,
+                        color: item.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _QuickItem {
+  final String label;
+  final String emoji;
+  final String route;
+  final Color color;
+  const _QuickItem(this.label, this.emoji, this.route, this.color);
+}
+
+// ── Bottom nav ───────────────────────────────────────────────────────────────
+
+class _BottomNav extends StatelessWidget {
+  final VoidCallback onProfileTap;
+  const _BottomNav({required this.onProfileTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F0E8),
+        border: Border(top: BorderSide(color: Color(0xFFDDD8CC), width: 1)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavBtn(icon: Icons.home_rounded,   label: 'Home',    isActive: true,  onTap: () {}),
+              _NavBtn(icon: Icons.person_rounded, label: 'Profile', isActive: false, onTap: onProfileTap),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// ── Small card (lessons row) ──────────────────────────────────────────────────
-class _SmallCard extends StatelessWidget {
-  final _Item item;
-  const _SmallCard({required this.item});
+class _NavBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  const _NavBtn({required this.icon, required this.label, required this.isActive, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFF1B5E4B) : const Color(0xFF9CA3AF);
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, item.route),
-      child: Container(
-        width: 90,
-        margin: const EdgeInsets.only(right: 10),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: item.colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-                color: item.colors[0].withOpacity(0.35),
-                blurRadius: 8,
-                offset: const Offset(0, 3))
-          ],
-        ),
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(item.emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 4),
-            Text(item.urdu,
-                style: const TextStyle(
-                    fontFamily: 'NotoNastaliqUrdu',
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textAlign: TextAlign.center,
-                textDirection: TextDirection.rtl),
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 11, color: color,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
+            if (isActive)
+              Container(
+                margin: const EdgeInsets.only(top: 3),
+                width: 18, height: 2,
+                decoration: BoxDecoration(color: color,
+                    borderRadius: BorderRadius.circular(1)),
+              ),
           ],
         ),
       ),
     );
   }
-}
-
-// ── Big card (quiz grid) ──────────────────────────────────────────────────────
-class _BigCard extends StatelessWidget {
-  final _Item item;
-  const _BigCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, item.route),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: item.colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-                color: item.colors[0].withOpacity(0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(item.emoji, style: const TextStyle(fontSize: 34)),
-            const SizedBox(height: 6),
-            Text(item.urdu,
-                style: const TextStyle(
-                    fontFamily: 'NotoNastaliqUrdu',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textDirection: TextDirection.rtl),
-            Text(item.sub,
-                style: const TextStyle(
-                    color: Colors.white70, fontSize: 11)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Item {
-  final String emoji, urdu, sub, route;
-  final List<Color> colors;
-  const _Item(
-      {required this.emoji,
-      required this.urdu,
-      required this.sub,
-      required this.route,
-      required this.colors});
 }

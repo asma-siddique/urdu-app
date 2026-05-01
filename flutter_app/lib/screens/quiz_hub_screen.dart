@@ -1,165 +1,280 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../widgets/professor_avatar.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../services/tts_service.dart';
 
-class QuizHubScreen extends StatefulWidget {
+class QuizHubScreen extends StatelessWidget {
   const QuizHubScreen({super.key});
 
-  @override
-  State<QuizHubScreen> createState() => _QuizHubScreenState();
-}
+  static const _headerColor = Color(0xFF1E3A5F);
+  static const _cream       = Color(0xFFF5F0E8);
 
-class _QuizHubScreenState extends State<QuizHubScreen> {
-  AvatarEmotion _emotion = AvatarEmotion.excited;
-
-  static const List<_QuizCard> _quizzes = [
-    _QuizCard(emoji: '🎤', urduTitle: 'حروف کوئز',  englishSub: 'Speak & Score',    route: '/haroof-quiz',  colors: [Color(0xFF9b5de5), Color(0xFF7b3fc4)]),
-    _QuizCard(emoji: '📝', urduTitle: 'الفاظ کوئز', englishSub: 'Word Quiz',        route: '/words-quiz',   colors: [Color(0xFF3a86ff), Color(0xFF2563eb)]),
-    _QuizCard(emoji: '💬', urduTitle: 'جملہ کوئز',  englishSub: 'Sentence Quiz',    route: '/sentences-quiz',colors: [Color(0xFF00bbf9), Color(0xFF0090c7)]),
-    _QuizCard(emoji: '🔗', urduTitle: 'ملائیں',     englishSub: 'Matching',         route: '/matching-quiz',colors: [Color(0xFFf15bb5), Color(0xFFc73d8f)]),
-    _QuizCard(emoji: '🎨', urduTitle: 'رنگ کوئز',   englishSub: 'Colors Quiz',      route: '/colors-quiz',  colors: [Color(0xFFff6d00), Color(0xFFcc5700)]),
-    _QuizCard(emoji: '🐄', urduTitle: 'جانور کوئز', englishSub: 'Animals Quiz',     route: '/animals-quiz', colors: [Color(0xFF059669), Color(0xFF047857)]),
-    _QuizCard(emoji: '🍎', urduTitle: 'پھل کوئز',   englishSub: 'Fruits Quiz',      route: '/fruits-quiz',  colors: [Color(0xFFdc2626), Color(0xFFb91c1c)]),
+  static const List<_QuizEntry> _quizzes = [
+    _QuizEntry(
+      number: 1,
+      englishTitle: 'Alphabet Quiz (Haroof)',
+      urduTitle: 'حروف کوئز',
+      description: 'Speak each letter aloud & get scored',
+      emoji: '🎤',
+      route: '/haroof-quiz',
+      color: Color(0xFF9b5de5),
+    ),
+    _QuizEntry(
+      number: 2,
+      englishTitle: 'Word Quiz (Alfaz)',
+      urduTitle: 'الفاظ کوئز',
+      description: 'Pronounce Urdu words correctly',
+      emoji: '📝',
+      route: '/words-quiz',
+      color: Color(0xFF2563EB),
+    ),
+    _QuizEntry(
+      number: 3,
+      englishTitle: 'Sentence Quiz (Jumlay)',
+      urduTitle: 'جملہ کوئز',
+      description: 'Read & speak full sentences',
+      emoji: '💬',
+      route: '/sentences-quiz',
+      color: Color(0xFF00bbf9),
+    ),
+    _QuizEntry(
+      number: 4,
+      englishTitle: 'Matching Quiz (Milao)',
+      urduTitle: 'ملائیں',
+      description: 'Match Urdu words with pictures',
+      emoji: '🔗',
+      route: '/matching-quiz',
+      color: Color(0xFFf15bb5),
+    ),
+    _QuizEntry(
+      number: 5,
+      englishTitle: 'Colors Quiz (Rang)',
+      urduTitle: 'رنگ کوئز',
+      description: 'Identify colors in Urdu',
+      emoji: '🎨',
+      route: '/colors-quiz',
+      color: Color(0xFFE07B2A),
+    ),
+    _QuizEntry(
+      number: 6,
+      englishTitle: 'Animals Quiz (Janwar)',
+      urduTitle: 'جانور کوئز',
+      description: 'Name animals in Urdu',
+      emoji: '🐄',
+      route: '/animals-quiz',
+      color: Color(0xFF059669),
+    ),
+    _QuizEntry(
+      number: 7,
+      englishTitle: 'Fruits Quiz (Phal)',
+      urduTitle: 'پھل کوئز',
+      description: 'Name fruits in Urdu',
+      emoji: '🍎',
+      route: '/fruits-quiz',
+      color: Color(0xFFdc2626),
+    ),
+    _QuizEntry(
+      number: 8,
+      englishTitle: 'Body Parts Quiz (Jism)',
+      urduTitle: 'جسم کوئز',
+      description: 'Name body parts in Urdu',
+      emoji: '🫀',
+      route: '/body-quiz',
+      color: Color(0xFF7c3aed),
+    ),
   ];
-
-  Future<void> _onAvatarTap() async {
-    setState(() => _emotion = AvatarEmotion.speaking);
-    await TtsService.instance.speak('کوئز کھیلیں');
-    if (mounted) setState(() => _emotion = AvatarEmotion.excited);
-  }
 
   @override
   Widget build(BuildContext context) {
+    final name = context.watch<AppProvider>().userName;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7ED),
+      backgroundColor: _cream,
       appBar: AppBar(
-        title: const Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            'کوئز',
-            style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 24),
-          ),
-        ),
-        backgroundColor: AppTheme.orange,
+        backgroundColor: _headerColor,
         foregroundColor: Colors.white,
         elevation: 0,
+        title: const Text(
+          'Quizzes',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.volume_up_rounded),
+            onPressed: () => TtsService.instance.speak('کوئز کھیلیں'),
+          ),
+        ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFf97316), Color(0xFFea580c)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: GestureDetector(
-                  onTap: _onAvatarTap,
-                  child: ProfessorAvatar(emotion: _emotion, size: 90),
-                ),
+      body: Column(
+        children: [
+          // ── Banner ──────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: _headerColor,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                mainAxisExtent: 140,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => _buildCard(_quizzes[i], ctx),
-                childCount: _quizzes.length,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (name.isNotEmpty)
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      'آؤ $name، کوئز کھیلیں!',
+                      style: const TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_quizzes.length} quizzes · Tap to start',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+          // ── Quiz list ────────────────────────────────────────────────
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _quizzes.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, thickness: 1, indent: 72, color: Color(0xFFEDE8DC)),
+              itemBuilder: (ctx, i) => _QuizTile(quiz: _quizzes[i]),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCard(_QuizCard card, BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, card.route),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: card.colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: card.colors[0].withOpacity(0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+// ── Single quiz tile ──────────────────────────────────────────────────────────
+
+class _QuizTile extends StatelessWidget {
+  final _QuizEntry quiz;
+  const _QuizTile({required this.quiz});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, quiz.route),
+      splashColor: quiz.color.withOpacity(0.08),
+      highlightColor: quiz.color.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            // ── Icon box ──────────────────────────────────────────────
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: quiz.color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(quiz.emoji, style: const TextStyle(fontSize: 22)),
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(card.emoji, style: const TextStyle(fontSize: 32)),
-              const SizedBox(height: 6),
-              Directionality(
-                textDirection: TextDirection.rtl,
-                child: Text(
-                  card.urduTitle,
-                  style: const TextStyle(
-                    fontFamily: 'NotoNastaliqUrdu',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            const SizedBox(width: 14),
+
+            // ── Text ──────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quiz ${quiz.number}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: quiz.color,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 2),
+                  Text(
+                    quiz.englishTitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      quiz.urduTitle,
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 13,
+                        color: quiz.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    quiz.description,
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Start badge ───────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: quiz.color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: quiz.color.withOpacity(0.3)),
+              ),
+              child: Text(
+                'Start',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: quiz.color,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                card.englishSub,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _QuizCard {
-  final String emoji;
+class _QuizEntry {
+  final int number;
+  final String englishTitle;
   final String urduTitle;
-  final String englishSub;
+  final String description;
+  final String emoji;
   final String route;
-  final List<Color> colors;
+  final Color color;
 
-  const _QuizCard({
-    required this.emoji,
+  const _QuizEntry({
+    required this.number,
+    required this.englishTitle,
     required this.urduTitle,
-    required this.englishSub,
+    required this.description,
+    required this.emoji,
     required this.route,
-    required this.colors,
+    required this.color,
   });
 }

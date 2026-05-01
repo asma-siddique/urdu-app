@@ -23,6 +23,9 @@ import 'screens/lessons_hub_screen.dart';
 import 'screens/quiz_hub_screen.dart';
 import 'screens/jor_tor_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/progress_screen.dart';
+import 'screens/vocabulary_bank_screen.dart';
+import 'screens/poetry_bank_screen.dart';
 import 'data/animals_extended.dart';
 import 'data/fruits.dart';
 import 'data/body_parts.dart';
@@ -101,6 +104,10 @@ class UrduLearningApp extends StatelessWidget {
         // ── Hubs ───────────────────────────────────────────────────────
         '/lessons-hub':   (_) => const LessonsHubScreen(),
         '/quiz-hub':      (_) => const QuizHubScreen(),
+        '/home':          (_) => const HomeScreen(),
+        '/progress':      (_) => const ProgressScreen(),
+        '/vocabulary-bank': (_) => const VocabularyBankScreen(),
+        '/poetry-bank':   (_) => const PoetryBankScreen(),
 
         // ── Quizzes ────────────────────────────────────────────────────
         '/quiz':          (_) => const QuizScreen(),

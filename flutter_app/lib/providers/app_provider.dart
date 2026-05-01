@@ -17,6 +17,9 @@ class AppProvider extends ChangeNotifier {
   Map<String, int> get srsIntervals => Map.unmodifiable(_srsIntervals);
   int get currentScreen => _currentScreen;
 
+  /// Convenience getter used by screens that just need the child's name.
+  String get userName => _currentUser?.name ?? '';
+
   String get profileLevel {
     if (_weaknessScores.isEmpty) return 'beginner';
     final mean =
@@ -126,6 +129,39 @@ class AppProvider extends ChangeNotifier {
 
     notifyListeners();
     saveUser();
+    _recordSessionToday(); // Track daily usage on every session completed
+  }
+
+  Future<void> _recordSessionToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final dayIndex = now.weekday - 1; // Mon=0 … Sun=6
+
+    // Add 5 minutes per lesson completed
+    final current = prefs.getInt('weekly_minutes_$dayIndex') ?? 0;
+    await prefs.setInt('weekly_minutes_$dayIndex', current + 5);
+
+    // Update streak
+    final lastStr = prefs.getString('last_session_date');
+    int streak = prefs.getInt('streak_count') ?? 0;
+    if (lastStr != null) {
+      final last = DateTime.tryParse(lastStr);
+      if (last != null) {
+        final todayDate = DateTime(now.year, now.month, now.day);
+        final lastDate = DateTime(last.year, last.month, last.day);
+        final diff = todayDate.difference(lastDate).inDays;
+        if (diff == 1) {
+          streak += 1;
+        } else if (diff > 1) {
+          streak = 1;
+        }
+        // diff == 0 → same day, streak unchanged
+      }
+    } else {
+      streak = 1;
+    }
+    await prefs.setString('last_session_date', now.toIso8601String());
+    await prefs.setInt('streak_count', streak);
   }
 
   // ── Weak areas sync to UserModel ─────────────────────────────────────────

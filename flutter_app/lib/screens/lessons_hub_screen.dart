@@ -1,164 +1,282 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../widgets/professor_avatar.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../services/tts_service.dart';
 
-class LessonsHubScreen extends StatefulWidget {
+class LessonsHubScreen extends StatelessWidget {
   const LessonsHubScreen({super.key});
 
-  @override
-  State<LessonsHubScreen> createState() => _LessonsHubScreenState();
-}
+  static const _darkGreen = Color(0xFF1B4332);
+  static const _cream     = Color(0xFFF5F0E8);
 
-class _LessonsHubScreenState extends State<LessonsHubScreen> {
-  AvatarEmotion _emotion = AvatarEmotion.happy;
-
-  static const List<_LessonCard> _lessons = [
-    _LessonCard(emoji: '🔤', urduTitle: 'حروف تہجی',     englishSub: 'Alphabet',         route: '/haroof',        colors: [Color(0xFF9b5de5), Color(0xFF7b3fc4)]),
-    _LessonCard(emoji: '🔗', urduTitle: 'جوڑ توڑ',       englishSub: 'Word Merging',     route: '/jor-tor',       colors: [Color(0xFFf15bb5), Color(0xFFc73d8f)]),
-    _LessonCard(emoji: '📝', urduTitle: 'الفاظ',          englishSub: 'Words',            route: '/lafz',          colors: [Color(0xFF00bbf9), Color(0xFF0090c7)]),
-    _LessonCard(emoji: '🐄', urduTitle: 'جانور',          englishSub: 'Animals',          route: '/animals-lesson',colors: [Color(0xFF059669), Color(0xFF047857)]),
-    _LessonCard(emoji: '🎨', urduTitle: 'رنگ',            englishSub: 'Colors',           route: '/rang',          colors: [Color(0xFFff6d00), Color(0xFFcc5700)]),
-    _LessonCard(emoji: '🍎', urduTitle: 'پھل',            englishSub: 'Fruits',           route: '/fruits-lesson', colors: [Color(0xFFdc2626), Color(0xFFb91c1c)]),
-    _LessonCard(emoji: '🫀', urduTitle: 'جسمانی اعضاء',   englishSub: 'Body Parts',       route: '/body-lesson',   colors: [Color(0xFF7c3aed), Color(0xFF6d28d9)]),
-    _LessonCard(emoji: '🔢', urduTitle: 'گنتی',           englishSub: 'Counting',         route: '/counting',      colors: [Color(0xFF0d9488), Color(0xFF0f766e)]),
-    _LessonCard(emoji: '💬', urduTitle: 'جملے',           englishSub: 'Sentences',        route: '/jumlay',        colors: [Color(0xFF3a86ff), Color(0xFF2563eb)]),
-    _LessonCard(emoji: '📖', urduTitle: 'واحد جمع',       englishSub: 'Singular Plural',  route: '/grammar',       colors: [Color(0xFFd97706), Color(0xFFb45309)]),
+  // ── Curriculum lessons (KG / Nursery level) ──────────────────────────────
+  static const List<_LessonEntry> _lessons = [
+    _LessonEntry(
+      number: 1,
+      englishTitle: 'Urdu Alphabet (Haroof)',
+      urduTitle: 'حروفِ تہجی',
+      description: 'Learn all 40 Urdu letters with examples',
+      emoji: '🔤',
+      route: '/haroof',
+      color: Color(0xFF1B4332),
+    ),
+    _LessonEntry(
+      number: 2,
+      englishTitle: 'Counting 1–100 (Ginti)',
+      urduTitle: 'گنتی ١ تا ١٠٠',
+      description: 'Numbers in Urdu words & numerals',
+      emoji: '🔢',
+      route: '/counting',
+      color: Color(0xFF0d9488),
+    ),
+    _LessonEntry(
+      number: 3,
+      englishTitle: 'Vocabulary (Alfaz)',
+      urduTitle: 'الفاظ',
+      description: 'Animals, fruits, food, body parts & more',
+      emoji: '📖',
+      route: '/lafz',
+      color: Color(0xFF2563EB),
+    ),
+    _LessonEntry(
+      number: 4,
+      englishTitle: 'Sentences (Jumlay)',
+      urduTitle: 'جملے',
+      description: 'Simple everyday Urdu sentences',
+      emoji: '💬',
+      route: '/jumlay',
+      color: Color(0xFF7c3aed),
+    ),
+    _LessonEntry(
+      number: 5,
+      englishTitle: 'Phonics (Jor Tor)',
+      urduTitle: 'جوڑ توڑ',
+      description: 'Letter + vowel combinations with sound',
+      emoji: '🔗',
+      route: '/jor-tor',
+      color: Color(0xFFf15bb5),
+    ),
+    _LessonEntry(
+      number: 6,
+      englishTitle: 'Colors (Rang)',
+      urduTitle: 'رنگ',
+      description: 'Learn colors in Urdu',
+      emoji: '🎨',
+      route: '/rang',
+      color: Color(0xFFE07B2A),
+    ),
+    _LessonEntry(
+      number: 7,
+      englishTitle: 'Animals (Janwar)',
+      urduTitle: 'جانور',
+      description: 'Wild & domestic animals vocabulary',
+      emoji: '🐄',
+      route: '/animals-lesson',
+      color: Color(0xFF059669),
+    ),
+    _LessonEntry(
+      number: 8,
+      englishTitle: 'Fruits (Phal)',
+      urduTitle: 'پھل',
+      description: 'Common fruits in Urdu',
+      emoji: '🍎',
+      route: '/fruits-lesson',
+      color: Color(0xFFdc2626),
+    ),
+    _LessonEntry(
+      number: 9,
+      englishTitle: 'Body Parts (Jism)',
+      urduTitle: 'جسمانی اعضاء',
+      description: 'Parts of the body in Urdu',
+      emoji: '🫀',
+      route: '/body-lesson',
+      color: Color(0xFF9b5de5),
+    ),
   ];
-
-  Future<void> _onAvatarTap() async {
-    setState(() => _emotion = AvatarEmotion.speaking);
-    await TtsService.instance.speak('سبق شروع کریں');
-    if (mounted) setState(() => _emotion = AvatarEmotion.happy);
-  }
 
   @override
   Widget build(BuildContext context) {
+    final name = context.watch<AppProvider>().userName;
+
     return Scaffold(
-      backgroundColor: AppTheme.lightGray,
+      backgroundColor: _cream,
       appBar: AppBar(
-        title: const Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            'سبق',
-            style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 24),
-          ),
-        ),
-        backgroundColor: AppTheme.purple,
+        backgroundColor: _darkGreen,
         foregroundColor: Colors.white,
         elevation: 0,
+        title: const Text(
+          'Lessons',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.volume_up_rounded),
+            onPressed: () => TtsService.instance.speak('سبق شروع کریں'),
+          ),
+        ],
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: AppTheme.headerGradient,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: GestureDetector(
-                  onTap: _onAvatarTap,
-                  child: ProfessorAvatar(emotion: _emotion, size: 90),
-                ),
+      body: Column(
+        children: [
+          // ── Banner ──────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: _darkGreen,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                mainAxisExtent: 140,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => _buildCard(_lessons[i], ctx),
-                childCount: _lessons.length,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (name.isNotEmpty)
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      'آؤ $name، سبق شروع کریں!',
+                      style: const TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_lessons.length} lessons · KG / Nursery',
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+          // ── Lesson list ──────────────────────────────────────────────
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _lessons.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, thickness: 1, indent: 72, color: Color(0xFFEDE8DC)),
+              itemBuilder: (ctx, i) => _LessonTile(lesson: _lessons[i]),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCard(_LessonCard card, BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, card.route),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: card.colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: card.colors[0].withOpacity(0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+// ── Single lesson tile ────────────────────────────────────────────────────────
+
+class _LessonTile extends StatelessWidget {
+  final _LessonEntry lesson;
+  const _LessonTile({required this.lesson});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, lesson.route),
+      splashColor: lesson.color.withOpacity(0.08),
+      highlightColor: lesson.color.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            // ── Icon box ──────────────────────────────────────────────
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: lesson.color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(lesson.emoji, style: const TextStyle(fontSize: 22)),
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(card.emoji, style: const TextStyle(fontSize: 32)),
-              const SizedBox(height: 6),
-              Directionality(
-                textDirection: TextDirection.rtl,
-                child: Text(
-                  card.urduTitle,
-                  style: const TextStyle(
-                    fontFamily: 'NotoNastaliqUrdu',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            const SizedBox(width: 14),
+
+            // ── Text block ────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Lesson ${lesson.number}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: lesson.color,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 2),
+                  Text(
+                    lesson.englishTitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      lesson.urduTitle,
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 13,
+                        color: lesson.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    lesson.description,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF6B7280),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                card.englishSub,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+
+            // ── Arrow ─────────────────────────────────────────────────
+            Icon(Icons.chevron_right_rounded,
+                color: lesson.color.withOpacity(0.6), size: 22),
+          ],
         ),
       ),
     );
   }
 }
 
-class _LessonCard {
-  final String emoji;
+class _LessonEntry {
+  final int number;
+  final String englishTitle;
   final String urduTitle;
-  final String englishSub;
+  final String description;
+  final String emoji;
   final String route;
-  final List<Color> colors;
+  final Color color;
 
-  const _LessonCard({
-    required this.emoji,
+  const _LessonEntry({
+    required this.number,
+    required this.englishTitle,
     required this.urduTitle,
-    required this.englishSub,
+    required this.description,
+    required this.emoji,
     required this.route,
-    required this.colors,
+    required this.color,
   });
 }
