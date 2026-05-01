@@ -15,10 +15,10 @@ class LessonsHubScreen extends StatelessWidget {
       number: 1,
       englishTitle: 'Urdu Alphabet (Haroof)',
       urduTitle: 'حروفِ تہجی',
-      description: 'Learn all 40 Urdu letters with examples',
+      description: 'Learn all 40 letters — Alif to Bari Yay',
       emoji: '🔤',
-      route: '/haroof',
-      color: Color(0xFF1B4332),
+      route: '/haroof-lesson',
+      color: Color(0xFFF97316),
     ),
     _LessonEntry(
       number: 2,
@@ -26,8 +26,8 @@ class LessonsHubScreen extends StatelessWidget {
       urduTitle: 'گنتی ١ تا ١٠٠',
       description: 'Numbers in Urdu words & numerals',
       emoji: '🔢',
-      route: '/counting',
-      color: Color(0xFF0d9488),
+      route: '/ginti-lesson',
+      color: Color(0xFF0EA5E9),
     ),
     _LessonEntry(
       number: 3,
@@ -35,8 +35,8 @@ class LessonsHubScreen extends StatelessWidget {
       urduTitle: 'الفاظ',
       description: 'Animals, fruits, food, body parts & more',
       emoji: '📖',
-      route: '/lafz',
-      color: Color(0xFF2563EB),
+      route: '/alfaz-lesson',
+      color: Color(0xFF8B5CF6),
     ),
     _LessonEntry(
       number: 4,
@@ -44,17 +44,17 @@ class LessonsHubScreen extends StatelessWidget {
       urduTitle: 'جملے',
       description: 'Simple everyday Urdu sentences',
       emoji: '💬',
-      route: '/jumlay',
-      color: Color(0xFF7c3aed),
+      route: '/jumla-lesson',
+      color: Color(0xFF10B981),
     ),
     _LessonEntry(
       number: 5,
       englishTitle: 'Phonics (Jor Tor)',
       urduTitle: 'جوڑ توڑ',
-      description: 'Letter + vowel combinations with sound',
+      description: 'Letter + vowel sound combinations',
       emoji: '🔗',
       route: '/jor-tor',
-      color: Color(0xFFf15bb5),
+      color: Color(0xFFEC4899),
     ),
     _LessonEntry(
       number: 6,
@@ -63,7 +63,7 @@ class LessonsHubScreen extends StatelessWidget {
       description: 'Learn colors in Urdu',
       emoji: '🎨',
       route: '/rang',
-      color: Color(0xFFE07B2A),
+      color: Color(0xFFF59E0B),
     ),
     _LessonEntry(
       number: 7,
@@ -81,7 +81,7 @@ class LessonsHubScreen extends StatelessWidget {
       description: 'Common fruits in Urdu',
       emoji: '🍎',
       route: '/fruits-lesson',
-      color: Color(0xFFdc2626),
+      color: Color(0xFFDC2626),
     ),
     _LessonEntry(
       number: 9,
@@ -90,7 +90,7 @@ class LessonsHubScreen extends StatelessWidget {
       description: 'Parts of the body in Urdu',
       emoji: '🫀',
       route: '/body-lesson',
-      color: Color(0xFF9b5de5),
+      color: Color(0xFF7C3AED),
     ),
   ];
 
@@ -98,7 +98,9 @@ class LessonsHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = context.watch<AppProvider>().userName;
 
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
       backgroundColor: _cream,
       appBar: AppBar(
         backgroundColor: _darkGreen,
@@ -167,7 +169,7 @@ class LessonsHubScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

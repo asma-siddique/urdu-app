@@ -118,6 +118,42 @@
     window.flutterSpeakStop = function() {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };
+
+    // ── MediaRecorder API — for HuggingFace Whisper ASR ──────────────────
+    (function() {
+      var _rec = null, _chunks = [], _cb = null;
+
+      window.flutterAudioStart = function(callback) {
+        _cb = callback; _chunks = [];
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(function(stream) {
+            var mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg']
+                         .find(function(m){ return MediaRecorder.isTypeSupported(m); }) || '';
+            _rec = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+            _rec.ondataavailable = function(e){ if (e.data.size > 0) _chunks.push(e.data); };
+            _rec.onstop = function() {
+              stream.getTracks().forEach(function(t){ t.stop(); });
+              var blob = new Blob(_chunks, { type: _rec.mimeType });
+              var reader = new FileReader();
+              reader.onloadend = function() {
+                var b64 = reader.result ? reader.result.split(',')[1] : null;
+                if (_cb) _cb(b64, _rec.mimeType);
+              };
+              reader.readAsDataURL(blob);
+            };
+            _rec.start();
+            console.log('[AudioRec] started mimeType:', _rec.mimeType);
+          })
+          .catch(function(err) {
+            console.warn('[AudioRec] getUserMedia error:', err);
+            if (_cb) _cb(null, null);
+          });
+      };
+
+      window.flutterAudioStop = function() {
+        if (_rec && _rec.state !== 'inactive') { _rec.stop(); }
+      };
+    })();
   </script>
 </body>
 </html>

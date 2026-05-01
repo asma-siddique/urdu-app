@@ -88,7 +88,9 @@ class QuizHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = context.watch<AppProvider>().userName;
 
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
       backgroundColor: _cream,
       appBar: AppBar(
         backgroundColor: _headerColor,
@@ -154,7 +156,7 @@ class QuizHubScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

@@ -15,7 +15,6 @@ import 'screens/lafz_screen.dart';
 import 'screens/jumlay_screen.dart';
 import 'screens/rang_screen.dart';
 import 'screens/quiz_screen.dart';
-import 'screens/category_lesson_screen.dart';
 import 'screens/counting_screen.dart';
 import 'screens/grammar_screen.dart';
 import 'screens/matching_quiz_screen.dart';
@@ -26,6 +25,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/vocabulary_bank_screen.dart';
 import 'screens/poetry_bank_screen.dart';
+import 'screens/lesson_entries.dart';
 import 'data/animals_extended.dart';
 import 'data/fruits.dart';
 import 'data/body_parts.dart';
@@ -81,25 +81,14 @@ class UrduLearningApp extends StatelessWidget {
         '/counting':      (_) => const CountingScreen(),
         '/grammar':       (_) => const GrammarScreen(),
 
-        // ── Category lessons (generic) ──────────────────────────────────
-        '/animals-lesson': (_) => const CategoryLessonScreen(
-              title: 'جانور',
-              emoji: '🐄',
-              words: ANIMALS,
-              accentColor: Color(0xFF059669),
-            ),
-        '/fruits-lesson': (_) => const CategoryLessonScreen(
-              title: 'پھل',
-              emoji: '🍎',
-              words: FRUITS,
-              accentColor: Color(0xFFdc2626),
-            ),
-        '/body-lesson':   (_) => const CategoryLessonScreen(
-              title: 'جسمانی اعضاء',
-              emoji: '🫀',
-              words: BODY_PARTS,
-              accentColor: Color(0xFF7c3aed),
-            ),
+        // ── Lesson flow entries ─────────────────────────────────────────
+        '/haroof-lesson':   (_) => const HaroofLessonScreen(),
+        '/ginti-lesson':    (_) => const GintiLessonScreen(),
+        '/alfaz-lesson':    (_) => const AlfazLessonScreen(),
+        '/jumla-lesson':    (_) => const JumlaLessonScreen(),
+        '/animals-lesson':  (_) => const JanwarLessonScreen(),
+        '/fruits-lesson':   (_) => const PhalLessonScreen(),
+        '/body-lesson':     (_) => const JismLessonScreen(),
 
         // ── Hubs ───────────────────────────────────────────────────────
         '/lessons-hub':   (_) => const LessonsHubScreen(),
@@ -115,9 +104,7 @@ class UrduLearningApp extends StatelessWidget {
         '/words-quiz':    (_) => const QuizScreen(
               screenTitle: 'الفاظ کوئز',
             ),
-        '/sentences-quiz':(_) => const QuizScreen(
-              screenTitle: 'جملہ کوئز',
-            ),
+        '/sentences-quiz':(_) => const SentenceQuizScreen(),
         '/matching-quiz': (_) => const MatchingQuizScreen(),
         '/animals-quiz':  (_) => QuizScreen(
               wordList: ANIMALS,

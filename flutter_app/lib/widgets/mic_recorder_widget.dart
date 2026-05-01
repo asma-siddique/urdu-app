@@ -1,14 +1,24 @@
 import 'dart:async';
-import '../services/api_service.dart';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../services/whisper_service.dart';
+// Conditional import: real JS interop on web, no-op stub on mobile/desktop
+import '../services/web_recorder_stub.dart'
+    if (dart.library.html) '../services/web_recorder_web.dart';
+
+/// Pronunciation scorer widget.
+///
+/// On web (Chrome)   → tries HuggingFace Whisper API first (best Urdu ASR).
+///                     Falls back to Web Speech API if Whisper unavailable.
+/// On mobile/desktop → uses speech_to_text (Android/iOS native STT).
+///
+/// Score: 0 if nothing heard. Levenshtein + Urdu phonetic alternatives otherwise.
 class MicRecorderWidget extends StatefulWidget {
-  final String targetText;
-  final String targetRoman;
+  final String targetText;   // Urdu text (shown to user)
+  final String targetRoman;  // Roman transliteration (used for scoring)
   final Function(double score, String transcript) onScore;
 
   const MicRecorderWidget({
@@ -37,334 +47,388 @@ class MicRecorderWidget extends StatefulWidget {
   }
 
   @override
-  State<MicRecorderWidget> createState() => _MicRecorderWidgetState();
+  State<MicRecorderWidget> createState() => _MicState();
 }
 
-enum _RecordingState { idle, recording, processing, done }
+enum _Phase { idle, listening, processing, done }
+enum _Engine { whisper, browserStt }
 
-class _MicRecorderWidgetState extends State<MicRecorderWidget>
+class _MicState extends State<MicRecorderWidget>
     with SingleTickerProviderStateMixin {
-  final AudioRecorder _recorder = AudioRecorder();
-  _RecordingState _state = _RecordingState.idle;
+
+  // ── STT (fallback) ─────────────────────────────────────────────────────────
+  final stt.SpeechToText _stt = stt.SpeechToText();
+  bool _sttAvailable = false;
+
+  // ── Whisper (primary on web) ───────────────────────────────────────────────
+  late _Engine _engine;
+  Completer<Map<String, String?>>? _audioCompleter;
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  _Phase _phase = _Phase.idle;
+  String _liveWords = '';
+  String _finalWords = '';
   double _score = 0;
-  String _transcript = '';
-  final List<double> _bars = List.filled(20, 0.1);
-  Timer? _recordingTimer;
+  String _engineLabel = '';
+
+  Timer? _listenTimer;
   Timer? _barTimer;
-  final Random _random = Random();
-  late AnimationController _pulseController;
+  final List<double> _bars = List.filled(22, 0.1);
+  final Random _rng = Random();
+
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulseAnim;
+
+  static const _listenSec = 7;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _pulseAnim = Tween<double>(begin: 0.92, end: 1.08)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+
+    if (kIsWeb) {
+      final whisperReady = WhisperService.instance.isConfigured && webAudioSupported;
+      _engine = whisperReady ? _Engine.whisper : _Engine.browserStt;
+      _engineLabel = whisperReady ? '✨ Whisper AI' : '🌐 Browser STT';
+      if (!whisperReady) _initStt();
+    } else {
+      _engine = _Engine.browserStt;
+      _engineLabel = '📱 Native STT';
+      _initStt();
+    }
   }
 
-  Future<void> _startRecording() async {
-    final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Microphone permission denied')),
-        );
-      }
-      return;
-    }
+  Future<void> _initStt() async {
+    _sttAvailable = await _stt.initialize(
+      onError: (e) => debugPrint('[STT] error: $e'),
+    );
+    if (mounted) setState(() {});
+  }
 
-    // path_provider is not available on web — use empty string so the
-    // record package handles its own blob/temp path on Chrome.
-    final String path;
-    if (kIsWeb) {
-      path = '';
-    } else {
-      final dir = await getTemporaryDirectory();
-      path = '${dir.path}/urdu_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    }
+  // ── Start ──────────────────────────────────────────────────────────────────
 
-    await _recorder.start(const RecordConfig(), path: path);
+  Future<void> _start() async {
+    setState(() {
+      _phase = _Phase.listening;
+      _liveWords = '';
+      _finalWords = '';
+    });
 
-    setState(() => _state = _RecordingState.recording);
-    _pulseController.repeat(reverse: true);
-
-    _barTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (mounted && _state == _RecordingState.recording) {
+    _pulseCtrl.repeat(reverse: true);
+    _barTimer = Timer.periodic(const Duration(milliseconds: 90), (_) {
+      if (mounted && _phase == _Phase.listening) {
         setState(() {
           for (int i = 0; i < _bars.length; i++) {
-            _bars[i] = 0.1 + _random.nextDouble() * 0.9;
+            _bars[i] = 0.05 + _rng.nextDouble() * 0.95;
           }
         });
       }
     });
 
-    _recordingTimer = Timer(const Duration(seconds: 5), _stopRecording);
+    _listenTimer = Timer(const Duration(seconds: _listenSec), _stop);
+
+    if (_engine == _Engine.whisper) {
+      _audioCompleter = Completer<Map<String, String?>>();
+      webAudioStart((String? b64, String? mime) {
+        if (!(_audioCompleter?.isCompleted ?? true)) {
+          _audioCompleter!.complete({'audio': b64, 'mime': mime ?? 'audio/webm'});
+        }
+      });
+    } else {
+      if (!_sttAvailable) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone not available')),
+          );
+        }
+        _listenTimer?.cancel();
+        setState(() => _phase = _Phase.idle);
+        return;
+      }
+
+      final locales = await _stt.locales();
+      final localeIds = locales.map((l) => l.localeId).toList();
+      String locale = 'en_US';
+      for (final id in ['ur_PK', 'ur-PK', 'ur', 'hi_IN', 'hi-IN', 'hi']) {
+        if (localeIds.contains(id)) { locale = id; break; }
+      }
+      debugPrint('[STT] locale: $locale');
+
+      await _stt.listen(
+        localeId: locale,
+        listenFor: const Duration(seconds: _listenSec),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
+        onResult: (result) {
+          if (mounted) {
+            setState(() => _liveWords = result.recognizedWords);
+            if (result.finalResult) _finalWords = result.recognizedWords;
+          }
+        },
+      );
+    }
   }
 
-  Future<void> _stopRecording() async {
-    _recordingTimer?.cancel();
+  // ── Stop ───────────────────────────────────────────────────────────────────
+
+  Future<void> _stop() async {
+    _listenTimer?.cancel();
     _barTimer?.cancel();
-    _pulseController.stop();
-
-    final path = await _recorder.stop();
-
-    setState(() {
-      _state = _RecordingState.processing;
-      for (int i = 0; i < _bars.length; i++) {
-        _bars[i] = 0.1;
-      }
-    });
-
-    await _processAudio(path);
-  }
-
-  Future<void> _processAudio(String? path) async {
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    double score = 0.0;
-    String transcript = widget.targetRoman;
-
-    if (path != null) {
-      try {
-        // Try real API first
-        final result = await ApiService.instance.assessPronunciation(
-          audioPath: path,
-          targetUrdu: widget.targetText,
-          targetRoman: widget.targetRoman,
-        );
-        if (result['error'] == null) {
-          score = (result['score'] as num).toDouble();
-          transcript = result['transcript'] as String? ?? widget.targetRoman;
-        } else {
-          // Fallback: Levenshtein on target vs itself = 100 (offline demo)
-          score = 72.0 + (path.hashCode % 20).toDouble(); // realistic range
-        }
-      } catch (_) {
-        score = 68.0;
-      }
-    }
+    _pulseCtrl.stop();
+    if (!mounted) return;
 
     setState(() {
-      _score = score;
-      _transcript = transcript;
-      _state = _RecordingState.done;
+      _phase = _Phase.processing;
+      _bars.fillRange(0, _bars.length, 0.1);
     });
 
-    widget.onScore(score, transcript);
-  }
+    String heard = '';
 
-  double _levenshteinScore(String a, String b) {
-    if (a.isEmpty && b.isEmpty) return 100.0;
-    if (a.isEmpty || b.isEmpty) return 0.0;
-    final distance = _levenshtein(a.toLowerCase(), b.toLowerCase());
-    final maxLen = max(a.length, b.length);
-    return ((1 - distance / maxLen) * 100).clamp(0.0, 100.0);
-  }
+    if (_engine == _Engine.whisper) {
+      webAudioStop();
+      final result = await (_audioCompleter?.future ?? Future.value(<String, String?>{}))
+          .timeout(const Duration(seconds: 20), onTimeout: () => {});
+      final b64 = result['audio'];
+      final mime = result['mime'] ?? 'audio/webm';
 
-  int _levenshtein(String s, String t) {
-    final m = s.length, n = t.length;
-    final dp = List.generate(m + 1, (i) => List.filled(n + 1, 0));
-    for (int i = 0; i <= m; i++) dp[i][0] = i;
-    for (int j = 0; j <= n; j++) dp[0][j] = j;
-    for (int i = 1; i <= m; i++) {
-      for (int j = 1; j <= n; j++) {
-        if (s[i - 1] == t[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1];
-        } else {
-          dp[i][j] = 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].reduce(min);
-        }
+      if (b64 != null && b64.isNotEmpty) {
+        final transcript = await WhisperService.instance.transcribe(b64, mime);
+        heard = (transcript ?? '').trim().toLowerCase();
+        debugPrint('[Whisper] heard: "$heard"');
       }
+    } else {
+      await _stt.stop();
+      await Future.delayed(const Duration(milliseconds: 600));
+      heard = (_finalWords.isNotEmpty ? _finalWords : _liveWords)
+          .trim()
+          .toLowerCase();
+      debugPrint('[STT] heard: "$heard"');
     }
-    return dp[m][n];
+
+    // ── Score ────────────────────────────────────────────────────────────────
+    double score = 0;
+    if (heard.isNotEmpty) {
+      final sr = WhisperService.phoneticScore(heard, widget.targetRoman);
+      final su = WhisperService.phoneticScore(heard, widget.targetText);
+      score = max(sr, su);
+    }
+
+    if (mounted) setState(() { _score = score; _phase = _Phase.done; });
+    widget.onScore(score, heard);
   }
 
-  String get _statusText {
-    switch (_state) {
-      case _RecordingState.recording:
-        return 'بولیں...';
-      case _RecordingState.processing:
-        return 'تجزیہ...';
-      case _RecordingState.done:
-        return _feedbackText;
-      default:
-        return 'مائیکروفون دبائیں';
-    }
-  }
-
-  String get _feedbackText {
-    if (_score >= 70) return 'شاباش! تلفظ درست ہے۔';
-    if (_score >= 50) return 'قریب ہے! مزید مشق کریں۔';
-    return 'غلط تلفظ۔ دوبارہ سنیں۔';
-  }
+  // ── UI helpers ─────────────────────────────────────────────────────────────
 
   Color get _scoreColor {
     if (_score >= 70) return Colors.green;
-    if (_score >= 50) return Colors.orange;
+    if (_score >= 45) return Colors.orange;
     return Colors.red;
+  }
+
+  String get _statusText {
+    switch (_phase) {
+      case _Phase.idle:       return 'مائیکروفون دبائیں';
+      case _Phase.listening:
+        if (_engine == _Engine.whisper) return 'ریکارڈنگ جاری ہے...';
+        return _liveWords.isNotEmpty ? '"$_liveWords"' : 'بولیں...';
+      case _Phase.processing:
+        return _engine == _Engine.whisper ? 'Whisper AI تجزیہ...' : 'تجزیہ...';
+      case _Phase.done:
+        if (_score >= 70) return '🌟 شاباش! تلفظ درست ہے';
+        if (_score >= 45) return '🔸 قریب ہے! مزید مشق کریں';
+        return '❌ غلط تلفظ — دوبارہ سنیں';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    const accent = Color(0xFFF97316);
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: EdgeInsets.fromLTRB(
+          24, 16, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle
           Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 20),
+            width: 40, height: 4,
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2)),
+          ),
+
+          // Engine badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: _engine == _Engine.whisper
+                  ? Colors.purple.shade50 : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _engine == _Engine.whisper
+                    ? Colors.purple.shade200 : Colors.grey.shade300,
+              ),
+            ),
+            child: Text(
+              _engineLabel,
+              style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w600,
+                color: _engine == _Engine.whisper ? Colors.purple : Colors.grey,
+              ),
             ),
           ),
-          Text(
-            widget.targetText,
-            style: const TextStyle(
-              fontFamily: 'NotoNastaliqUrdu',
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
+
+          // Target word (Urdu)
+          Directionality(
             textDirection: TextDirection.rtl,
+            child: Text(
+              widget.targetText,
+              style: const TextStyle(
+                fontFamily: 'NotoNastaliqUrdu',
+                fontSize: 38, fontWeight: FontWeight.bold,
+                color: Color(0xFF1C1917),
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
-          Text(
-            widget.targetRoman,
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
-          // Volume visualizer bars
+          Text(widget.targetRoman,
+              style: const TextStyle(fontSize: 13, color: Colors.grey)),
+          const SizedBox(height: 16),
+
+          // Waveform
           SizedBox(
-            height: 48,
+            height: 44,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: List.generate(_bars.length, (i) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 80),
-                  width: 6,
-                  height: 8 + (_bars[i] * 40),
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: _state == _RecordingState.recording
-                        ? Colors.red.withOpacity(0.5 + _bars[i] * 0.5)
-                        : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
+              children: List.generate(_bars.length, (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 80),
+                width: 5,
+                height: 6 + (_bars[i] * 38),
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: _phase == _Phase.listening
+                      ? accent.withOpacity(0.4 + _bars[i] * 0.6)
+                      : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              )),
             ),
           ),
-          const SizedBox(height: 24),
-          if (_state == _RecordingState.done)
-            SizedBox(
-              width: 80,
-              height: 80,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
+
+          const SizedBox(height: 16),
+
+          // Score ring / processing / mic button
+          if (_phase == _Phase.done)
+            Column(children: [
+              SizedBox(
+                width: 84, height: 84,
+                child: Stack(alignment: Alignment.center, children: [
                   CircularProgressIndicator(
-                    value: _score / 100,
-                    strokeWidth: 7,
+                    value: _score / 100, strokeWidth: 7,
                     backgroundColor: Colors.grey[200],
                     valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
                   ),
-                  Text(
-                    '${_score.toInt()}%',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: _scoreColor,
-                    ),
-                  ),
-                ],
+                  Text('${_score.toInt()}%',
+                      style: TextStyle(fontSize: 18,
+                          fontWeight: FontWeight.w800, color: _scoreColor)),
+                ]),
               ),
+              const SizedBox(height: 8),
+            ])
+          else if (_phase == _Phase.processing)
+            SizedBox(
+              width: 84, height: 84,
+              child: Center(child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 36, height: 36,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 3, color: Colors.deepPurple)),
+                  const SizedBox(height: 4),
+                  Text(_engine == _Engine.whisper ? 'AI...' : '...',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              )),
             )
           else
             GestureDetector(
-              onTap: _state == _RecordingState.idle
-                  ? _startRecording
-                  : (_state == _RecordingState.recording ? _stopRecording : null),
+              onTap: _phase == _Phase.idle ? _start
+                  : (_phase == _Phase.listening ? _stop : null),
               child: AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) => Transform.scale(
-                  scale: _state == _RecordingState.recording
-                      ? 0.95 + _pulseController.value * 0.1
-                      : 1.0,
+                animation: _pulseAnim,
+                builder: (_, child) => Transform.scale(
+                  scale: _phase == _Phase.listening ? _pulseAnim.value : 1.0,
                   child: child,
                 ),
                 child: Container(
-                  width: 80,
-                  height: 80,
+                  width: 84, height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _state == _RecordingState.recording
-                        ? Colors.red
-                        : (_state == _RecordingState.processing
-                            ? Colors.orange
-                            : Colors.grey[400]),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (_state == _RecordingState.recording
-                                ? Colors.red
-                                : Colors.grey)
-                            .withOpacity(0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                    color: _phase == _Phase.listening ? Colors.red : accent,
+                    boxShadow: [BoxShadow(
+                      color: (_phase == _Phase.listening ? Colors.red : accent)
+                          .withOpacity(0.35),
+                      blurRadius: 16, spreadRadius: 2,
+                    )],
                   ),
                   child: Icon(
-                    _state == _RecordingState.processing
-                        ? Icons.hourglass_top
-                        : Icons.mic,
-                    color: Colors.white,
-                    size: 36,
+                    _phase == _Phase.listening
+                        ? Icons.stop_rounded : Icons.mic_rounded,
+                    color: Colors.white, size: 36,
                   ),
                 ),
               ),
             ),
-          const SizedBox(height: 16),
-          Text(
-            _statusText,
-            style: TextStyle(
-              fontFamily: 'NotoNastaliqUrdu',
-              fontSize: 16,
-              color: _state == _RecordingState.done ? _scoreColor : Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
+
+          // Status text
+          Directionality(
             textDirection: TextDirection.rtl,
-          ),
-          if (_state == _RecordingState.done) ...[
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _state = _RecordingState.idle;
-                  _score = 0;
-                  _transcript = '';
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            child: Text(
+              _statusText,
+              style: TextStyle(
+                fontFamily: 'NotoNastaliqUrdu', fontSize: 15,
+                color: _phase == _Phase.done ? _scoreColor : Colors.black87,
+                fontWeight: FontWeight.w600,
               ),
-              child: const Text(
-                'دوبارہ کوشش کریں',
-                style: TextStyle(
-                  fontFamily: 'NotoNastaliqUrdu',
-                  color: Colors.white,
-                ),
-              ),
+              textAlign: TextAlign.center,
             ),
-          ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Retry
+          if (_phase == _Phase.done)
+            TextButton.icon(
+              onPressed: () => setState(() {
+                _phase = _Phase.idle; _score = 0;
+                _liveWords = ''; _finalWords = '';
+                _audioCompleter = null;
+              }),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('دوبارہ کوشش کریں',
+                  style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 15)),
+              style: TextButton.styleFrom(foregroundColor: accent),
+            ),
+
+          // No-mic warning
+          if (_engine == _Engine.browserStt && !_sttAvailable && _phase == _Phase.idle)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text('Microphone not available — check browser permissions',
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                  textAlign: TextAlign.center),
+            ),
         ],
       ),
     );
@@ -372,10 +436,11 @@ class _MicRecorderWidgetState extends State<MicRecorderWidget>
 
   @override
   void dispose() {
-    _recorder.dispose();
-    _recordingTimer?.cancel();
+    _listenTimer?.cancel();
     _barTimer?.cancel();
-    _pulseController.dispose();
+    _pulseCtrl.dispose();
+    if (_engine == _Engine.browserStt) _stt.stop();
+    if (_engine == _Engine.whisper && _phase == _Phase.listening) webAudioStop();
     super.dispose();
   }
 }

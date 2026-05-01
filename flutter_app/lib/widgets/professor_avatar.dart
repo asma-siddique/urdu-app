@@ -225,18 +225,10 @@ class ProfessorAvatarState extends State<ProfessorAvatar>
                 ),
               ],
             ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/teacher.png',
-                width: widget.size * 0.86,
-                height: widget.size * 0.86,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Center(
-                  child: Text(
-                    _emoji,
-                    style: TextStyle(fontSize: widget.size * 0.48),
-                  ),
-                ),
+            child: Center(
+              child: Text(
+                _emoji,
+                style: TextStyle(fontSize: widget.size * 0.52),
               ),
             ),
           ),

@@ -26,172 +26,182 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final name = context.watch<AppProvider>().userName;
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F0E8),
-      body: SafeArea(child: _HomeBody(userName: name)),
-      bottomNavigationBar: _BottomNav(
-        onProfileTap: () => Navigator.pushNamed(context, '/profile'),
-      ),
-    );
-  }
-}
-
-// ── Body ────────────────────────────────────────────────────────────────────
-
-class _HomeBody extends StatelessWidget {
-  final String userName;
-  const _HomeBody({required this.userName});
-
-  static const _darkGreen  = Color(0xFF1B5E4B);
-  static const _blueGreen  = Color(0xFF0d9488);
-  static const _amber      = Color(0xFFD97706);
-  static const _blue       = Color(0xFF2563EB);
-  static const _orange     = Color(0xFFE07B2A);
-
-  @override
-  Widget build(BuildContext context) {
-    final greeting = userName.isNotEmpty ? 'خوش آمدید، $userName!' : 'خوش آمدید';
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 32),
-
-            // ── Header ────────────────────────────────────────────────
-            const Text(
-              'Welcome',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                greeting,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'NotoNastaliqUrdu',
-                  fontSize: 20,
-                  color: Color(0xFF2D2D2D),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // ── 2 × 2 grid ────────────────────────────────────────────
-            GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.0,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: const [
-                _Tile(
-                  label: 'Lessons',
-                  urduLabel: 'سبق',
-                  icon: Icons.menu_book_rounded,
-                  bg: _darkGreen,
-                  routeName: '/lessons-hub',
-                ),
-                _Tile(
-                  label: 'Quizzes',
-                  urduLabel: 'کوئز',
-                  icon: Icons.quiz_rounded,
-                  bg: _blue,
-                  routeName: '/quiz-hub',
-                ),
-                _Tile(
-                  label: 'Vocabulary',
-                  urduLabel: 'لغت',
-                  icon: Icons.library_books_rounded,
-                  bg: _amber,
-                  routeName: '/vocabulary-bank',
-                ),
-                _Tile(
-                  label: 'Progress',
-                  urduLabel: 'پیش رفت',
-                  icon: Icons.bar_chart_rounded,
-                  bg: _orange,
-                  routeName: '/progress',
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 28),
-
-            // ── Quick-access strip ─────────────────────────────────────
-            const _SectionHeader('Quick Lessons'),
-            const SizedBox(height: 10),
-            _QuickStrip(items: const [
-              _QuickItem('حروف', '🔤', '/haroof',         _darkGreen),
-              _QuickItem('گنتی',  '🔢', '/counting',       _blueGreen),
-              _QuickItem('الفاظ', '📖', '/lafz',           _blue),
-              _QuickItem('جملے', '💬', '/jumlay',          _amber),
-              _QuickItem('جوڑ توڑ','🔗','/jor-tor',       Color(0xFF7c3aed)),
-              _QuickItem('رنگ',   '🎨', '/rang',           _orange),
-            ]),
-
-            const SizedBox(height: 28),
-
-            // ── Quick quiz strip ───────────────────────────────────────
-            const _SectionHeader('Quick Quizzes'),
-            const SizedBox(height: 10),
-            _QuickStrip(items: const [
-              _QuickItem('حروف',  '🎤', '/haroof-quiz',    Color(0xFF9b5de5)),
-              _QuickItem('الفاظ', '📝', '/words-quiz',     _blue),
-              _QuickItem('ملائیں','🔗', '/matching-quiz',  Color(0xFFf15bb5)),
-              _QuickItem('جانور', '🐄', '/animals-quiz',   Color(0xFF059669)),
-              _QuickItem('پھل',   '🍎', '/fruits-quiz',    Color(0xFFdc2626)),
-            ]),
-
-            const SizedBox(height: 32),
-          ],
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFFBF4),
+        body: SafeArea(child: _HomeBody(userName: name)),
+        bottomNavigationBar: _BottomNav(
+          onProfileTap: () => Navigator.pushNamed(context, '/profile'),
         ),
       ),
     );
   }
 }
 
-// ── Tile card ────────────────────────────────────────────────────────────────
+// ── Body ─────────────────────────────────────────────────────────────────────
 
-class _Tile extends StatelessWidget {
+class _HomeBody extends StatelessWidget {
+  final String userName;
+  const _HomeBody({required this.userName});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    // On desktop/tablet, cap content at 520 px and centre it
+    final contentW = screenW.clamp(0.0, 520.0);
+
+    return SingleChildScrollView(
+      child: Center(
+        child: SizedBox(
+          width: contentW,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 28),
+
+                // ── Header ──────────────────────────────────────────────
+                const Text(
+                  'Welcome',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1C1917),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Text(
+                    userName.isNotEmpty ? 'خوش آمدید، $userName!' : 'خوش آمدید',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'NotoNastaliqUrdu',
+                      fontSize: 20,
+                      color: Color(0xFF44403C),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // ── 2 × 2 tile grid ─────────────────────────────────────
+                // Force exact 2-column layout regardless of screen width
+                _TileGrid(),
+
+                const SizedBox(height: 28),
+
+                // ── Quick Lessons strip ──────────────────────────────────
+                _SectionHeader(title: 'Quick Lessons', color: const Color(0xFFF97316)),
+                const SizedBox(height: 10),
+                _QuickStrip(items: const [
+                  _QuickItem('حروف',   '🔤', '/haroof-lesson', Color(0xFFF97316)),
+                  _QuickItem('گنتی',   '🔢', '/ginti-lesson',  Color(0xFF0EA5E9)),
+                  _QuickItem('الفاظ',  '📖', '/alfaz-lesson',  Color(0xFF8B5CF6)),
+                  _QuickItem('جملے',   '💬', '/jumla-lesson',  Color(0xFF10B981)),
+                  _QuickItem('جوڑ توڑ','🔗', '/jor-tor',       Color(0xFFEC4899)),
+                  _QuickItem('رنگ',    '🎨', '/rang',          Color(0xFFF59E0B)),
+                ]),
+
+                const SizedBox(height: 24),
+
+                // ── Quick Quizzes strip ──────────────────────────────────
+                _SectionHeader(title: 'Quick Quizzes', color: const Color(0xFF8B5CF6)),
+                const SizedBox(height: 10),
+                _QuickStrip(items: const [
+                  _QuickItem('حروف',  '🎤', '/haroof-quiz',   Color(0xFF8B5CF6)),
+                  _QuickItem('الفاظ', '📝', '/words-quiz',    Color(0xFF2563EB)),
+                  _QuickItem('ملائیں','🔗', '/matching-quiz', Color(0xFFEC4899)),
+                  _QuickItem('جانور', '🐄', '/animals-quiz',  Color(0xFF059669)),
+                  _QuickItem('پھل',   '🍎', '/fruits-quiz',   Color(0xFFDC2626)),
+                ]),
+
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── 2×2 tile grid (always 2 columns) ─────────────────────────────────────────
+
+class _TileGrid extends StatelessWidget {
+  const _TileGrid();
+
+  static const _tiles = [
+    _TileData('Lessons',    'سبق',     Icons.menu_book_rounded,    Color(0xFF1B5E4B), '/lessons-hub'),
+    _TileData('Quizzes',    'کوئز',    Icons.quiz_rounded,          Color(0xFF2563EB), '/quiz-hub'),
+    _TileData('Vocabulary', 'لغت',     Icons.library_books_rounded, Color(0xFFD97706), '/vocabulary-bank'),
+    _TileData('Progress',   'پیش رفت', Icons.bar_chart_rounded,     Color(0xFFE07B2A), '/progress'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (ctx, bc) {
+      final gap = 14.0;
+      final tileW = (bc.maxWidth - gap) / 2;
+      final tileH = tileW * 0.78; // slightly shorter than square
+
+      return Column(
+        children: [
+          Row(
+            children: [
+              _Tile(data: _tiles[0], width: tileW, height: tileH),
+              SizedBox(width: gap),
+              _Tile(data: _tiles[1], width: tileW, height: tileH),
+            ],
+          ),
+          SizedBox(height: gap),
+          Row(
+            children: [
+              _Tile(data: _tiles[2], width: tileW, height: tileH),
+              SizedBox(width: gap),
+              _Tile(data: _tiles[3], width: tileW, height: tileH),
+            ],
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class _TileData {
   final String label;
   final String urduLabel;
   final IconData icon;
   final Color bg;
-  final String routeName;
+  final String route;
+  const _TileData(this.label, this.urduLabel, this.icon, this.bg, this.route);
+}
 
-  const _Tile({
-    required this.label,
-    required this.urduLabel,
-    required this.icon,
-    required this.bg,
-    required this.routeName,
-  });
+class _Tile extends StatelessWidget {
+  final _TileData data;
+  final double width;
+  final double height;
+  const _Tile({required this.data, required this.width, required this.height});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, routeName),
+      onTap: () => Navigator.pushNamed(context, data.route),
       child: Container(
+        width: width,
+        height: height,
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(22),
+          color: data.bg,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: bg.withOpacity(0.38),
-              blurRadius: 14,
-              offset: const Offset(0, 7),
+              color: data.bg.withOpacity(0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -199,33 +209,32 @@ class _Tile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 58,
-              height: 58,
+              width: height * 0.36,
+              height: height * 0.36,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: Colors.white, size: 30),
+              child: Icon(data.icon, color: Colors.white, size: height * 0.2),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: height * 0.07),
             Text(
-              label,
-              style: const TextStyle(
+              data.label,
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
+                fontSize: (height * 0.12).clamp(12, 17),
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: height * 0.02),
             Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
-                urduLabel,
-                style: const TextStyle(
+                data.urduLabel,
+                style: TextStyle(
                   fontFamily: 'NotoNastaliqUrdu',
                   color: Colors.white70,
-                  fontSize: 13,
+                  fontSize: (height * 0.10).clamp(10, 14),
                 ),
               ),
             ),
@@ -236,30 +245,40 @@ class _Tile extends StatelessWidget {
   }
 }
 
-// ── Section header ───────────────────────────────────────────────────────────
+// ── Section header ────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
-  final String text;
-  const _SectionHeader(this.text);
+  final String title;
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(width: 4, height: 18, color: const Color(0xFF1B5E4B),
-            margin: const EdgeInsets.only(right: 8)),
-        Text(text, style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF1A1A1A),
-          letterSpacing: 0.3,
-        )),
+        Container(
+          width: 4, height: 18,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1C1917),
+            letterSpacing: 0.2,
+          ),
+        ),
       ],
     );
   }
 }
 
-// ── Quick horizontal strip ───────────────────────────────────────────────────
+// ── Quick strip ───────────────────────────────────────────────────────────────
 
 class _QuickStrip extends StatelessWidget {
   final List<_QuickItem> items;
@@ -268,47 +287,50 @@ class _QuickStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 86,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (ctx, i) {
-          final item = items[i];
-          return GestureDetector(
-            onTap: () => Navigator.pushNamed(ctx, item.route),
-            child: Container(
-              width: 72,
-              decoration: BoxDecoration(
-                color: item.color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: item.color.withOpacity(0.3)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(item.emoji, style: const TextStyle(fontSize: 26)),
-                  const SizedBox(height: 4),
-                  Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Text(
-                      item.label,
-                      style: TextStyle(
-                        fontFamily: 'NotoNastaliqUrdu',
-                        fontSize: 12,
-                        color: item.color,
-                        fontWeight: FontWeight.w600,
+      height: 88,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (ctx, i) {
+            final item = items[i];
+            return GestureDetector(
+              onTap: () => Navigator.pushNamed(ctx, item.route),
+              child: Container(
+                width: 74,
+                decoration: BoxDecoration(
+                  color: item.color.withOpacity(0.09),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: item.color.withOpacity(0.25), width: 1.5),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(item.emoji, style: const TextStyle(fontSize: 28)),
+                    const SizedBox(height: 5),
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        item.label,
+                        style: TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 12,
+                          color: item.color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -322,7 +344,7 @@ class _QuickItem {
   const _QuickItem(this.label, this.emoji, this.route, this.color);
 }
 
-// ── Bottom nav ───────────────────────────────────────────────────────────────
+// ── Bottom nav ────────────────────────────────────────────────────────────────
 
 class _BottomNav extends StatelessWidget {
   final VoidCallback onProfileTap;
@@ -330,21 +352,25 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F0E8),
-        border: Border(top: BorderSide(color: Color(0xFFDDD8CC), width: 1)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavBtn(icon: Icons.home_rounded,   label: 'Home',    isActive: true,  onTap: () {}),
-              _NavBtn(icon: Icons.person_rounded, label: 'Profile', isActive: false, onTap: onProfileTap),
-            ],
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+          boxShadow: [BoxShadow(color: Color(0x0A000000), blurRadius: 8)],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavBtn(icon: Icons.home_rounded,   label: 'Home',    isActive: true,  onTap: () {}),
+                _NavBtn(icon: Icons.person_rounded, label: 'Profile', isActive: false, onTap: onProfileTap),
+              ],
+            ),
           ),
         ),
       ),
@@ -361,28 +387,21 @@ class _NavBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFF1B5E4B) : const Color(0xFF9CA3AF);
+    final color = isActive ? const Color(0xFFF97316) : const Color(0xFF9CA3AF);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 11, color: color,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
-            if (isActive)
-              Container(
-                margin: const EdgeInsets.only(top: 3),
-                width: 18, height: 2,
-                decoration: BoxDecoration(color: color,
-                    borderRadius: BorderRadius.circular(1)),
-              ),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.normal)),
+        ],
       ),
     );
   }
