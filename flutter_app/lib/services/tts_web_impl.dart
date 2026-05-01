@@ -1,6 +1,8 @@
-// Web-only — compiled only when dart.library.html is available.
+// Web-only TTS — dispatches a CustomEvent that the JS handler in index.html
+// picks up. This is the ONLY reliable way to call speechSynthesis from inside
+// Flutter's canvas context on Chrome, because dart:js.callMethod() is
+// frequently NOT recognised as a user-gesture origin by the browser.
 import 'dart:html' as html;
-import 'dart:js' as js;
 import 'package:flutter/foundation.dart';
 
 class WebTts {
@@ -17,71 +19,65 @@ class WebTts {
       return;
     }
 
-    // Chrome loads voices asynchronously — poll until available (up to ~3 s).
+    // Trigger voice list load — Chrome populates it asynchronously.
+    synth.getVoices();
+
+    // Poll up to 3 s for voices to arrive.
     List<html.SpeechSynthesisVoice> voices = [];
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 15; i++) {
       voices = synth.getVoices();
       if (voices.isNotEmpty) break;
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    if (voices.isEmpty) {
-      debugPrint('WebTts: no voices found, defaulting to hi-IN');
-      _ready = true;
-      return;
+    if (voices.isNotEmpty) {
+      final langs = voices.map((v) => v.lang ?? '').toList();
+      debugPrint('WebTts voices: $langs');
+      if (langs.contains('ur-PK')) {
+        _lang = 'ur-PK';
+      } else if (langs.any((l) => l.startsWith('ur'))) {
+        _lang = langs.firstWhere((l) => l.startsWith('ur'));
+      } else if (langs.contains('hi-IN')) {
+        _lang = 'hi-IN';
+      } else if (langs.any((l) => l.startsWith('hi'))) {
+        _lang = langs.firstWhere((l) => l.startsWith('hi'));
+      }
+      debugPrint('WebTts selected lang: $_lang');
     }
 
-    final langs = voices.map((v) => v.lang ?? '').toList();
-    debugPrint('WebTts available voices: $langs');
-
-    // Preference: ur-PK → any ur-* → hi-IN → any hi-* → en-US
-    if (langs.contains('ur-PK')) {
-      _lang = 'ur-PK';
-    } else if (langs.any((l) => l.startsWith('ur'))) {
-      _lang = langs.firstWhere((l) => l.startsWith('ur'));
-    } else if (langs.contains('hi-IN')) {
-      _lang = 'hi-IN';
-    } else if (langs.any((l) => l.startsWith('hi'))) {
-      _lang = langs.firstWhere((l) => l.startsWith('hi'));
-    } else {
-      _lang = 'en-US';
-    }
-
-    debugPrint('WebTts selected lang: $_lang');
     _ready = true;
   }
 
-  /// Speak by calling window.flutterSpeak() defined in index.html.
-  /// That function runs in JS context and correctly handles Chrome's
-  /// silent-pause bug with cancel→resume→speak pattern.
+  /// Dispatch a CustomEvent — the listener in index.html calls
+  /// window.flutterSpeak() from the main JS thread (Chrome honours that
+  /// as a user-gesture context).
   static Future<void> speak(String text) async {
     if (!_ready) await init();
+
+    // Separator must not appear in Urdu text.
+    final detail = '$text|||$_lang';
     try {
-      // Call the JS function we injected in index.html
-      js.context.callMethod('flutterSpeak', [text, _lang]);
-      debugPrint('WebTts.speak → "$text" [$_lang]');
+      final event = html.CustomEvent(
+        'urdu-speak',
+        canBubble: true,
+        cancelable: false,
+        detail: detail,
+      );
+      html.document.dispatchEvent(event);
+      debugPrint('WebTts dispatch urdu-speak: "$text" [$_lang]');
     } catch (e) {
-      // Fallback: use dart:html directly
-      debugPrint('WebTts js fallback: $e');
-      try {
-        final synth = html.window.speechSynthesis;
-        if (synth == null) return;
-        synth.cancel();
-        final u = html.SpeechSynthesisUtterance(text);
-        u.lang = _lang;
-        u.rate = 0.80;
-        u.volume = 1.0;
-        synth.resume();
-        synth.speak(u);
-      } catch (e2) {
-        debugPrint('WebTts fallback error: $e2');
-      }
+      debugPrint('WebTts dispatch error: $e');
     }
   }
 
   static void stop() {
     try {
-      js.context.callMethod('flutterSpeakStop', []);
+      final event = html.CustomEvent(
+        'urdu-speak-stop',
+        canBubble: true,
+        cancelable: false,
+      );
+      html.document.dispatchEvent(event);
     } catch (_) {
       html.window.speechSynthesis?.cancel();
     }

@@ -118,6 +118,21 @@
     window.flutterSpeakStop = function() {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };
+
+    // ── CustomEvent bridge (called from Dart via dart:html) ───────────────
+    // Dart dispatches 'urdu-speak' with detail = "text|||lang"
+    // This listener runs on the main JS thread — Chrome honours it as a
+    // user-gesture context, so speechSynthesis works reliably.
+    document.addEventListener('urdu-speak', function(e) {
+      var parts = (e.detail || '').split('|||');
+      var text  = parts[0] || '';
+      var lang  = parts[1] || _ttsLang || 'hi-IN';
+      window.flutterSpeak(text, lang);
+    });
+
+    document.addEventListener('urdu-speak-stop', function() {
+      window.flutterSpeakStop();
+    });
   </script>
 </body>
 </html>

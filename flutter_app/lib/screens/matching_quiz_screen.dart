@@ -150,13 +150,13 @@ class _MatchingQuizScreenState extends State<MatchingQuizScreen> {
                 child: ProfessorAvatar(emotion: _emotion, size: 70)),
           ),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
                 'صحیح جوڑ ملائیں',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'NotoNastaliqUrdu',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
