@@ -179,6 +179,36 @@ class PhalLessonScreen extends StatelessWidget {
   }
 }
 
+// ── Quiz 1 — Haroof Quiz (Alphabet, 10 random letters) ───────────────────────
+/// Same flashcard design as the lesson but isQuiz=true → shuffled, scores tracked,
+/// results shown at the end.
+
+class HaroofQuizEntry extends StatelessWidget {
+  const HaroofQuizEntry({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final shuffled = List.of(FULL_ALPHABET)..shuffle();
+    final cards = shuffled.take(10).map((l) => LessonCard(
+          mainText: l.urdu,
+          name: l.roman,
+          transcription: '${l.example} — ${l.exampleMeaning}',
+          emoji: l.emoji,
+          speakText: '${l.urdu}۔ ${l.roman}',
+          romanTarget: l.roman,
+        )).toList();
+
+    return LessonFlowScreen(
+      lessonNumber: 1,
+      title: 'Alphabet Quiz',
+      subtitle: '10 random letters — pronounce each',
+      accentColor: const Color(0xFF9b5de5),
+      cards: cards,
+      isQuiz: true,
+    );
+  }
+}
+
 // ── Lesson 9 — Jism (Body Parts) ─────────────────────────────────────────────
 
 class JismLessonScreen extends StatelessWidget {

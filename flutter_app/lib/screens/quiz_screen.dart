@@ -88,6 +88,10 @@ class _QuizScreenState extends State<QuizScreen>
     _fadeAnim = CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut);
     _buildDeck();
     _slideCtrl.forward();
+    // Auto-speak the first question
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) _speakQuestion();
+    });
   }
 
   @override

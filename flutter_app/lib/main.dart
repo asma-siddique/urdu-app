@@ -100,7 +100,7 @@ class UrduLearningApp extends StatelessWidget {
 
         // ── Quizzes ────────────────────────────────────────────────────
         '/quiz':          (_) => const QuizScreen(),
-        '/haroof-quiz':   (_) => const HaroofScreen(),   // letter practice
+        '/haroof-quiz':   (_) => const HaroofQuizEntry(), // flashcard quiz
         '/words-quiz':    (_) => const QuizScreen(
               screenTitle: 'الفاظ کوئز',
             ),

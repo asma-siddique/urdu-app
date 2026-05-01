@@ -118,184 +118,157 @@ class _MatchingQuizScreenState extends State<MatchingQuizScreen> {
     if (_roundsPlayed >= _totalRounds) {
       return _buildResults();
     }
-    return Scaffold(
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
       backgroundColor: AppTheme.lightGray,
       appBar: AppBar(
-        title: Directionality(
-          textDirection: TextDirection.ltr,
-          child: Text(
-            'Matching  ${_roundsPlayed + 1} / $_totalRounds   ✓ $_totalScore',
-            style: const TextStyle(fontSize: 16),
-          ),
+        title: Text(
+          'Matching  ${_roundsPlayed + 1} / $_totalRounds   ✓ $_totalScore',
+          style: const TextStyle(fontSize: 16),
         ),
         backgroundColor: const Color(0xFFf15bb5),
         foregroundColor: Colors.white,
         elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: LinearProgressIndicator(
+            value: (_roundsPlayed + 1) / _totalRounds,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            minHeight: 4,
+          ),
+        ),
       ),
       body: Column(
         children: [
-          // Avatar banner
+          // Compact avatar banner
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                   colors: [Color(0xFFf15bb5), Color(0xFFc73d8f)]),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
               ),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-                child: ProfessorAvatar(emotion: _emotion, size: 70)),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Center(child: ProfessorAvatar(emotion: _emotion, size: 52)),
           ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                'صحیح جوڑ ملائیں',
-                style: const TextStyle(
-                  fontFamily: 'NotoNastaliqUrdu',
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.navy,
-                ),
+          const SizedBox(height: 8),
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: Text(
+              'صحیح جوڑ ملائیں',
+              style: const TextStyle(
+                fontFamily: 'NotoNastaliqUrdu',
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.navy,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          // Main matching area
+          const SizedBox(height: 8),
+
+          // Main matching area — items use Expanded so they NEVER overflow
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Left: Emoji column
                   Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: List.generate(_roundWords.length, (i) {
                         final matched = _matchedIndices.contains(i);
                         final selected = _selectedEmoji == i;
                         final wrong = _wrongPair.contains(i);
-
                         Color bg = Colors.white;
                         Color border = Colors.grey.shade300;
-                        if (matched) {
-                          bg = Colors.green.shade50;
-                          border = Colors.green;
-                        } else if (selected) {
-                          bg = const Color(0xFFf15bb5).withOpacity(0.15);
-                          border = const Color(0xFFf15bb5);
-                        } else if (wrong) {
-                          bg = Colors.red.shade50;
-                          border = Colors.red;
-                        }
-
-                        return GestureDetector(
-                          onTap: matched ? null : () => _onEmojiTap(i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: border, width: 2),
-                              boxShadow: const [
-                                BoxShadow(
-                                    color: Color(0x10000000),
-                                    blurRadius: 4)
-                              ],
-                            ),
-                            child: Center(
-                              child: matched
-                                  ? const Icon(Icons.check_circle,
-                                      color: Colors.green, size: 28)
-                                  : Text(
-                                      _roundWords[i].emoji,
-                                      style:
-                                          const TextStyle(fontSize: 28),
-                                    ),
+                        if (matched)        { bg = Colors.green.shade50;  border = Colors.green; }
+                        else if (selected)  { bg = const Color(0xFFf15bb5).withOpacity(0.12); border = const Color(0xFFf15bb5); }
+                        else if (wrong)     { bg = Colors.red.shade50;    border = Colors.red; }
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: matched ? null : () => _onEmojiTap(i),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 0),
+                              decoration: BoxDecoration(
+                                color: bg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: border, width: 2),
+                                boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 3)],
+                              ),
+                              child: Center(
+                                child: matched
+                                    ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+                                    : Text(_roundWords[i].emoji,
+                                        style: const TextStyle(fontSize: 26)),
+                              ),
                             ),
                           ),
                         );
                       }),
                     ),
                   ),
+
                   // Center divider
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+
                   // Right: Urdu words column (shuffled)
                   Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children:
-                          List.generate(_roundWords.length, (shuffleIdx) {
+                      children: List.generate(_roundWords.length, (shuffleIdx) {
                         final wordIdx = _shuffledUrdu[shuffleIdx];
-                        final matched =
-                            _matchedIndices.contains(wordIdx);
+                        final matched = _matchedIndices.contains(wordIdx);
                         final selected = _selectedUrdu == shuffleIdx;
-                        final wrong =
-                            _wrongPair.contains(-1 - shuffleIdx);
-
+                        final wrong = _wrongPair.contains(-1 - shuffleIdx);
                         Color bg = Colors.white;
                         Color border = Colors.grey.shade300;
-                        if (matched) {
-                          bg = Colors.green.shade50;
-                          border = Colors.green;
-                        } else if (selected) {
-                          bg = const Color(0xFFf15bb5).withOpacity(0.15);
-                          border = const Color(0xFFf15bb5);
-                        } else if (wrong) {
-                          bg = Colors.red.shade50;
-                          border = Colors.red;
-                        }
-
-                        return GestureDetector(
-                          onTap: matched
-                              ? null
-                              : () => _onUrduTap(shuffleIdx),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: border, width: 2),
-                              boxShadow: const [
-                                BoxShadow(
-                                    color: Color(0x10000000),
-                                    blurRadius: 4)
-                              ],
-                            ),
-                            child: Center(
-                              child: matched
-                                  ? const Icon(Icons.check_circle,
-                                      color: Colors.green, size: 28)
-                                  : Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: Text(
-                                        _roundWords[wordIdx].urdu,
-                                        style: const TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.navy,
+                        if (matched)        { bg = Colors.green.shade50;  border = Colors.green; }
+                        else if (selected)  { bg = const Color(0xFFf15bb5).withOpacity(0.12); border = const Color(0xFFf15bb5); }
+                        else if (wrong)     { bg = Colors.red.shade50;    border = Colors.red; }
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: matched ? null : () => _onUrduTap(shuffleIdx),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(vertical: 3),
+                              decoration: BoxDecoration(
+                                color: bg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: border, width: 2),
+                                boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 3)],
+                              ),
+                              child: Center(
+                                child: matched
+                                    ? const Icon(Icons.check_circle, color: Colors.green, size: 24)
+                                    : Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child: Text(
+                                          _roundWords[wordIdx].urdu,
+                                          style: const TextStyle(
+                                            fontFamily: 'NotoNastaliqUrdu',
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.navy,
+                                          ),
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
                         );
@@ -333,10 +306,10 @@ class _MatchingQuizScreenState extends State<MatchingQuizScreen> {
               ),
             )
           else
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
         ],
       ),
-    );
+    )); // closes Directionality + Scaffold
   }
 
   Widget _buildResults() {
