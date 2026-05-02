@@ -1,16 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-// Conditional import: uses dart:html on web, stub on mobile/desktop.
+// Conditional import: web uses dart:html SpeechSynthesis, stub on mobile/desktop.
 import 'tts_stub_impl.dart' if (dart.library.html) 'tts_web_impl.dart';
+import 'mms_tts_service.dart';
 
 /// Singleton TTS service.
 ///
-/// On web  → uses dart:html SpeechSynthesis directly (bypasses flutter_tts web
-///            which returns null on speak()).
-/// On mobile → uses flutter_tts with ur-PK voice.
+/// Priority chain (web):
+///   1. MMS-TTS  — facebook/mms-tts-urd-script_arabic via HuggingFace API
+///                 Native Urdu voice, trained on Meta MMS dataset.
+///                 Requires AiConfig.hfToken to be set.
+///   2. Browser  — window.speechSynthesis (hi-IN or ur-PK if available)
+///                 Fallback when API token is missing or network fails.
 ///
-/// IMPORTANT: always call speak() from a user-gesture handler on Chrome.
+/// On mobile/desktop: flutter_tts with ur-PK voice.
 class TtsService {
   TtsService._();
   static final TtsService instance = TtsService._();
@@ -19,7 +23,7 @@ class TtsService {
   FlutterTts? _mobileTts;
   bool _mobileReady = false;
 
-  // ── init ──────────────────────────────────────────────────────────────
+  // ── init ──────────────────────────────────────────────────────────────────
   Future<void> init() async {
     if (kIsWeb) {
       await WebTts.init();
@@ -42,36 +46,55 @@ class TtsService {
       await _mobileTts!.setPitch(1.05);
       await _mobileTts!.setVolume(1.0);
       _mobileReady = true;
-      debugPrint('TtsService mobile ready (ur-PK)');
+      debugPrint('[TTS] mobile ready (ur-PK)');
     } catch (e) {
-      debugPrint('TtsService mobile init error: $e');
+      debugPrint('[TTS] mobile init error: $e');
       _mobileReady = true;
     }
   }
 
-  // ── speak ─────────────────────────────────────────────────────────────
+  // ── speak ─────────────────────────────────────────────────────────────────
+  /// Speak [text] in Urdu.
+  ///
+  /// On web:
+  ///   • Tries MMS-TTS (facebook/mms-tts-urd-script_arabic) first.
+  ///   • Falls back to browser speechSynthesis if MMS-TTS fails or is not configured.
   Future<void> speak(String text, {VoidCallback? onDone}) async {
+    if (text.trim().isEmpty) return;
+
     if (kIsWeb) {
-      await WebTts.speak(text);
-      // Web Speech API has no reliable completion callback in this setup;
-      // call onDone after an estimated delay based on text length.
-      if (onDone != null) {
-        final ms = (text.length * 120).clamp(600, 4000);
-        Future.delayed(Duration(milliseconds: ms), onDone);
+      // ── Primary: MMS-TTS (real Urdu ML model) ──────────────────────────
+      bool played = false;
+      if (MmsTtsService.instance.isConfigured) {
+        played = await MmsTtsService.instance.speak(text);
       }
+
+      // ── Fallback: browser Web Speech API ────────────────────────────────
+      if (!played) {
+        await WebTts.speak(text);
+        // Estimate completion for onDone callback
+        if (onDone != null) {
+          final ms = (text.length * 120).clamp(600, 4000);
+          Future.delayed(Duration(milliseconds: ms), onDone);
+          return;
+        }
+      }
+
+      onDone?.call();
     } else {
+      // ── Mobile: flutter_tts ───────────────────────────────────────────
       if (!_mobileReady) await _mobileInit();
       try {
         await _mobileTts!.stop();
         if (onDone != null) _mobileTts!.setCompletionHandler(onDone);
         await _mobileTts!.speak(text);
       } catch (e) {
-        debugPrint('TtsService.speak error: $e');
+        debugPrint('[TTS] mobile speak error: $e');
       }
     }
   }
 
-  // ── stop ──────────────────────────────────────────────────────────────
+  // ── stop ──────────────────────────────────────────────────────────────────
   Future<void> stop() async {
     if (kIsWeb) {
       WebTts.stop();

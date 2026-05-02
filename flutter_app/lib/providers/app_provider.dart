@@ -164,6 +164,39 @@ class AppProvider extends ChangeNotifier {
     await prefs.setInt('streak_count', streak);
   }
 
+  // ── Profile helpers ──────────────────────────────────────────────────────
+  Future<void> updateUserName(String newName) async {
+    if (_currentUser == null) return;
+    _currentUser = _currentUser!.copyWith(name: newName);
+    notifyListeners();
+    await saveUser();
+  }
+
+  Future<void> clearProgress() async {
+    _progressHistory.clear();
+    _weaknessScores.clear();
+    _srsIntervals.clear();
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(
+        totalStars: 0,
+        sessionsCompleted: 0,
+        weakAreas: [],
+        currentLevel: 'beginner',
+      );
+    }
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('progress_history');
+    await prefs.remove('weakness_scores');
+    await prefs.remove('srs_intervals');
+    await prefs.remove('streak_count');
+    await prefs.remove('last_session_date');
+    for (int i = 0; i < 7; i++) {
+      await prefs.remove('weekly_minutes_$i');
+    }
+    await saveUser();
+  }
+
   // ── Weak areas sync to UserModel ─────────────────────────────────────────
   void syncWeakAreasToUser() {
     if (_currentUser == null) return;

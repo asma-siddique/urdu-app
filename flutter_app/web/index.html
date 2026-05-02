@@ -119,6 +119,32 @@
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     };
 
+    // ── MMS-TTS Audio Playback ────────────────────────────────────────────
+    // Called from Flutter (MmsTtsPlayer.play) with base64-encoded audio
+    // returned by facebook/mms-tts-urd-script_arabic (HuggingFace API).
+    window._mmsAudio = null;
+    window.playUrduAudio = function(base64Audio, mimeType) {
+      try {
+        // Stop any currently playing audio
+        if (window._mmsAudio) {
+          window._mmsAudio.pause();
+          window._mmsAudio.src = '';
+        }
+        var mime = mimeType || 'audio/flac';
+        var src  = 'data:' + mime + ';base64,' + base64Audio;
+        var audio = new Audio(src);
+        audio.volume = 1.0;
+        window._mmsAudio = audio;
+        audio.play().then(function() {
+          console.log('[MMS-TTS] ✓ playing audio [' + mime + ']');
+        }).catch(function(e) {
+          console.warn('[MMS-TTS] playback error:', e);
+        });
+      } catch(e) {
+        console.warn('[MMS-TTS] playUrduAudio error:', e);
+      }
+    };
+
     // ── MediaRecorder API — for HuggingFace Whisper ASR ──────────────────
     (function() {
       var _rec = null, _chunks = [], _cb = null;

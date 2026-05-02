@@ -3,37 +3,38 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-/// HuggingFace Whisper-based Urdu ASR service.
+import 'ai_config.dart';
+
+/// HuggingFace Whisper ASR service — Urdu pronunciation checking.
 ///
-/// Set [apiKey] to your free HuggingFace API key from https://huggingface.co/settings/tokens
-/// Model: openai/whisper-large-v3 — supports Urdu natively.
+/// Model  : openai/whisper-large-v3
+/// Paper  : "Robust Speech Recognition via Large-Scale Weak Supervision"
+///           Radford et al., 2022 — https://arxiv.org/abs/2212.04356
+/// Dataset: 680 000 hours of weakly-supervised multilingual audio (99 langs, incl. Urdu)
 ///
-/// Falls back gracefully if network is unavailable.
+/// Evaluation: Tested on Mozilla Common Voice 17.0 Urdu test split.
+/// See scripts/evaluate_whisper_wer.py for WER computation.
+///
+/// Token : Set AiConfig.hfToken (same token used for MMS-TTS).
 class WhisperService {
   WhisperService._();
   static final instance = WhisperService._();
 
-  // ── HuggingFace config ─────────────────────────────────────────────────────
-  // TODO: Replace with your free HF token from https://huggingface.co/settings/tokens
-  static const String apiKey = 'hf_REPLACE_WITH_YOUR_TOKEN';
-  static const String _model = 'openai/whisper-large-v3';
-  static const String _baseUrl = 'https://api-inference.huggingface.co/models/$_model';
-
-  bool get isConfigured => apiKey.isNotEmpty && !apiKey.contains('REPLACE');
+  bool get isConfigured => AiConfig.isConfigured;
 
   /// Transcribe raw audio bytes. mimeType = 'audio/webm' (Chrome MediaRecorder default).
   /// Returns the Urdu/Roman transcript or null on failure.
   Future<String?> transcribe(String base64Audio, String mimeType) async {
     if (!isConfigured) {
-      debugPrint('[Whisper] No API key configured — set WhisperService.apiKey');
+      debugPrint('[Whisper] No HF token — set AiConfig.hfToken in ai_config.dart');
       return null;
     }
     try {
       final bytes = base64Decode(base64Audio);
       final response = await http.post(
-        Uri.parse(_baseUrl),
+        Uri.parse(AiConfig.whisperEndpoint),
         headers: {
-          'Authorization': 'Bearer $apiKey',
+          'Authorization': 'Bearer ${AiConfig.hfToken}',
           'Content-Type': mimeType.isNotEmpty ? mimeType : 'audio/webm',
         },
         body: bytes,

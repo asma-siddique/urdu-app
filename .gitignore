@@ -13,7 +13,7 @@ __pycache__/
 *.py[cod]
 *.pth
 *.pt
-models/
+
 venv/
 .venv/
 ml/data/

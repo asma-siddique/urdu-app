@@ -147,7 +147,7 @@ class LessonsHubScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_lessons.length} lessons · KG / Nursery',
+                  '${_lessons.length} lessons',
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -186,22 +186,29 @@ class _LessonTile extends StatelessWidget {
       splashColor: lesson.color.withOpacity(0.08),
       highlightColor: lesson.color.withOpacity(0.05),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             // ── Icon box ──────────────────────────────────────────────
             Container(
-              width: 48,
-              height: 48,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: lesson.color,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: lesson.color.withOpacity(0.30),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Center(
-                child: Text(lesson.emoji, style: const TextStyle(fontSize: 22)),
+                child: Text(lesson.emoji, style: const TextStyle(fontSize: 26)),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
 
             // ── Text block ────────────────────────────────────────────
             Expanded(
@@ -209,53 +216,54 @@ class _LessonTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Lesson ${lesson.number}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: lesson.color,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
                     lesson.englishTitle,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1A1A1A),
                     ),
                   ),
-                  const SizedBox(height: 1),
+                  const SizedBox(height: 4),
                   Directionality(
                     textDirection: TextDirection.rtl,
                     child: Text(
                       lesson.urduTitle,
                       style: TextStyle(
                         fontFamily: 'NotoNastaliqUrdu',
-                        fontSize: 13,
+                        fontSize: 14,
                         color: lesson.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    lesson.description,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF6B7280),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),
 
-            // ── Arrow ─────────────────────────────────────────────────
-            Icon(Icons.chevron_right_rounded,
-                color: lesson.color.withOpacity(0.6), size: 22),
+            // ── Number badge + arrow ───────────────────────────────────
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: lesson.color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${lesson.number}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: lesson.color,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Icon(Icons.chevron_right_rounded,
+                    color: lesson.color.withOpacity(0.5), size: 20),
+              ],
+            ),
           ],
         ),
       ),

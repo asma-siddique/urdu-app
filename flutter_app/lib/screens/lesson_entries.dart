@@ -47,21 +47,24 @@ class GintiLessonScreen extends StatelessWidget {
     '1️⃣1️⃣','1️⃣2️⃣','1️⃣3️⃣','1️⃣4️⃣','1️⃣5️⃣','1️⃣6️⃣','1️⃣7️⃣','1️⃣8️⃣','1️⃣9️⃣','2️⃣0️⃣',
   ];
 
+  /// For 1-20 use keycap emojis; for 21-99 show the western numeral as text;
+  /// 100 gets the 💯 emoji.
   String _emoji(int n) {
     if (n <= 20) return _numberEmojis[n - 1];
-    if (n <= 30) return '🔢';
-    if (n <= 50) return '🔢';
-    return '💯';
+    if (n == 100) return '💯';
+    return '$n'; // e.g. "24" — displayed in the grey box at top
   }
 
   @override
   Widget build(BuildContext context) {
     final cards = COUNTING.map((n) => LessonCard(
-          mainText: n.numeral,
-          name: n.roman,
-          transcription: n.urdu,
-          emoji: _emoji(n.number),
-          speakText: n.urdu,
+          mainText: n.numeral,       // Urdu numeral e.g. ٢٤
+          name: n.roman,             // e.g. Chaubees
+          transcription: n.urdu,     // Urdu word e.g. چوبیس
+          emoji: _emoji(n.number),   // visual aid in grey box
+          // Use the roman (English) name for TTS — works with any browser voice.
+          // Urdu Nastaliq script causes silent failures when no ur-PK voice is loaded.
+          speakText: n.roman,
           romanTarget: n.roman,
         )).toList();
 

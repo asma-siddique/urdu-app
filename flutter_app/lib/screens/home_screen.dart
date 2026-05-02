@@ -93,33 +93,6 @@ class _HomeBody extends StatelessWidget {
                 // Force exact 2-column layout regardless of screen width
                 _TileGrid(),
 
-                const SizedBox(height: 28),
-
-                // ── Quick Lessons strip ──────────────────────────────────
-                _SectionHeader(title: 'Quick Lessons', color: const Color(0xFFF97316)),
-                const SizedBox(height: 10),
-                _QuickStrip(items: const [
-                  _QuickItem('حروف',   '🔤', '/haroof-lesson', Color(0xFFF97316)),
-                  _QuickItem('گنتی',   '🔢', '/ginti-lesson',  Color(0xFF0EA5E9)),
-                  _QuickItem('الفاظ',  '📖', '/alfaz-lesson',  Color(0xFF8B5CF6)),
-                  _QuickItem('جملے',   '💬', '/jumla-lesson',  Color(0xFF10B981)),
-                  _QuickItem('جوڑ توڑ','🔗', '/jor-tor',       Color(0xFFEC4899)),
-                  _QuickItem('رنگ',    '🎨', '/rang',          Color(0xFFF59E0B)),
-                ]),
-
-                const SizedBox(height: 24),
-
-                // ── Quick Quizzes strip ──────────────────────────────────
-                _SectionHeader(title: 'Quick Quizzes', color: const Color(0xFF8B5CF6)),
-                const SizedBox(height: 10),
-                _QuickStrip(items: const [
-                  _QuickItem('حروف',  '🎤', '/haroof-quiz',   Color(0xFF8B5CF6)),
-                  _QuickItem('الفاظ', '📝', '/words-quiz',    Color(0xFF2563EB)),
-                  _QuickItem('ملائیں','🔗', '/matching-quiz', Color(0xFFEC4899)),
-                  _QuickItem('جانور', '🐄', '/animals-quiz',  Color(0xFF059669)),
-                  _QuickItem('پھل',   '🍎', '/fruits-quiz',   Color(0xFFDC2626)),
-                ]),
-
                 const SizedBox(height: 32),
               ],
             ),
@@ -243,105 +216,6 @@ class _Tile extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Section header ────────────────────────────────────────────────────────────
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final Color color;
-  const _SectionHeader({required this.title, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 4, height: 18,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1C1917),
-            letterSpacing: 0.2,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Quick strip ───────────────────────────────────────────────────────────────
-
-class _QuickStrip extends StatelessWidget {
-  final List<_QuickItem> items;
-  const _QuickStrip({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 88,
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (ctx, i) {
-            final item = items[i];
-            return GestureDetector(
-              onTap: () => Navigator.pushNamed(ctx, item.route),
-              child: Container(
-                width: 74,
-                decoration: BoxDecoration(
-                  color: item.color.withOpacity(0.09),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: item.color.withOpacity(0.25), width: 1.5),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(item.emoji, style: const TextStyle(fontSize: 28)),
-                    const SizedBox(height: 5),
-                    Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text(
-                        item.label,
-                        style: TextStyle(
-                          fontFamily: 'NotoNastaliqUrdu',
-                          fontSize: 12,
-                          color: item.color,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickItem {
-  final String label;
-  final String emoji;
-  final String route;
-  final Color color;
-  const _QuickItem(this.label, this.emoji, this.route, this.color);
 }
 
 // ── Bottom nav ────────────────────────────────────────────────────────────────

@@ -26,6 +26,7 @@ import 'screens/progress_screen.dart';
 import 'screens/vocabulary_bank_screen.dart';
 import 'screens/poetry_bank_screen.dart';
 import 'screens/lesson_entries.dart';
+import 'screens/profile_screen.dart';
 import 'data/animals_extended.dart';
 import 'data/fruits.dart';
 import 'data/body_parts.dart';
@@ -95,6 +96,7 @@ class UrduLearningApp extends StatelessWidget {
         '/quiz-hub':      (_) => const QuizHubScreen(),
         '/home':          (_) => const HomeScreen(),
         '/progress':      (_) => const ProgressScreen(),
+        '/profile':       (_) => const ProfileScreen(),
         '/vocabulary-bank': (_) => const VocabularyBankScreen(),
         '/poetry-bank':   (_) => const PoetryBankScreen(),
 
