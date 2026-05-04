@@ -295,11 +295,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Column(children: [
-                          const Text('📚',
+                        child: const Column(children: [
+                          Text('📚',
                               style: TextStyle(fontSize: 48)),
-                          const SizedBox(height: 12),
-                          const Text(
+                          SizedBox(height: 12),
+                          Text(
                             'No activity yet\nStart a lesson to track your progress!',
                             textAlign: TextAlign.center,
                             style: TextStyle(
