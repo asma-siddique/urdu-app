@@ -1,152 +1,93 @@
-// src/screens/HomeScreen.jsx
+// src/screens/HomeScreen.jsx — Kid-friendly Home
 import React from 'react';
-import ProfessorAvatar from '../components/ProfessorAvatar.jsx';
-import { PBar } from '../components/UI.jsx';
-import { T } from '../theme.js';
+import { K, BoyCharacter, SpeechBubble, SectionHeading } from '../components/KidUI.jsx';
 import { getGreeting } from '../utils.js';
 
 const MODULES = [
-  { id:'haroof', title:'حروف تہجی', sub:'Alphabet',   icon:'ا',   color:T.purple,  desc:'Learn all 40 Urdu letters' },
-  { id:'lafz',   title:'الفاظ',     sub:'Words',       icon:'📝',  color:T.teal,    desc:'40+ vocabulary words'       },
-  { id:'jumlay', title:'جملے',      sub:'Sentences',   icon:'💬',  color:T.orange,  desc:'12 everyday sentences'      },
-  { id:'rang',   title:'رنگ',       sub:'Colours',     icon:'🎨',  color:T.pink,    desc:'14 colours in Urdu'         },
-  { id:'quiz',   title:'کوئز',      sub:'Quiz',        icon:'🏆',  color:T.green,   desc:'Test your knowledge!'       },
+  { id: 'haroof', title: 'حروف تہجی', sub: 'Alphabet',  accent: K.orange,  desc: 'Learn all 40 letters', emoji: '📖', icon: 'ا' },
+  { id: 'lafz',   title: 'الفاظ',     sub: 'Words',      accent: K.teal,    desc: '40+ vocabulary words', emoji: '🔤', icon: '📝' },
+  { id: 'jumlay', title: 'جملے',      sub: 'Sentences',  accent: K.purple,  desc: '12 everyday sentences', emoji: '🗣️', icon: '💬' },
+  { id: 'rang',   title: 'رنگ',       sub: 'Colours',    accent: K.pink,    desc: '14 colours in Urdu',   emoji: '🌈', icon: '🎨' },
+  { id: 'quiz',   title: 'کوئز',      sub: 'Quiz',       accent: K.green,   desc: 'Test your knowledge!', emoji: '✅', icon: '🏆' },
 ];
 
 export default function HomeScreen({ user, completedMap = {}, starsMap = {}, onNavigate }) {
-  const now     = new Date();
-  const hour    = now.getHours();
-  const greet   = getGreeting(hour);
-
-  const totalModules   = MODULES.length;
-  const doneModules    = Object.keys(completedMap).filter(k => completedMap[k]).length;
-  const totalStars     = Object.values(starsMap).reduce((s, v) => s + (v || 0), 0);
+  const hour  = new Date().getHours();
+  const greet = getGreeting(hour);
+  const totalStars  = Object.values(starsMap).reduce((s, v) => s + (v || 0), 0);
+  const doneModules = Object.keys(completedMap).filter(k => completedMap[k]).length;
 
   return (
-    <div style={{
-      flex:1, overflowY:'auto',
-      background:T.screenBg,
-      display:'flex', flexDirection:'column',
-    }}>
-      {/* Hero banner */}
-      <div style={{
-        background:`linear-gradient(135deg, ${T.purple} 0%, ${T.navyLight} 100%)`,
-        padding:'24px 20px 28px',
-        position:'relative', overflow:'hidden',
-      }}>
-        {/* Decorative circles */}
-        <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
-        <div style={{ position:'absolute', bottom:-20, left:-20, width:80,  height:80,  borderRadius:'50%', background:'rgba(255,255,255,0.06)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: K.cream, fontFamily: "'Nunito','Segoe UI',sans-serif", overflowY: 'auto' }}>
 
-        <div style={{ display:'flex', alignItems:'center', gap:14, position:'relative', zIndex:1 }}>
-          <ProfessorAvatar mood="happy" size={72} floating />
-          <div>
-            {/* Greeting line */}
-            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-              <span style={{ fontSize:15, lineHeight:1 }}>{greet.emoji}</span>
-              <span style={{ color:'rgba(255,255,255,0.80)', fontSize:12, fontWeight:600 }}>
-                {greet.eng}
-              </span>
+      {/* Hero banner */}
+      <div style={{ background: `linear-gradient(135deg,${K.orange} 0%,${K.orangeLight} 100%)`, padding: '20px 16px 24px', position: 'relative', overflow: 'hidden', boxShadow: `0 4px 20px ${K.orange}44` }}>
+        <div style={{ position: 'absolute', top: -30, right: -30, width: 130, height: 130, borderRadius: '50%', background: 'rgba(255,255,255,0.10)' }} />
+        <div style={{ position: 'absolute', bottom: -20, left: -20, width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, position: 'relative', zIndex: 1 }}>
+          <div style={{ flexShrink: 0 }}><BoyCharacter mood="happy" size={90} /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{greet.emoji}</span>
+              <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: 13, fontWeight: 700 }}>{greet.eng}</span>
             </div>
-            {/* Name */}
-            <div style={{ color:T.white, fontSize:22, fontWeight:900, lineHeight:1.2 }}>
-              {user.name}!
-            </div>
-            {/* Urdu greeting phrase */}
-            <div style={{
-              fontFamily:"'Noto Nastaliq Urdu', serif",
-              color:'rgba(255,255,255,0.75)',
-              fontSize:14, direction:'rtl', marginTop:2,
-            }}>
-              {greet.urdu}
-            </div>
+            <div style={{ color: K.white, fontSize: 22, fontWeight: 900, lineHeight: 1.2 }}>{user.name}! 👋</div>
+            <div style={{ fontFamily: "'Noto Nastaliq Urdu',serif", color: 'rgba(255,255,255,0.80)', fontSize: 14, direction: 'rtl', marginTop: 3 }}>{greet.urdu}</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 20, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
+            <span style={{ fontSize: 18 }}>⭐</span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: K.orange }}>{totalStars}</span>
           </div>
         </div>
 
         {/* Progress strip */}
-        <div style={{
-          background:'rgba(255,255,255,0.12)',
-          borderRadius:14, padding:'10px 14px',
-          marginTop:16, position:'relative', zIndex:1,
-          display:'flex', alignItems:'center', gap:12,
-        }}>
-          <div style={{ flex:1 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-              <span style={{ color:'rgba(255,255,255,0.8)', fontSize:11, fontWeight:600 }}>
-                Progress
-              </span>
-              <span style={{ color:T.yellow, fontSize:11, fontWeight:700 }}>
-                {doneModules}/{totalModules} modules
-              </span>
-            </div>
-            <PBar value={doneModules} max={totalModules} color={T.yellow} height={7} />
+        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: '10px 14px', marginTop: 16, position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: 12, fontWeight: 700 }}>Overall Progress</span>
+            <span style={{ color: K.white, fontSize: 12, fontWeight: 800 }}>{doneModules}/{MODULES.length} modules</span>
           </div>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:18 }}>⭐</div>
-            <div style={{ color:T.yellow, fontWeight:900, fontSize:13 }}>{totalStars}</div>
+          <div style={{ height: 8, background: 'rgba(255,255,255,0.28)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.round((doneModules / MODULES.length) * 100)}%`, height: '100%', background: K.white, borderRadius: 99, transition: 'width 0.4s ease' }} />
           </div>
         </div>
       </div>
 
-      {/* Modules grid */}
-      <div style={{ padding:'20px 16px', display:'flex', flexDirection:'column', gap:12 }}>
-        <div style={{
-          fontFamily:"'Noto Nastaliq Urdu', serif",
-          fontSize:16, fontWeight:800,
-          color:T.navy, direction:'rtl',
-          marginBottom:4,
-        }}>سبق شروع کریں</div>
+      {/* Module grid */}
+      <div style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <SectionHeading urdu="سبق شروع کریں" english="Start Learning" />
 
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {MODULES.map(mod => {
             const done  = !!completedMap[mod.id];
             const stars = starsMap[mod.id] || 0;
             return (
-              <button
-                key={mod.id}
-                onClick={() => onNavigate(mod.id)}
-                style={{
-                  background:T.white,
-                  border:`2px solid ${done ? mod.color + '66' : T.lightGray}`,
-                  borderRadius:20,
-                  padding:'16px 12px',
-                  cursor:'pointer',
-                  textAlign:'center',
-                  boxShadow:`0 2px 10px ${T.shadow}`,
-                  transition:'all 0.2s',
-                  position:'relative',
-                }}
-              >
+              <button key={mod.id} onClick={() => onNavigate(mod.id)} style={{ background: K.white, border: `2.5px solid ${done ? mod.accent + '66' : K.yellow}`, borderRadius: 22, padding: '18px 12px 14px', cursor: 'pointer', textAlign: 'center', boxShadow: `0 4px 16px ${mod.accent}18`, transition: 'all 0.2s', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
                 {done && (
-                  <div style={{
-                    position:'absolute', top:8, right:8,
-                    background:mod.color, color:'white',
-                    borderRadius:'50%', width:20, height:20,
-                    fontSize:11, fontWeight:900,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                  }}>✓</div>
+                  <div style={{ position: 'absolute', top: 8, right: 8, background: mod.accent, color: K.white, borderRadius: '50%', width: 22, height: 22, fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 2px 6px ${mod.accent}55` }}>✓</div>
                 )}
-                <div style={{
-                  fontSize: mod.id === 'haroof' ? 26 : 30,
-                  fontFamily: mod.id === 'haroof' ? "'Noto Nastaliq Urdu', serif" : undefined,
-                  color: mod.id === 'haroof' ? mod.color : undefined,
-                  marginBottom:8,
-                }}>{mod.icon}</div>
-                <div style={{
-                  fontFamily:"'Noto Nastaliq Urdu', serif",
-                  fontSize:16, fontWeight:800,
-                  color:mod.color, direction:'rtl',
-                  marginBottom:2,
-                }}>{mod.title}</div>
-                <div style={{ fontSize:11, color:T.darkGray, fontWeight:600 }}>{mod.sub}</div>
-                {stars > 0 && (
-                  <div style={{ marginTop:6, fontSize:12 }}>
-                    {'⭐'.repeat(stars)}{'☆'.repeat(3-stars)}
-                  </div>
-                )}
+                <div style={{ width: 56, height: 56, borderRadius: 18, background: `${mod.accent}18`, border: `2px solid ${mod.accent}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: mod.id === 'haroof' ? 28 : 30, fontFamily: mod.id === 'haroof' ? "'Noto Nastaliq Urdu',serif" : undefined, color: mod.id === 'haroof' ? mod.accent : undefined }}>
+                  {mod.id === 'haroof' ? mod.icon : mod.emoji}
+                </div>
+                <div style={{ fontFamily: "'Noto Nastaliq Urdu',serif", fontSize: 16, fontWeight: 800, color: mod.accent, direction: 'rtl' }}>{mod.title}</div>
+                <div style={{ fontSize: 11, color: K.textMid, fontWeight: 700 }}>{mod.sub}</div>
+                <div style={{ fontSize: 10, color: K.gray, fontWeight: 600, lineHeight: 1.3 }}>{mod.desc}</div>
+                {stars > 0 && <div style={{ fontSize: 13 }}>{'⭐'.repeat(stars)}{'☆'.repeat(3 - stars)}</div>}
+                <div style={{ marginTop: 4, background: `linear-gradient(135deg,${mod.accent},${mod.accent}CC)`, color: K.white, borderRadius: 12, padding: '4px 14px', fontSize: 11, fontWeight: 800, boxShadow: `0 2px 8px ${mod.accent}44` }}>
+                  {done ? 'Review' : 'Start'} →
+                </div>
               </button>
             );
           })}
+        </div>
+
+        {/* Footer motivator */}
+        <div style={{ background: K.white, borderRadius: 18, padding: '12px 16px', border: `2px solid ${K.yellow}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 28, flexShrink: 0 }}>🌟</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: K.textDark }}>Keep it up!</div>
+            <div style={{ fontFamily: "'Noto Nastaliq Urdu',serif", fontSize: 12, color: K.textMid, direction: 'rtl', marginTop: 2 }}>ہر روز تھوڑا سیکھیں</div>
+          </div>
         </div>
       </div>
     </div>

@@ -67,8 +67,10 @@ class _HaroofScreenState extends State<HaroofScreen> {
             _scores[index] = score;
             _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
           });
-          // record to provider for adaptive quiz
-          context.read<AppProvider>().recordResult(letter.urdu, score);
+          // record to provider for adaptive quiz + update lesson progress
+          final provider = context.read<AppProvider>();
+          provider.recordResult(letter.urdu, score);
+          provider.updateLessonProgress('/haroof-lesson', _scores.length / FULL_ALPHABET.length);
           TtsService.instance.speak(
             score >= 70 ? 'شاباش! تلفظ درست ہے۔' : 'دوبارہ کوشش کریں۔',
           );

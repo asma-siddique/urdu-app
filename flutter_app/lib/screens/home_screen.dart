@@ -91,7 +91,7 @@ class _HomeBody extends StatelessWidget {
 
                 // ── 2 × 2 tile grid ─────────────────────────────────────
                 // Force exact 2-column layout regardless of screen width
-                _TileGrid(),
+                const _TileGrid(),
 
                 const SizedBox(height: 32),
               ],
@@ -118,7 +118,7 @@ class _TileGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (ctx, bc) {
-      final gap = 14.0;
+      const gap = 14.0;
       final tileW = (bc.maxWidth - gap) / 2;
       final tileH = tileW * 0.78; // slightly shorter than square
 

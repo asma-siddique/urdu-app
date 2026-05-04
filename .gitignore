@@ -1,3 +1,8 @@
+# Secrets — NEVER commit these
+flutter_app/lib/services/secrets.dart
+scripts/cv_urdu_stats.json
+scripts/whisper_wer_results.json
+
 # Flutter
 flutter_app/.dart_tool/
 flutter_app/build/

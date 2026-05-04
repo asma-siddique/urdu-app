@@ -62,7 +62,7 @@ class MmsTtsService {
         final b64  = base64Encode(response.bodyBytes);
         _cache[text] = b64; // cache for instant replay
         MmsTtsPlayer.play(b64, mime);
-        debugPrint('[MMS-TTS] ✓ playing "${text}" [${response.bodyBytes.length} bytes, $mime]');
+        debugPrint('[MMS-TTS] ✓ playing "$text" [${response.bodyBytes.length} bytes, $mime]');
         await Future.delayed(_estimatedDuration(text));
         return true;
 

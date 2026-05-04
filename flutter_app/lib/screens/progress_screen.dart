@@ -17,7 +17,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   static const _amber     = Color(0xFFD4A017);
 
   // Simulated daily usage minutes (Mon–Sun for current week)
-  List<int> _weeklyMinutes = [0, 0, 0, 0, 0, 0, 0];
+  final List<int> _weeklyMinutes = [0, 0, 0, 0, 0, 0, 0];
   int _lessonsCompleted = 0;
   int _streak = 0;
   DateTime? _lastSessionDate;

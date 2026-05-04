@@ -1,5 +1,6 @@
 /// Thin entry-point widgets that convert existing data → LessonFlowScreen.
 /// Each one is a route target — no logic of their own.
+library;
 import 'package:flutter/material.dart';
 import '../data/alphabet.dart';
 import '../data/words.dart';
@@ -90,7 +91,7 @@ class AlfazLessonScreen extends StatelessWidget {
           name: w.roman,
           transcription: w.english,
           emoji: w.emoji,
-          speakText: w.urdu,
+          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
           romanTarget: w.roman,
         )).toList();
 
@@ -116,7 +117,7 @@ class JumlaLessonScreen extends StatelessWidget {
           name: s.english,
           transcription: s.words.join(' · '),
           emoji: '💬',
-          speakText: s.urdu,
+          speakText: '${s.urdu}. ${s.english}',
           romanTarget: s.english,
         )).toList();
 
@@ -142,7 +143,7 @@ class JanwarLessonScreen extends StatelessWidget {
           name: w.roman,
           transcription: w.english,
           emoji: w.emoji,
-          speakText: w.urdu,
+          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
           romanTarget: w.roman,
         )).toList();
 
@@ -168,7 +169,7 @@ class PhalLessonScreen extends StatelessWidget {
           name: w.roman,
           transcription: w.english,
           emoji: w.emoji,
-          speakText: w.urdu,
+          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
           romanTarget: w.roman,
         )).toList();
 
@@ -224,7 +225,7 @@ class JismLessonScreen extends StatelessWidget {
           name: w.roman,
           transcription: w.english,
           emoji: w.emoji,
-          speakText: w.urdu,
+          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
           romanTarget: w.roman,
         )).toList();
 
@@ -237,3 +238,4 @@ class JismLessonScreen extends StatelessWidget {
     );
   }
 }
+

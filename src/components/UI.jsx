@@ -78,6 +78,8 @@ export function Btn({ children, onClick, color = T.purple, outline = false, disa
         fontWeight: 700,
         cursor: disabled ? 'not-allowed' : 'pointer',
         width: full ? '100%' : undefined,
+        maxWidth: full ? 220 : undefined,
+        margin: full ? '0 auto' : undefined,
         transition: 'all 0.2s',
         fontFamily: "'Noto Nastaliq Urdu', serif",
         boxShadow: disabled ? 'none' : `0 3px 10px ${color}55`,

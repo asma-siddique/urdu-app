@@ -254,6 +254,8 @@ function Btn({children,onClick,color=T.purple,outline=false,disabled=false,full=
     borderRadius:14,fontSize:sm?13:15,fontWeight:700,
     cursor:disabled?'not-allowed':'pointer',
     width:full?'100%':undefined,
+    maxWidth:full?220:undefined,
+    margin:full?'0 auto':undefined,
     boxShadow:disabled?'none':`0 3px 10px ${color}55`,
     transition:'all 0.2s',...UR}}>
     {emoji&&<span style={{fontSize:sm?14:18}}>{emoji}</span>}{children}

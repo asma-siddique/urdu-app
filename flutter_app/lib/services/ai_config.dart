@@ -31,14 +31,18 @@
 ///  -----
 ///  1. Create a FREE HuggingFace account at https://huggingface.co
 ///  2. Go to https://huggingface.co/settings/tokens → New token (read)
-///  3. Paste it below as [hfToken]
+///  3. Copy lib/services/secrets.dart.example → secrets.dart and paste token
+library;
+
+// Token is loaded from secrets.dart (gitignored — never committed).
+// See secrets.dart.example for the template.
+import 'secrets.dart';
 
 class AiConfig {
   AiConfig._();
 
-  // ── HuggingFace token ────────────────────────────────────────────────────
-  // Replace with your token — one token works for BOTH models.
-  static const String hfToken = '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';
+  // ── HuggingFace token (loaded from gitignored secrets.dart) ─────────────
+  static const String hfToken = kHuggingFaceToken;
 
   static bool get isConfigured =>
       hfToken.isNotEmpty && !hfToken.contains('REPLACE');

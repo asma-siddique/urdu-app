@@ -8,6 +8,7 @@ class AppProvider extends ChangeNotifier {
   List<ProgressModel> _progressHistory = [];
   Map<String, double> _weaknessScores = {};
   Map<String, int> _srsIntervals = {};
+  Map<String, double> _lessonProgress = {};
   int _currentScreen = 0;
 
   // ── Getters ──────────────────────────────────────────────────────────────
@@ -15,6 +16,7 @@ class AppProvider extends ChangeNotifier {
   List<ProgressModel> get progressHistory => List.unmodifiable(_progressHistory);
   Map<String, double> get weaknessScores => Map.unmodifiable(_weaknessScores);
   Map<String, int> get srsIntervals => Map.unmodifiable(_srsIntervals);
+  Map<String, double> get lessonProgress => Map.unmodifiable(_lessonProgress);
   int get currentScreen => _currentScreen;
 
   /// Convenience getter used by screens that just need the child's name.
@@ -33,6 +35,16 @@ class AppProvider extends ChangeNotifier {
   void setScreen(int i) {
     _currentScreen = i;
     notifyListeners();
+  }
+
+  // ── Per-lesson progress ──────────────────────────────────────────────────
+  /// Call from individual lesson screens with a value between 0.0 and 1.0.
+  void updateLessonProgress(String route, double fraction) {
+    final clamped = fraction.clamp(0.0, 1.0);
+    if ((_lessonProgress[route] ?? 0.0) == clamped) return; // no change
+    _lessonProgress[route] = clamped;
+    notifyListeners();
+    saveUser();
   }
 
   // ── User persistence ─────────────────────────────────────────────────────
@@ -66,6 +78,12 @@ class AppProvider extends ChangeNotifier {
       _srsIntervals = raw.map((k, v) => MapEntry(k, (v as int)));
     }
 
+    final lessonProgressJson = prefs.getString('lesson_progress');
+    if (lessonProgressJson != null) {
+      final raw = jsonDecode(lessonProgressJson) as Map<String, dynamic>;
+      _lessonProgress = raw.map((k, v) => MapEntry(k, (v as num).toDouble()));
+    }
+
     notifyListeners();
   }
 
@@ -79,6 +97,7 @@ class AppProvider extends ChangeNotifier {
     );
     await prefs.setString('weakness_scores', jsonEncode(_weaknessScores));
     await prefs.setString('srs_intervals', jsonEncode(_srsIntervals));
+    await prefs.setString('lesson_progress', jsonEncode(_lessonProgress));
   }
 
   Future<void> setUser(UserModel user) async {

@@ -22,11 +22,11 @@ class MicRecorderWidget extends StatefulWidget {
   final Function(double score, String transcript) onScore;
 
   const MicRecorderWidget({
-    Key? key,
+    super.key,
     required this.targetText,
     required this.targetRoman,
     required this.onScore,
-  }) : super(key: key);
+  });
 
   static Future<void> show(
     BuildContext context, {

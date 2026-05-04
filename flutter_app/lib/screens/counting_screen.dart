@@ -38,8 +38,9 @@ class _CountingScreenState extends State<CountingScreen> {
             _scores[index] = score;
             _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
           });
-          // Record result using urdu word as key
-          context.read<AppProvider>().recordResult(num.urdu, score);
+          final provider = context.read<AppProvider>();
+          provider.recordResult(num.urdu, score);
+          provider.updateLessonProgress('/ginti-lesson', _scores.length / COUNTING.length);
           TtsService.instance.speak(
               score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
         },
@@ -153,7 +154,7 @@ class _CountingScreenState extends State<CountingScreen> {
                         Directionality(
                           textDirection: TextDirection.rtl,
                           child: Text(num.urdu,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'NotoNastaliqUrdu',
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,

@@ -48,7 +48,7 @@ class _JumlaySreenState extends State<JumlaySreen> {
       _emotion = AvatarEmotion.thinking;
       _highlightedWord = -1;
     });
-    await TtsService.instance.speak(sentence.urdu);
+    await TtsService.instance.speak('${sentence.urdu}. ${sentence.english}');
     _startWordHighlight(sentence);
   }
 
@@ -84,8 +84,8 @@ class _JumlaySreenState extends State<JumlaySreen> {
       onScore: (score, transcript) {
         final provider = context.read<AppProvider>();
         provider.recordResult(sentence.urdu, score);
+        provider.updateLessonProgress('/jumla-lesson', (_currentPage + 1) / SENTENCES.length);
         if (score >= 70) {
-          // progress recorded via recordResult above
           setState(() => _emotion = AvatarEmotion.happy);
         } else {
           setState(() => _emotion = AvatarEmotion.sad);
@@ -413,4 +413,5 @@ class _BigBtn extends StatelessWidget {
       ),
     );
   }
+
 }

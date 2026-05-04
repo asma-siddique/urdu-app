@@ -386,9 +386,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           return Positioned(
             left: 90 + 86 * cos(angle) - 12,
             top: 90 + 86 * sin(angle) - 12,
-            child: Text(
-              ['⭐', '🌟', '✨', '💫', '⭐', '🌟'][i],
-              style: const TextStyle(fontSize: 18),
+            child: Opacity(
+              opacity: 0.85,
+              child: Text(
+                ['⭐','🌟','✨','💫','⚡','🎯'][i],
+                style: const TextStyle(fontSize: 20),
+              ),
             ),
           );
         }),
