@@ -46,26 +46,28 @@ class MmsTtsService {
 
       // ── API call ───────────────────────────────────────────────────────
       debugPrint('[MMS-TTS] requesting: "$text"');
-      final response = await http.post(
-        Uri.parse(AiConfig.mmsTtsEndpoint),
-        headers: {
-          'Authorization': 'Bearer ${AiConfig.hfToken}',
-          'Content-Type': 'application/json',
-          'Accept': 'audio/flac',
-        },
-        body: jsonEncode({'inputs': text}),
-      ).timeout(const Duration(seconds: 20));
+      final response = await http
+          .post(
+            Uri.parse(AiConfig.mmsTtsEndpoint),
+            headers: {
+              'Authorization': 'Bearer ${AiConfig.hfToken}',
+              'Content-Type': 'application/json',
+              'Accept': 'audio/flac',
+            },
+            body: jsonEncode({'inputs': text}),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200) {
         // Detect mime type from response headers (usually audio/flac)
         final mime = response.headers['content-type'] ?? 'audio/flac';
-        final b64  = base64Encode(response.bodyBytes);
+        final b64 = base64Encode(response.bodyBytes);
         _cache[text] = b64; // cache for instant replay
         MmsTtsPlayer.play(b64, mime);
-        debugPrint('[MMS-TTS] ✓ playing "$text" [${response.bodyBytes.length} bytes, $mime]');
+        debugPrint(
+            '[MMS-TTS] ✓ playing "$text" [${response.bodyBytes.length} bytes, $mime]');
         await Future.delayed(_estimatedDuration(text));
         return true;
-
       } else if (response.statusCode == 503) {
         // HuggingFace is loading the model — wait then retry once
         final msg = jsonDecode(response.body);
@@ -74,7 +76,6 @@ class MmsTtsService {
         await Future.delayed(Duration(seconds: wait.clamp(3, 20)));
         _busy = false;
         return speak(text); // single retry
-
       } else {
         debugPrint('[MMS-TTS] error ${response.statusCode}: ${response.body}');
         return false;

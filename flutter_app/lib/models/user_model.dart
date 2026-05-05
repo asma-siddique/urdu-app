@@ -108,7 +108,6 @@
 //   }
 // }
 
-
 class UserModel {
   final String id;
   final String name;
@@ -172,21 +171,15 @@ class UserModel {
       avatar: json['avatar']?.toString() ?? '🧑‍🎓',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
-
       totalStars: (json['totalStars'] is int)
           ? json['totalStars']
           : int.tryParse(json['totalStars']?.toString() ?? '0') ?? 0,
-
       sessionsCompleted: (json['sessionsCompleted'] is int)
           ? json['sessionsCompleted']
           : int.tryParse(json['sessionsCompleted']?.toString() ?? '0') ?? 0,
-
       weakAreas: (json['weakAreas'] is List)
-          ? (json['weakAreas'] as List)
-              .map((e) => e.toString())
-              .toList()
+          ? (json['weakAreas'] as List).map((e) => e.toString()).toList()
           : [],
-
       currentLevel: json['currentLevel']?.toString() ?? 'beginner',
     );
   }
@@ -228,9 +221,8 @@ class ProgressModel {
       stars: int.tryParse(json['stars']?.toString() ?? '1') ?? 1,
       durationSeconds:
           int.tryParse(json['durationSeconds']?.toString() ?? '0') ?? 0,
-      completedAt:
-          DateTime.tryParse(json['completedAt']?.toString() ?? '') ??
-              DateTime.now(),
+      completedAt: DateTime.tryParse(json['completedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }

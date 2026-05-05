@@ -24,9 +24,14 @@ class _HaroofScreenState extends State<HaroofScreen> {
   final Map<int, double> _scores = {};
 
   static const List<Color> _circleColors = [
-    Color(0xFF9b5de5), Color(0xFFf15bb5), Color(0xFF00bbf9),
-    Color(0xFFff6d00), Color(0xFF00f5d4), Color(0xFFfee440),
-    Color(0xFF3a86ff), Color(0xFFfb5607),
+    Color(0xFF9b5de5),
+    Color(0xFFf15bb5),
+    Color(0xFF00bbf9),
+    Color(0xFFff6d00),
+    Color(0xFF00f5d4),
+    Color(0xFFfee440),
+    Color(0xFF3a86ff),
+    Color(0xFFfb5607),
   ];
 
   @override
@@ -41,8 +46,7 @@ class _HaroofScreenState extends State<HaroofScreen> {
     super.dispose();
   }
 
-  Color _circleColor(int index) =>
-      _circleColors[index % _circleColors.length];
+  Color _circleColor(int index) => _circleColors[index % _circleColors.length];
 
   // ── TTS: only called from explicit tap ─────────────────────────────────
   Future<void> _speakLetter(UrduLetter letter) async {
@@ -70,7 +74,8 @@ class _HaroofScreenState extends State<HaroofScreen> {
           // record to provider for adaptive quiz + update lesson progress
           final provider = context.read<AppProvider>();
           provider.recordResult(letter.urdu, score);
-          provider.updateLessonProgress('/haroof-lesson', _scores.length / FULL_ALPHABET.length);
+          provider.updateLessonProgress(
+              '/haroof-lesson', _scores.length / FULL_ALPHABET.length);
           TtsService.instance.speak(
             score >= 70 ? 'شاباش! تلفظ درست ہے۔' : 'دوبارہ کوشش کریں۔',
           );
@@ -141,9 +146,8 @@ class _HaroofScreenState extends State<HaroofScreen> {
                         color: selected ? AppTheme.purple : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: selected
-                              ? AppTheme.purple
-                              : Colors.grey.shade300,
+                          color:
+                              selected ? AppTheme.purple : Colors.grey.shade300,
                         ),
                       ),
                       child: Text(
@@ -152,9 +156,8 @@ class _HaroofScreenState extends State<HaroofScreen> {
                           fontFamily: 'NotoNastaliqUrdu',
                           fontSize: 16,
                           color: selected ? Colors.white : AppTheme.navy,
-                          fontWeight: selected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          fontWeight:
+                              selected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -216,7 +219,7 @@ class _HaroofScreenState extends State<HaroofScreen> {
 class _LetterCard extends StatelessWidget {
   final UrduLetter letter;
   final Color circleColor;
-  final double? score;       // null = not attempted yet
+  final double? score; // null = not attempted yet
   final VoidCallback onSpeak;
   final VoidCallback onMic;
 
@@ -315,8 +318,7 @@ class _LetterCard extends StatelessWidget {
                     ),
                     Text(
                       letter.exampleMeaning,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -328,8 +330,8 @@ class _LetterCard extends StatelessWidget {
             // ── Score badge (shown after mic attempt) ────────────────────
             if (score != null)
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: _scoreColor.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(20),
@@ -400,8 +402,7 @@ class _LetterCard extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: onSpeak,
-                    icon: const Text('🔊',
-                        style: TextStyle(fontSize: 18)),
+                    icon: const Text('🔊', style: TextStyle(fontSize: 18)),
                     label: const Text(
                       'سنیں',
                       style: TextStyle(
@@ -422,8 +423,7 @@ class _LetterCard extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: onMic,
-                    icon: const Text('🎤',
-                        style: TextStyle(fontSize: 18)),
+                    icon: const Text('🎤', style: TextStyle(fontSize: 18)),
                     label: const Text(
                       'بولیں',
                       style: TextStyle(

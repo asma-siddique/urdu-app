@@ -153,11 +153,11 @@ class _LessonsHeader extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: Colors.white70)),
               ])),
               // books illustration
-              SizedBox(width: 72, height: 72, child: Stack(children: [
-                const Positioned(bottom: 0, left: 6,  child: Text('📚', style: TextStyle(fontSize: 38))),
-                const Positioned(top: 0,    left: 24, child: Text('🍎', style: TextStyle(fontSize: 20))),
-                const Positioned(top: 2,    right: 0, child: Text('✨', style: TextStyle(fontSize: 16))),
-                const Positioned(bottom: 16, right: 2, child: Text('⭐', style: TextStyle(fontSize: 11))),
+              const SizedBox(width: 72, height: 72, child: Stack(children: [
+                Positioned(bottom: 0, left: 6,  child: Text('📚', style: TextStyle(fontSize: 38))),
+                Positioned(top: 0,    left: 24, child: Text('🍎', style: TextStyle(fontSize: 20))),
+                Positioned(top: 2,    right: 0, child: Text('✨', style: TextStyle(fontSize: 16))),
+                Positioned(bottom: 16, right: 2, child: Text('⭐', style: TextStyle(fontSize: 11))),
               ])),
             ]),
             const SizedBox(height: 14),
@@ -227,20 +227,7 @@ class _LessonRow extends StatelessWidget {
                   fontFamily: 'NotoNastaliqUrdu', fontSize: 12,
                   color: lesson.color, fontWeight: FontWeight.w600,
                   height: 1.2, leadingDistribution: TextLeadingDistribution.even))),
-            if (isInProgress) ...[
-              const SizedBox(height: 6),
-              Row(children: [
-                Expanded(child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress, minHeight: 5,
-                    backgroundColor: lesson.color.withOpacity(0.15),
-                    valueColor: AlwaysStoppedAnimation<Color>(lesson.color)),
-                )),
-                const SizedBox(width: 6),
-                Text('${(progress * 100).round()}%', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: lesson.color)),
-              ]),
-            ],
+           
           ])),
           const SizedBox(width: 10),
           // Right side status

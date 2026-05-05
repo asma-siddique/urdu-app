@@ -76,7 +76,7 @@ class _JumlaySreenState extends State<JumlaySreen> {
   }
 
   void _openMic(BuildContext context, UrduSentence sentence) {
-    final expected = sentence.words.join(' ');
+    
     MicRecorderWidget.show(
       context,
       targetText: sentence.urdu,
@@ -84,7 +84,8 @@ class _JumlaySreenState extends State<JumlaySreen> {
       onScore: (score, transcript) {
         final provider = context.read<AppProvider>();
         provider.recordResult(sentence.urdu, score);
-        provider.updateLessonProgress('/jumla-lesson', (_currentPage + 1) / SENTENCES.length);
+        provider.updateLessonProgress(
+            '/jumla-lesson', (_currentPage + 1) / SENTENCES.length);
         if (score >= 70) {
           setState(() => _emotion = AvatarEmotion.happy);
         } else {
@@ -121,7 +122,7 @@ class _JumlaySreenState extends State<JumlaySreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sentence = SENTENCES[_currentPage];
+    
 
     return Scaffold(
       backgroundColor: AppTheme.lightGray,
@@ -180,9 +181,8 @@ class _JumlaySreenState extends State<JumlaySreen> {
                       height: 8,
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       decoration: BoxDecoration(
-                        color: i == _currentPage
-                            ? Colors.white
-                            : Colors.white54,
+                        color:
+                            i == _currentPage ? Colors.white : Colors.white54,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
@@ -287,9 +287,7 @@ class _SentencePage extends StatelessWidget {
                             fontFamily: 'NotoNastaliqUrdu',
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: highlighted
-                                ? Colors.white
-                                : AppTheme.navy,
+                            color: highlighted ? Colors.white : AppTheme.navy,
                             height: 1.6,
                           ),
                         ),
@@ -413,5 +411,4 @@ class _BigBtn extends StatelessWidget {
       ),
     );
   }
-
 }

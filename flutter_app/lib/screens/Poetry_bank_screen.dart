@@ -22,7 +22,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
         'tanhayi bhi kund si aane lagi hai ham bhi',
         'chalo ham aaj ye qissa adhoora chhod dete hain',
       ],
-      english: 'Loneliness too has become dull for us now\nLet us leave this story incomplete today',
+      english:
+          'Loneliness too has become dull for us now\nLet us leave this story incomplete today',
     ),
     _Poem(
       poet: 'علامہ اقبال',
@@ -35,7 +36,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
         'sitaaron se aage jahaan aur bhi hain',
         'abhi ishq ke imtihaan aur bhi hain',
       ],
-      english: 'Beyond the stars there are more worlds yet\nThere are more trials of love still to come',
+      english:
+          'Beyond the stars there are more worlds yet\nThere are more trials of love still to come',
     ),
     _Poem(
       poet: 'میر تقی میر',
@@ -48,7 +50,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
         'Mir kya saada hain bemaar hue jis ke sabab',
         'usi attaar ke ladke se dawa lete hain',
       ],
-      english: 'How naive Mir is — the one who caused his illness\nHe seeks remedy from the same apothecary\'s boy',
+      english:
+          'How naive Mir is — the one who caused his illness\nHe seeks remedy from the same apothecary\'s boy',
     ),
     _Poem(
       poet: 'فیض احمد فیض',
@@ -61,7 +64,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
         'mujh se pehli si muhabbat meri mahboob na maang',
         'main ne samjha tha ke tu hai to darakhshaan hai hayaat',
       ],
-      english: 'Do not ask of me, my love, that love I had for you once\nI had thought that you were there, life was radiant',
+      english:
+          'Do not ask of me, my love, that love I had for you once\nI had thought that you were there, life was radiant',
     ),
     _Poem(
       poet: 'پروین شاکر',
@@ -74,7 +78,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
         'khushbu ka safar hai abhi baqi',
         'phool ki zid nahin hai meri',
       ],
-      english: 'The journey of fragrance is still not over\nI do not insist on the flower itself',
+      english:
+          'The journey of fragrance is still not over\nI do not insist on the flower itself',
     ),
   ];
 
@@ -107,9 +112,12 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
                   onTap: () => setState(() => _selectedPoetIndex = i),
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.15),
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -117,7 +125,8 @@ class _PoetryBankScreenState extends State<PoetryBankScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? const Color(0xFF1B4332) : Colors.white,
+                        color:
+                            isSelected ? const Color(0xFF1B4332) : Colors.white,
                       ),
                     ),
                   ),
@@ -184,25 +193,26 @@ class _PoemCardState extends State<_PoemCard> {
           // Quote mark
           const Align(
             alignment: Alignment.topRight,
-            child: Text('❝', style: TextStyle(fontSize: 36, color: Colors.white54)),
+            child: Text('❝',
+                style: TextStyle(fontSize: 36, color: Colors.white54)),
           ),
           const SizedBox(height: 8),
 
           // Urdu lines
           ...widget.poem.urduLines.map((line) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              line,
-              style: const TextStyle(
-                fontFamily: 'NotoNastaliqUrdu',
-                fontSize: 20,
-                color: Colors.white,
-                height: 2.0,
-              ),
-              textDirection: TextDirection.rtl,
-              textAlign: TextAlign.right,
-            ),
-          )),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    fontFamily: 'NotoNastaliqUrdu',
+                    fontSize: 20,
+                    color: Colors.white,
+                    height: 2.0,
+                  ),
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
+                ),
+              )),
 
           const SizedBox(height: 12),
           const Divider(color: Colors.white24),
@@ -237,14 +247,14 @@ class _PoemCardState extends State<_PoemCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ...widget.poem.romanLines.map((line) => Text(
-                    line,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.white70,
-                      fontStyle: FontStyle.italic,
-                      height: 1.8,
-                    ),
-                  )),
+                        line,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.white70,
+                          fontStyle: FontStyle.italic,
+                          height: 1.8,
+                        ),
+                      )),
                   const SizedBox(height: 8),
                   Text(
                     widget.poem.english,
@@ -269,20 +279,25 @@ class _PoemCardState extends State<_PoemCard> {
                   widget.poem.urduLines.join(' '),
                 ),
                 icon: const Icon(Icons.volume_up, size: 16),
-                label: const Text('سنیں', style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 14)),
+                label: const Text('سنیں',
+                    style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu', fontSize: 14)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white.withOpacity(0.15),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 ),
               ),
               const SizedBox(width: 10),
               // Transliteration toggle
               ElevatedButton.icon(
                 onPressed: () => setState(() => _showRoman = !_showRoman),
-                icon: Icon(_showRoman ? Icons.visibility_off : Icons.translate, size: 16),
+                icon: Icon(_showRoman ? Icons.visibility_off : Icons.translate,
+                    size: 16),
                 label: Text(
                   _showRoman ? 'Hide' : 'Transliteration',
                   style: const TextStyle(fontSize: 12),
@@ -291,8 +306,10 @@ class _PoemCardState extends State<_PoemCard> {
                   backgroundColor: Colors.white.withOpacity(0.15),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 ),
               ),
             ],
@@ -319,7 +336,10 @@ class _CompactPoemTile extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2)),
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Column(

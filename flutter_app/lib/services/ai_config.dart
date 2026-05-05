@@ -48,18 +48,18 @@ class AiConfig {
       hfToken.isNotEmpty && !hfToken.contains('REPLACE');
 
   // ── Model 1: Whisper Large V3 — ASR ─────────────────────────────────────
-  static const String whisperModel    = 'openai/whisper-large-v3';
+  static const String whisperModel = 'openai/whisper-large-v3';
   static const String whisperEndpoint =
       'https://api-inference.huggingface.co/models/$whisperModel';
 
   // ── Model 2: MMS-TTS Urdu — TTS ─────────────────────────────────────────
-  static const String mmsTtsModel    = 'facebook/mms-tts-urd-script_arabic';
+  static const String mmsTtsModel = 'facebook/mms-tts-urd-script_arabic';
   static const String mmsTtsEndpoint =
       'https://api-inference.huggingface.co/models/$mmsTtsModel';
 
   // ── Dataset ──────────────────────────────────────────────────────────────
-  static const String datasetName    = 'mozilla-foundation/common_voice_17_0';
-  static const String datasetLang    = 'ur';
-  static const String datasetUrl     =
+  static const String datasetName = 'mozilla-foundation/common_voice_17_0';
+  static const String datasetLang = 'ur';
+  static const String datasetUrl =
       'https://huggingface.co/datasets/$datasetName';
 }

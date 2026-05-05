@@ -1,6 +1,7 @@
 /// Thin entry-point widgets that convert existing data → LessonFlowScreen.
 /// Each one is a route target — no logic of their own.
 library;
+
 import 'package:flutter/material.dart';
 import '../data/alphabet.dart';
 import '../data/words.dart';
@@ -19,14 +20,16 @@ class HaroofLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = FULL_ALPHABET.map((l) => LessonCard(
-          mainText: l.urdu,
-          name: l.roman,
-          transcription: '${l.example} — ${l.exampleMeaning}',
-          emoji: l.emoji,
-          speakText: '${l.urdu}۔ ${l.roman}۔ مثال: ${l.example}',
-          romanTarget: l.roman,
-        )).toList();
+    final cards = FULL_ALPHABET
+        .map((l) => LessonCard(
+              mainText: l.urdu,
+              name: l.roman,
+              transcription: '${l.example} — ${l.exampleMeaning}',
+              emoji: l.emoji,
+              speakText: '${l.urdu}۔ ${l.roman}۔ مثال: ${l.example}',
+              romanTarget: l.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 1,
@@ -44,8 +47,26 @@ class GintiLessonScreen extends StatelessWidget {
   const GintiLessonScreen({super.key});
 
   static const _numberEmojis = [
-    '1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟',
-    '1️⃣1️⃣','1️⃣2️⃣','1️⃣3️⃣','1️⃣4️⃣','1️⃣5️⃣','1️⃣6️⃣','1️⃣7️⃣','1️⃣8️⃣','1️⃣9️⃣','2️⃣0️⃣',
+    '1️⃣',
+    '2️⃣',
+    '3️⃣',
+    '4️⃣',
+    '5️⃣',
+    '6️⃣',
+    '7️⃣',
+    '8️⃣',
+    '9️⃣',
+    '🔟',
+    '1️⃣1️⃣',
+    '1️⃣2️⃣',
+    '1️⃣3️⃣',
+    '1️⃣4️⃣',
+    '1️⃣5️⃣',
+    '1️⃣6️⃣',
+    '1️⃣7️⃣',
+    '1️⃣8️⃣',
+    '1️⃣9️⃣',
+    '2️⃣0️⃣',
   ];
 
   /// For 1-20 use keycap emojis; for 21-99 show the western numeral as text;
@@ -58,16 +79,18 @@ class GintiLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = COUNTING.map((n) => LessonCard(
-          mainText: n.numeral,       // Urdu numeral e.g. ٢٤
-          name: n.roman,             // e.g. Chaubees
-          transcription: n.urdu,     // Urdu word e.g. چوبیس
-          emoji: _emoji(n.number),   // visual aid in grey box
-          // Use the roman (English) name for TTS — works with any browser voice.
-          // Urdu Nastaliq script causes silent failures when no ur-PK voice is loaded.
-          speakText: n.roman,
-          romanTarget: n.roman,
-        )).toList();
+    final cards = COUNTING
+        .map((n) => LessonCard(
+              mainText: n.numeral, // Urdu numeral e.g. ٢٤
+              name: n.roman, // e.g. Chaubees
+              transcription: n.urdu, // Urdu word e.g. چوبیس
+              emoji: _emoji(n.number), // visual aid in grey box
+              // Use the roman (English) name for TTS — works with any browser voice.
+              // Urdu Nastaliq script causes silent failures when no ur-PK voice is loaded.
+              speakText: n.roman,
+              romanTarget: n.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 2,
@@ -86,14 +109,16 @@ class AlfazLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = WORDS.map((w) => LessonCard(
-          mainText: w.urdu,
-          name: w.roman,
-          transcription: w.english,
-          emoji: w.emoji,
-          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
-          romanTarget: w.roman,
-        )).toList();
+    final cards = WORDS
+        .map((w) => LessonCard(
+              mainText: w.urdu,
+              name: w.roman,
+              transcription: w.english,
+              emoji: w.emoji,
+              speakText: '${w.urdu}. ${w.roman}. ${w.english}',
+              romanTarget: w.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 3,
@@ -112,14 +137,16 @@ class JumlaLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = SENTENCES.map((s) => LessonCard(
-          mainText: s.urdu,
-          name: s.english,
-          transcription: s.words.join(' · '),
-          emoji: '💬',
-          speakText: '${s.urdu}. ${s.english}',
-          romanTarget: s.english,
-        )).toList();
+    final cards = SENTENCES
+        .map((s) => LessonCard(
+              mainText: s.urdu,
+              name: s.english,
+              transcription: s.words.join(' · '),
+              emoji: '💬',
+              speakText: '${s.urdu}. ${s.english}',
+              romanTarget: s.english,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 4,
@@ -138,14 +165,16 @@ class JanwarLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = ANIMALS.map((w) => LessonCard(
-          mainText: w.urdu,
-          name: w.roman,
-          transcription: w.english,
-          emoji: w.emoji,
-          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
-          romanTarget: w.roman,
-        )).toList();
+    final cards = ANIMALS
+        .map((w) => LessonCard(
+              mainText: w.urdu,
+              name: w.roman,
+              transcription: w.english,
+              emoji: w.emoji,
+              speakText: '${w.urdu}. ${w.roman}. ${w.english}',
+              romanTarget: w.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 7,
@@ -164,14 +193,16 @@ class PhalLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = FRUITS.map((w) => LessonCard(
-          mainText: w.urdu,
-          name: w.roman,
-          transcription: w.english,
-          emoji: w.emoji,
-          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
-          romanTarget: w.roman,
-        )).toList();
+    final cards = FRUITS
+        .map((w) => LessonCard(
+              mainText: w.urdu,
+              name: w.roman,
+              transcription: w.english,
+              emoji: w.emoji,
+              speakText: '${w.urdu}. ${w.roman}. ${w.english}',
+              romanTarget: w.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 8,
@@ -193,14 +224,17 @@ class HaroofQuizEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shuffled = List.of(FULL_ALPHABET)..shuffle();
-    final cards = shuffled.take(10).map((l) => LessonCard(
-          mainText: l.urdu,
-          name: l.roman,
-          transcription: '${l.example} — ${l.exampleMeaning}',
-          emoji: l.emoji,
-          speakText: '${l.urdu}۔ ${l.roman}',
-          romanTarget: l.roman,
-        )).toList();
+    final cards = shuffled
+        .take(10)
+        .map((l) => LessonCard(
+              mainText: l.urdu,
+              name: l.roman,
+              transcription: '${l.example} — ${l.exampleMeaning}',
+              emoji: l.emoji,
+              speakText: '${l.urdu}۔ ${l.roman}',
+              romanTarget: l.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 1,
@@ -220,14 +254,16 @@ class JismLessonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = BODY_PARTS.map((w) => LessonCard(
-          mainText: w.urdu,
-          name: w.roman,
-          transcription: w.english,
-          emoji: w.emoji,
-          speakText: '${w.urdu}. ${w.roman}. ${w.english}',
-          romanTarget: w.roman,
-        )).toList();
+    final cards = BODY_PARTS
+        .map((w) => LessonCard(
+              mainText: w.urdu,
+              name: w.roman,
+              transcription: w.english,
+              emoji: w.emoji,
+              speakText: '${w.urdu}. ${w.roman}. ${w.english}',
+              romanTarget: w.roman,
+            ))
+        .toList();
 
     return LessonFlowScreen(
       lessonNumber: 9,
@@ -238,4 +274,3 @@ class JismLessonScreen extends StatelessWidget {
     );
   }
 }
-

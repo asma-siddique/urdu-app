@@ -109,10 +109,14 @@ class _TileGrid extends StatelessWidget {
   const _TileGrid();
 
   static const _tiles = [
-    _TileData('Lessons',    'سبق',     Icons.menu_book_rounded,    Color(0xFF1B5E4B), '/lessons-hub'),
-    _TileData('Quizzes',    'کوئز',    Icons.quiz_rounded,          Color(0xFF2563EB), '/quiz-hub'),
-    _TileData('Vocabulary', 'لغت',     Icons.library_books_rounded, Color(0xFFD97706), '/vocabulary-bank'),
-    _TileData('Progress',   'پیش رفت', Icons.bar_chart_rounded,     Color(0xFFE07B2A), '/progress'),
+    _TileData('Lessons', 'سبق', Icons.menu_book_rounded, Color(0xFF1B5E4B),
+        '/lessons-hub'),
+    _TileData(
+        'Quizzes', 'کوئز', Icons.quiz_rounded, Color(0xFF2563EB), '/quiz-hub'),
+    _TileData('Vocabulary', 'لغت', Icons.library_books_rounded,
+        Color(0xFFD97706), '/vocabulary-bank'),
+    _TileData('Progress', 'پیش رفت', Icons.bar_chart_rounded, Color(0xFFE07B2A),
+        '/progress'),
   ];
 
   @override
@@ -241,8 +245,16 @@ class _BottomNav extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavBtn(icon: Icons.home_rounded,   label: 'Home',    isActive: true,  onTap: () {}),
-                _NavBtn(icon: Icons.person_rounded, label: 'Profile', isActive: false, onTap: onProfileTap),
+                _NavBtn(
+                    icon: Icons.home_rounded,
+                    label: 'Home',
+                    isActive: true,
+                    onTap: () {}),
+                _NavBtn(
+                    icon: Icons.person_rounded,
+                    label: 'Profile',
+                    isActive: false,
+                    onTap: onProfileTap),
               ],
             ),
           ),
@@ -257,7 +269,11 @@ class _NavBtn extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  const _NavBtn({required this.icon, required this.label, required this.isActive, required this.onTap});
+  const _NavBtn(
+      {required this.icon,
+      required this.label,
+      required this.isActive,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -271,10 +287,11 @@ class _NavBtn extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(
-              fontSize: 11,
-              color: color,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.normal)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.normal)),
         ],
       ),
     );

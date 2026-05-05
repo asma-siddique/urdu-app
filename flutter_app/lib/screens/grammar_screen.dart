@@ -34,21 +34,60 @@ class _GrammarScreenState extends State<GrammarScreen> {
   final Map<int, double> _scores = {};
 
   static const List<_SingularPlural> _words = [
-    _SingularPlural(singular: 'بچہ',    plural: 'بچے',     english: 'Child / Children',      emoji: '👶'),
-    _SingularPlural(singular: 'کتا',    plural: 'کتے',     english: 'Dog / Dogs',             emoji: '🐶'),
-    _SingularPlural(singular: 'پھول',   plural: 'پھول',    english: 'Flower / Flowers',       emoji: '🌸'),
-    _SingularPlural(singular: 'کتاب',   plural: 'کتابیں',  english: 'Book / Books',           emoji: '📚'),
-    _SingularPlural(singular: 'قلم',    plural: 'قلمیں',   english: 'Pen / Pens',             emoji: '✒️'),
-    _SingularPlural(singular: 'لڑکا',   plural: 'لڑکے',   english: 'Boy / Boys',             emoji: '👦'),
-    _SingularPlural(singular: 'لڑکی',   plural: 'لڑکیاں', english: 'Girl / Girls',           emoji: '👧'),
-    _SingularPlural(singular: 'درخت',   plural: 'درخت',    english: 'Tree / Trees',           emoji: '🌳'),
-    _SingularPlural(singular: 'گھر',    plural: 'گھر',     english: 'House / Houses',         emoji: '🏠'),
-    _SingularPlural(singular: 'کمرہ',   plural: 'کمرے',    english: 'Room / Rooms',           emoji: '🛏️'),
-    _SingularPlural(singular: 'استاد',  plural: 'اساتذہ',  english: 'Teacher / Teachers',     emoji: '👨‍🏫'),
-    _SingularPlural(singular: 'طالب علم',plural:'طلباء',   english: 'Student / Students',     emoji: '🧑‍🎓'),
-    _SingularPlural(singular: 'گائے',   plural: 'گائیں',   english: 'Cow / Cows',             emoji: '🐄'),
-    _SingularPlural(singular: 'مرغی',   plural: 'مرغیاں',  english: 'Hen / Hens',             emoji: '🐔'),
-    _SingularPlural(singular: 'پرندہ',  plural: 'پرندے',   english: 'Bird / Birds',           emoji: '🐦'),
+    _SingularPlural(
+        singular: 'بچہ',
+        plural: 'بچے',
+        english: 'Child / Children',
+        emoji: '👶'),
+    _SingularPlural(
+        singular: 'کتا', plural: 'کتے', english: 'Dog / Dogs', emoji: '🐶'),
+    _SingularPlural(
+        singular: 'پھول',
+        plural: 'پھول',
+        english: 'Flower / Flowers',
+        emoji: '🌸'),
+    _SingularPlural(
+        singular: 'کتاب',
+        plural: 'کتابیں',
+        english: 'Book / Books',
+        emoji: '📚'),
+    _SingularPlural(
+        singular: 'قلم', plural: 'قلمیں', english: 'Pen / Pens', emoji: '✒️'),
+    _SingularPlural(
+        singular: 'لڑکا', plural: 'لڑکے', english: 'Boy / Boys', emoji: '👦'),
+    _SingularPlural(
+        singular: 'لڑکی',
+        plural: 'لڑکیاں',
+        english: 'Girl / Girls',
+        emoji: '👧'),
+    _SingularPlural(
+        singular: 'درخت', plural: 'درخت', english: 'Tree / Trees', emoji: '🌳'),
+    _SingularPlural(
+        singular: 'گھر', plural: 'گھر', english: 'House / Houses', emoji: '🏠'),
+    _SingularPlural(
+        singular: 'کمرہ',
+        plural: 'کمرے',
+        english: 'Room / Rooms',
+        emoji: '🛏️'),
+    _SingularPlural(
+        singular: 'استاد',
+        plural: 'اساتذہ',
+        english: 'Teacher / Teachers',
+        emoji: '👨‍🏫'),
+    _SingularPlural(
+        singular: 'طالب علم',
+        plural: 'طلباء',
+        english: 'Student / Students',
+        emoji: '🧑‍🎓'),
+    _SingularPlural(
+        singular: 'گائے', plural: 'گائیں', english: 'Cow / Cows', emoji: '🐄'),
+    _SingularPlural(
+        singular: 'مرغی', plural: 'مرغیاں', english: 'Hen / Hens', emoji: '🐔'),
+    _SingularPlural(
+        singular: 'پرندہ',
+        plural: 'پرندے',
+        english: 'Bird / Birds',
+        emoji: '🐦'),
   ];
 
   Future<void> _speak(String text) async {
@@ -69,12 +108,11 @@ class _GrammarScreenState extends State<GrammarScreen> {
           Navigator.pop(context);
           setState(() {
             _scores[index] = score;
-            _emotion =
-                score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
+            _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
           });
           context.read<AppProvider>().recordResult(word.singular, score);
-          TtsService.instance.speak(
-              score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
+          TtsService.instance
+              .speak(score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
         },
       ),
     );
@@ -108,8 +146,7 @@ class _GrammarScreenState extends State<GrammarScreen> {
               ),
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Center(
-                child: ProfessorAvatar(emotion: _emotion, size: 80)),
+            child: Center(child: ProfessorAvatar(emotion: _emotion, size: 80)),
           ),
           // Header row
           const Padding(
@@ -174,16 +211,14 @@ class _GrammarScreenState extends State<GrammarScreen> {
                     child: Row(
                       children: [
                         // Emoji
-                        Text(word.emoji,
-                            style: const TextStyle(fontSize: 30)),
+                        Text(word.emoji, style: const TextStyle(fontSize: 30)),
                         const SizedBox(width: 10),
                         // Singular
                         Expanded(
                           child: Directionality(
                             textDirection: TextDirection.rtl,
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(word.singular,
                                     style: const TextStyle(
@@ -209,8 +244,7 @@ class _GrammarScreenState extends State<GrammarScreen> {
                           child: Directionality(
                             textDirection: TextDirection.rtl,
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(word.plural,
                                     style: const TextStyle(
@@ -229,15 +263,13 @@ class _GrammarScreenState extends State<GrammarScreen> {
                         Column(
                           children: [
                             GestureDetector(
-                              onTap: () => _speak(
-                                  '${word.singular}۔ ${word.plural}'),
+                              onTap: () =>
+                                  _speak('${word.singular}۔ ${word.plural}'),
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color:
-                                      AppTheme.teal.withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                  color: AppTheme.teal.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text('🔊',
                                     style: TextStyle(fontSize: 18)),
@@ -249,10 +281,8 @@ class _GrammarScreenState extends State<GrammarScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.purple
-                                      .withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                  color: AppTheme.purple.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text('🎤',
                                     style: TextStyle(fontSize: 18)),
@@ -271,9 +301,8 @@ class _GrammarScreenState extends State<GrammarScreen> {
                                       strokeWidth: 3,
                                       backgroundColor:
                                           scoreColor.withOpacity(0.2),
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                              scoreColor),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          scoreColor),
                                     ),
                                     Text('${score.toInt()}',
                                         style: TextStyle(

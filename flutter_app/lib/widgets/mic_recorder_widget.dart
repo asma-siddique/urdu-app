@@ -17,8 +17,8 @@ import '../services/web_recorder_stub.dart'
 ///
 /// Score: 0 if nothing heard. Levenshtein + Urdu phonetic alternatives otherwise.
 class MicRecorderWidget extends StatefulWidget {
-  final String targetText;   // Urdu text (shown to user)
-  final String targetRoman;  // Roman transliteration (used for scoring)
+  final String targetText; // Urdu text (shown to user)
+  final String targetRoman; // Roman transliteration (used for scoring)
   final Function(double score, String transcript) onScore;
 
   const MicRecorderWidget({
@@ -51,11 +51,11 @@ class MicRecorderWidget extends StatefulWidget {
 }
 
 enum _Phase { idle, listening, processing, done }
+
 enum _Engine { whisper, browserStt }
 
 class _MicState extends State<MicRecorderWidget>
     with SingleTickerProviderStateMixin {
-
   // ── STT (fallback) ─────────────────────────────────────────────────────────
   final stt.SpeechToText _stt = stt.SpeechToText();
   bool _sttAvailable = false;
@@ -90,10 +90,13 @@ class _MicState extends State<MicRecorderWidget>
         .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     if (kIsWeb) {
-      final whisperReady = WhisperService.instance.isConfigured && webAudioSupported;
+      final whisperReady =
+          WhisperService.instance.isConfigured && webAudioSupported;
       _engine = whisperReady ? _Engine.whisper : _Engine.browserStt;
       _engineLabel = whisperReady ? '✨ Whisper AI' : '🌐 Browser STT';
-      if (!whisperReady) _initStt();
+      if (!whisperReady) {
+        _initStt();
+      }
     } else {
       _engine = _Engine.browserStt;
       _engineLabel = '📱 Native STT';
@@ -105,7 +108,9 @@ class _MicState extends State<MicRecorderWidget>
     _sttAvailable = await _stt.initialize(
       onError: (e) => debugPrint('[STT] error: $e'),
     );
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // ── Start ──────────────────────────────────────────────────────────────────
@@ -134,7 +139,8 @@ class _MicState extends State<MicRecorderWidget>
       _audioCompleter = Completer<Map<String, String?>>();
       webAudioStart((String? b64, String? mime) {
         if (!(_audioCompleter?.isCompleted ?? true)) {
-          _audioCompleter!.complete({'audio': b64, 'mime': mime ?? 'audio/webm'});
+          _audioCompleter!
+              .complete({'audio': b64, 'mime': mime ?? 'audio/webm'});
         }
       });
     } else {
@@ -153,7 +159,10 @@ class _MicState extends State<MicRecorderWidget>
       final localeIds = locales.map((l) => l.localeId).toList();
       String locale = 'en_US';
       for (final id in ['ur_PK', 'ur-PK', 'ur', 'hi_IN', 'hi-IN', 'hi']) {
-        if (localeIds.contains(id)) { locale = id; break; }
+        if (localeIds.contains(id)) {
+          locale = id;
+          break;
+        }
       }
       debugPrint('[STT] locale: $locale');
 
@@ -165,7 +174,9 @@ class _MicState extends State<MicRecorderWidget>
         onResult: (result) {
           if (mounted) {
             setState(() => _liveWords = result.recognizedWords);
-            if (result.finalResult) _finalWords = result.recognizedWords;
+            if (result.finalResult) {
+              _finalWords = result.recognizedWords;
+            }
           }
         },
       );
@@ -189,8 +200,9 @@ class _MicState extends State<MicRecorderWidget>
 
     if (_engine == _Engine.whisper) {
       webAudioStop();
-      final result = await (_audioCompleter?.future ?? Future.value(<String, String?>{}))
-          .timeout(const Duration(seconds: 20), onTimeout: () => {});
+      final result =
+          await (_audioCompleter?.future ?? Future.value(<String, String?>{}))
+              .timeout(const Duration(seconds: 20), onTimeout: () => {});
       final b64 = result['audio'];
       final mime = result['mime'] ?? 'audio/webm';
 
@@ -216,7 +228,12 @@ class _MicState extends State<MicRecorderWidget>
       score = max(sr, su);
     }
 
-    if (mounted) setState(() { _score = score; _phase = _Phase.done; });
+    if (mounted) {
+      setState(() {
+        _score = score;
+        _phase = _Phase.done;
+      });
+    }
     widget.onScore(score, heard);
   }
 
@@ -230,7 +247,8 @@ class _MicState extends State<MicRecorderWidget>
 
   String get _statusText {
     switch (_phase) {
-      case _Phase.idle:       return 'مائیکروفون دبائیں';
+      case _Phase.idle:
+        return 'مائیکروفون دبائیں';
       case _Phase.listening:
         if (_engine == _Engine.whisper) return 'ریکارڈنگ جاری ہے...';
         return _liveWords.isNotEmpty ? '"$_liveWords"' : 'بولیں...';
@@ -259,7 +277,8 @@ class _MicState extends State<MicRecorderWidget>
         children: [
           // Handle
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
                 color: Colors.grey[300],
@@ -272,17 +291,20 @@ class _MicState extends State<MicRecorderWidget>
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
               color: _engine == _Engine.whisper
-                  ? Colors.purple.shade50 : Colors.grey.shade100,
+                  ? Colors.purple.shade50
+                  : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: _engine == _Engine.whisper
-                    ? Colors.purple.shade200 : Colors.grey.shade300,
+                    ? Colors.purple.shade200
+                    : Colors.grey.shade300,
               ),
             ),
             child: Text(
               _engineLabel,
               style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w600,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
                 color: _engine == _Engine.whisper ? Colors.purple : Colors.grey,
               ),
             ),
@@ -295,7 +317,8 @@ class _MicState extends State<MicRecorderWidget>
               widget.targetText,
               style: const TextStyle(
                 fontFamily: 'NotoNastaliqUrdu',
-                fontSize: 38, fontWeight: FontWeight.bold,
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
                 color: Color(0xFF1C1917),
               ),
               textAlign: TextAlign.center,
@@ -311,18 +334,20 @@ class _MicState extends State<MicRecorderWidget>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: List.generate(_bars.length, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 80),
-                width: 5,
-                height: 6 + (_bars[i] * 38),
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  color: _phase == _Phase.listening
-                      ? accent.withOpacity(0.4 + _bars[i] * 0.6)
-                      : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              )),
+              children: List.generate(
+                  _bars.length,
+                  (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 80),
+                        width: 5,
+                        height: 6 + (_bars[i] * 38),
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: _phase == _Phase.listening
+                              ? accent.withOpacity(0.4 + _bars[i] * 0.6)
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      )),
             ),
           ),
 
@@ -332,29 +357,37 @@ class _MicState extends State<MicRecorderWidget>
           if (_phase == _Phase.done)
             Column(children: [
               SizedBox(
-                width: 84, height: 84,
+                width: 84,
+                height: 84,
                 child: Stack(alignment: Alignment.center, children: [
                   CircularProgressIndicator(
-                    value: _score / 100, strokeWidth: 7,
+                    value: _score / 100,
+                    strokeWidth: 7,
                     backgroundColor: Colors.grey[200],
                     valueColor: AlwaysStoppedAnimation<Color>(_scoreColor),
                   ),
                   Text('${_score.toInt()}%',
-                      style: TextStyle(fontSize: 18,
-                          fontWeight: FontWeight.w800, color: _scoreColor)),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: _scoreColor)),
                 ]),
               ),
               const SizedBox(height: 8),
             ])
           else if (_phase == _Phase.processing)
             SizedBox(
-              width: 84, height: 84,
-              child: Center(child: Column(
+              width: 84,
+              height: 84,
+              child: Center(
+                  child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(width: 36, height: 36,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 3, color: Colors.deepPurple)),
+                  const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 3, color: Colors.deepPurple)),
                   const SizedBox(height: 4),
                   Text(_engine == _Engine.whisper ? 'AI...' : '...',
                       style: const TextStyle(fontSize: 11, color: Colors.grey)),
@@ -363,7 +396,8 @@ class _MicState extends State<MicRecorderWidget>
             )
           else
             GestureDetector(
-              onTap: _phase == _Phase.idle ? _start
+              onTap: _phase == _Phase.idle
+                  ? _start
                   : (_phase == _Phase.listening ? _stop : null),
               child: AnimatedBuilder(
                 animation: _pulseAnim,
@@ -372,20 +406,27 @@ class _MicState extends State<MicRecorderWidget>
                   child: child,
                 ),
                 child: Container(
-                  width: 84, height: 84,
+                  width: 84,
+                  height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _phase == _Phase.listening ? Colors.red : accent,
-                    boxShadow: [BoxShadow(
-                      color: (_phase == _Phase.listening ? Colors.red : accent)
-                          .withOpacity(0.35),
-                      blurRadius: 16, spreadRadius: 2,
-                    )],
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            (_phase == _Phase.listening ? Colors.red : accent)
+                                .withOpacity(0.35),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      )
+                    ],
                   ),
                   child: Icon(
                     _phase == _Phase.listening
-                        ? Icons.stop_rounded : Icons.mic_rounded,
-                    color: Colors.white, size: 36,
+                        ? Icons.stop_rounded
+                        : Icons.mic_rounded,
+                    color: Colors.white,
+                    size: 36,
                   ),
                 ),
               ),
@@ -397,7 +438,8 @@ class _MicState extends State<MicRecorderWidget>
             child: Text(
               _statusText,
               style: TextStyle(
-                fontFamily: 'NotoNastaliqUrdu', fontSize: 15,
+                fontFamily: 'NotoNastaliqUrdu',
+                fontSize: 15,
                 color: _phase == _Phase.done ? _scoreColor : Colors.black87,
                 fontWeight: FontWeight.w600,
               ),
@@ -411,21 +453,27 @@ class _MicState extends State<MicRecorderWidget>
           if (_phase == _Phase.done)
             TextButton.icon(
               onPressed: () => setState(() {
-                _phase = _Phase.idle; _score = 0;
-                _liveWords = ''; _finalWords = '';
+                _phase = _Phase.idle;
+                _score = 0;
+                _liveWords = '';
+                _finalWords = '';
                 _audioCompleter = null;
               }),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('دوبارہ کوشش کریں',
-                  style: TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 15)),
+                  style:
+                      TextStyle(fontFamily: 'NotoNastaliqUrdu', fontSize: 15)),
               style: TextButton.styleFrom(foregroundColor: accent),
             ),
 
           // No-mic warning
-          if (_engine == _Engine.browserStt && !_sttAvailable && _phase == _Phase.idle)
+          if (_engine == _Engine.browserStt &&
+              !_sttAvailable &&
+              _phase == _Phase.idle)
             const Padding(
               padding: EdgeInsets.only(top: 6),
-              child: Text('Microphone not available — check browser permissions',
+              child: Text(
+                  'Microphone not available — check browser permissions',
                   style: TextStyle(fontSize: 12, color: Colors.red),
                   textAlign: TextAlign.center),
             ),
@@ -439,8 +487,12 @@ class _MicState extends State<MicRecorderWidget>
     _listenTimer?.cancel();
     _barTimer?.cancel();
     _pulseCtrl.dispose();
-    if (_engine == _Engine.browserStt) _stt.stop();
-    if (_engine == _Engine.whisper && _phase == _Phase.listening) webAudioStop();
+    if (_engine == _Engine.browserStt) {
+      _stt.stop();
+    }
+    if (_engine == _Engine.whisper && _phase == _Phase.listening) {
+      webAudioStop();
+    }
     super.dispose();
   }
 }

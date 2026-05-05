@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
-import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -50,11 +49,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : history.map((p) => p.score.toDouble()).fold(0.0, (a, b) => a + b) /
             history.length;
 
-    final levelData = {
-      'beginner':     ('🌱', 'Beginner',     const Color(0xFF10B981)),
-      'intermediate': ('⚡', 'Intermediate', const Color(0xFF0EA5E9)),
-      'advanced':     ('🏆', 'Advanced',     const Color(0xFFF59E0B)),
-    }[level] ?? ('🌱', 'Beginner', const Color(0xFF10B981));
+    final levelData = level == 'intermediate'
+        ? ('⚡', 'Intermediate', const Color(0xFF0EA5E9))
+        : level == 'advanced'
+            ? ('🏆', 'Advanced', const Color(0xFFF59E0B))
+            : ('🌱', 'Beginner', const Color(0xFF10B981));
 
     return Directionality(
       textDirection: TextDirection.ltr,
@@ -200,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(children: [
                       Expanded(child: _StatCard(
                         icon: Icons.local_fire_department_rounded,
-                        value: '${provider.currentUser?.sessionsCompleted ?? 0}',
+                        value: '${provider.currentUser == null ? 0 : provider.currentUser!.sessionsCompleted}',
                         label: 'Sessions Done',
                         color: const Color(0xFFF97316),
                       )),
@@ -255,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Directionality(
                               textDirection: TextDirection.rtl,
                               child: Text(
-                                p.module ?? '—',
+                                p.module.isNotEmpty ? p.module : '—',
                                 style: const TextStyle(
                                     fontFamily: 'NotoNastaliqUrdu',
                                     fontSize: 16,
@@ -316,7 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () => showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          title: const Text('Reset Progress?'),
+                          title: const Text('?Reset Progress'),
                           content: const Text(
                               'This will clear all your scores and history. This cannot be undone.'),
                           actions: [
