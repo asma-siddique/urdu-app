@@ -502,9 +502,15 @@ class _QuizFlashCard extends StatelessWidget {
                   topRight: Radius.circular(24),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                   // Prompt label
                   Directionality(
                     textDirection: TextDirection.rtl,
@@ -528,14 +534,17 @@ class _QuizFlashCard extends StatelessWidget {
                   if (card.kind == _QKind.speakWord) ...[
                     Directionality(
                       textDirection: TextDirection.rtl,
-                      child: Text(card.mainText,
-                          style: TextStyle(
-                            fontFamily: 'NotoNastaliqUrdu',
-                            fontSize: 42,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                            height: 1.2,
-                          )),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(card.mainText,
+                            style: TextStyle(
+                              fontFamily: 'NotoNastaliqUrdu',
+                              fontSize: 42,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                              height: 1.2,
+                            )),
+                      ),
                     ),
                     Text(card.name,
                         style: const TextStyle(
@@ -564,6 +573,9 @@ class _QuizFlashCard extends StatelessWidget {
                     ],
                   ],
                 ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -614,21 +626,25 @@ class _QuizFlashCard extends StatelessWidget {
                                   Border.all(color: borderColor, width: 2),
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
                               children: [
-                                Directionality(
-                                  textDirection: TextDirection.rtl,
-                                  child: Flexible(
-                                    child: Text(card.choices[i],
-                                        style: TextStyle(
-                                          fontFamily: 'NotoNastaliqUrdu',
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w700,
-                                          color: textColor,
-                                        )),
+                                Expanded(
+                                  child: Directionality(
+                                    textDirection: TextDirection.rtl,
+                                    child: Text(
+                                      card.choices[i],
+                                      style: TextStyle(
+                                        fontFamily: 'NotoNastaliqUrdu',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: textColor,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 if (revealed && i == card.correctIndex)
                                   const Icon(Icons.check_circle_rounded,
                                       color: Colors.green, size: 20),
@@ -1114,15 +1130,11 @@ class _SentenceQuizState extends State<SentenceQuizScreen>
                                                         width: 2),
                                                   ),
                                                   child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
                                                     children: [
-                                                      Directionality(
-                                                        textDirection:
-                                                            TextDirection
-                                                                .rtl,
-                                                        child: Flexible(
+                                                      Expanded(
+                                                        child: Directionality(
+                                                          textDirection:
+                                                              TextDirection.rtl,
                                                           child: Text(
                                                             card.choices[i],
                                                             style: TextStyle(
@@ -1135,9 +1147,16 @@ class _SentenceQuizState extends State<SentenceQuizScreen>
                                                               color:
                                                                   textColor,
                                                             ),
+                                                            maxLines: 2,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            textAlign:
+                                                                TextAlign.right,
                                                           ),
                                                         ),
                                                       ),
+                                                      const SizedBox(width: 8),
                                                       if (_revealed &&
                                                           i ==
                                                               card.correctIndex)
