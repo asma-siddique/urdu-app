@@ -6,14 +6,18 @@ import '../providers/app_provider.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _kCardTop = Color(0xFFFFF3D6);
-const _kTeal    = Color(0xFF26C6DA);
-const _kOrange  = Color(0xFFFF7043);
-const _kPurple  = Color(0xFF7C3AED);
-const _kBg      = Color(0xFFFFF8E8);
+const _kTeal = Color(0xFF26C6DA);
+const _kOrange = Color(0xFFFF7043);
+const _kPurple = Color(0xFF7C3AED);
+const _kBg = Color(0xFFFFF8E8);
 
 const _mascotMsgs = [
-  'Look!\nThis\ncolor!', 'Cool!\nWhat\ncolor?', 'Great!\nName\nit!',
-  'Yes!\nSay\nit!',      'Wow!\nLearn\nit!',   'Fun!\nTry\nit!',
+  'Look!\nThis\ncolor!',
+  'Cool!\nWhat\ncolor?',
+  'Great!\nName\nit!',
+  'Yes!\nSay\nit!',
+  'Wow!\nLearn\nit!',
+  'Fun!\nTry\nit!',
 ];
 
 class _ColorData {
@@ -22,35 +26,87 @@ class _ColorData {
   final String roman;
   final Color color;
   final List<String> objects;
-  const _ColorData({required this.urdu, required this.english,
-      required this.roman, required this.color, required this.objects});
+  const _ColorData(
+      {required this.urdu,
+      required this.english,
+      required this.roman,
+      required this.color,
+      required this.objects});
 }
 
 const List<_ColorData> _COLORS = [
-  _ColorData(urdu:'سرخ',    english:'Red',      roman:'Surkh',    color:Color(0xFFEF233C),
-    objects:['🍎 سیب','🍓 اسٹرابیری','🌹 گلاب','❤️ دل']),
-  _ColorData(urdu:'نیلا',   english:'Blue',     roman:'Neela',    color:Color(0xFF0077B6),
-    objects:['🌊 سمندر','🫐 بیری','🧢 ٹوپی','🦋 تتلی']),
-  _ColorData(urdu:'سبز',    english:'Green',    roman:'Sabz',     color:Color(0xFF2DC653),
-    objects:['🌿 پودا','🥦 بروکلی','🐸 مینڈک','🌳 درخت']),
-  _ColorData(urdu:'پیلا',   english:'Yellow',   roman:'Peela',    color:Color(0xFFFDD835),
-    objects:['🌻 سورج مکھی','🍋 لیموں','🌟 ستارہ','🐤 چوزہ']),
-  _ColorData(urdu:'نارنجی', english:'Orange',   roman:'Naranji',  color:Color(0xFFFF6D00),
-    objects:['🍊 مالٹا','🎃 کدو','🦊 لومڑی','🥕 گاجر']),
-  _ColorData(urdu:'بنفشی',  english:'Purple',   roman:'Banafshi', color:Color(0xFF9B5DE5),
-    objects:['🍇 انگور','🌸 پھول','🦄 یونیکورن','🫐 بیری']),
-  _ColorData(urdu:'گلابی',  english:'Pink',     roman:'Gulabi',   color:Color(0xFFf48fb1),
-    objects:['🌸 پھول','🦩 فلیمنگو','🍬 ٹافی','🎀 ربن']),
-  _ColorData(urdu:'سفید',   english:'White',    roman:'Safaid',   color:Color(0xFFBDBDBD),
-    objects:['☁️ بادل','🕊️ کبوتر','🥛 دودھ','🏔️ برف']),
-  _ColorData(urdu:'کالا',   english:'Black',    roman:'Kaala',    color:Color(0xFF424242),
-    objects:['🌑 رات','🎱 گیند','🖊️ قلم','🐈 بلی']),
-  _ColorData(urdu:'بھورا',  english:'Brown',    roman:'Bhoora',   color:Color(0xFF795548),
-    objects:['🐻 ریچھ','☕ چائے','🍫 چاکلیٹ','🪵 لکڑی']),
-  _ColorData(urdu:'آسمانی', english:'Sky Blue', roman:'Aasmani',  color:Color(0xFF00BBF9),
-    objects:['🌥️ آسمان','🐦 پرندہ','💧 پانی','🧊 برف']),
-  _ColorData(urdu:'سنہری',  english:'Golden',   roman:'Sonehari', color:Color(0xFFFFAB00),
-    objects:['👑 تاج','🏆 ٹرافی','⭐ ستارہ','🌾 گندم']),
+  _ColorData(
+      urdu: 'سرخ',
+      english: 'Red',
+      roman: 'Surkh',
+      color: Color(0xFFEF233C),
+      objects: ['🍎 سیب', '🍓 اسٹرابیری', '🌹 گلاب', '❤️ دل']),
+  _ColorData(
+      urdu: 'نیلا',
+      english: 'Blue',
+      roman: 'Neela',
+      color: Color(0xFF0077B6),
+      objects: ['🌊 سمندر', '🫐 بیری', '🧢 ٹوپی', '🦋 تتلی']),
+  _ColorData(
+      urdu: 'سبز',
+      english: 'Green',
+      roman: 'Sabz',
+      color: Color(0xFF2DC653),
+      objects: ['🌿 پودا', '🥦 بروکلی', '🐸 مینڈک', '🌳 درخت']),
+  _ColorData(
+      urdu: 'پیلا',
+      english: 'Yellow',
+      roman: 'Peela',
+      color: Color(0xFFFDD835),
+      objects: ['🌻 سورج مکھی', '🍋 لیموں', '🌟 ستارہ', '🐤 چوزہ']),
+  _ColorData(
+      urdu: 'نارنجی',
+      english: 'Orange',
+      roman: 'Naranji',
+      color: Color(0xFFFF6D00),
+      objects: ['🍊 مالٹا', '🎃 کدو', '🦊 لومڑی', '🥕 گاجر']),
+  _ColorData(
+      urdu: 'بنفشی',
+      english: 'Purple',
+      roman: 'Banafshi',
+      color: Color(0xFF9B5DE5),
+      objects: ['🍇 انگور', '🌸 پھول', '🦄 یونیکورن', '🫐 بیری']),
+  _ColorData(
+      urdu: 'گلابی',
+      english: 'Pink',
+      roman: 'Gulabi',
+      color: Color(0xFFf48fb1),
+      objects: ['🌸 پھول', '🦩 فلیمنگو', '🍬 ٹافی', '🎀 ربن']),
+  _ColorData(
+      urdu: 'سفید',
+      english: 'White',
+      roman: 'Safaid',
+      color: Color(0xFFBDBDBD),
+      objects: ['☁️ بادل', '🕊️ کبوتر', '🥛 دودھ', '🏔️ برف']),
+  _ColorData(
+      urdu: 'کالا',
+      english: 'Black',
+      roman: 'Kaala',
+      color: Color(0xFF424242),
+      objects: ['🌑 رات', '🎱 گیند', '🖊️ قلم', '🐈 بلی']),
+  _ColorData(
+      urdu: 'بھورا',
+      english: 'Brown',
+      roman: 'Bhoora',
+      color: Color(0xFF795548),
+      objects: ['🐻 ریچھ', '☕ چائے', '🍫 چاکلیٹ', '🪵 لکڑی']),
+  _ColorData(
+      urdu: 'آسمانی',
+      english: 'Sky Blue',
+      roman: 'Aasmani',
+      color: Color(0xFF00BBF9),
+      objects: ['🌥️ آسمان', '🐦 پرندہ', '💧 پانی', '🧊 برف']),
+  _ColorData(
+      urdu: 'سنہری',
+      english: 'Golden',
+      roman: 'Sonehari',
+      color: Color(0xFFFFAB00),
+      objects: ['👑 تاج', '🏆 ٹرافی', '⭐ ستارہ', '🌾 گندم']),
 ];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -74,7 +130,7 @@ class _RangScreenState extends State<RangScreen>
     super.initState();
     _anim = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 300));
-    _fadeAnim  = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(begin: const Offset(0.10, 0), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
     _anim.forward();
@@ -84,7 +140,10 @@ class _RangScreenState extends State<RangScreen>
   }
 
   @override
-  void dispose() { _anim.dispose(); super.dispose(); }
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
 
   _ColorData get _color => _COLORS[_index];
 
@@ -107,7 +166,6 @@ class _RangScreenState extends State<RangScreen>
 
   void _openMic() {
     final c = _color;
-    final idx = _index;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -120,7 +178,8 @@ class _RangScreenState extends State<RangScreen>
           final provider = context.read<AppProvider>();
           provider.recordResult(c.urdu, score);
           provider.updateLessonProgress('/rang', (_index + 1) / _COLORS.length);
-          TtsService.instance.speak(score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
+          TtsService.instance
+              .speak(score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
         },
       ),
     );
@@ -128,44 +187,68 @@ class _RangScreenState extends State<RangScreen>
 
   List<Widget> _decorStars(Color col) {
     const stars = [
-      {'top': 78.0,  'left': 10.0,  'size': 15.0, 'op': 0.60},
-      {'top': 138.0, 'left': 26.0,  'size': 10.0, 'op': 0.42},
-      {'top': 210.0, 'left': 6.0,   'size': 17.0, 'op': 0.52},
-      {'top': 78.0,  'right': 8.0,  'size': 13.0, 'op': 0.60},
+      {'top': 78.0, 'left': 10.0, 'size': 15.0, 'op': 0.60},
+      {'top': 138.0, 'left': 26.0, 'size': 10.0, 'op': 0.42},
+      {'top': 210.0, 'left': 6.0, 'size': 17.0, 'op': 0.52},
+      {'top': 78.0, 'right': 8.0, 'size': 13.0, 'op': 0.60},
       {'top': 150.0, 'right': 22.0, 'size': 17.0, 'op': 0.48},
-      {'top': 230.0, 'right': 5.0,  'size': 12.0, 'op': 0.52},
+      {'top': 230.0, 'right': 5.0, 'size': 12.0, 'op': 0.52},
     ];
-    final List<Widget> w = stars.map<Widget>((d) => Positioned(
-      top:   d['top']   as double,
-      left:  d.containsKey('left')  ? d['left']  as double : null,
-      right: d.containsKey('right') ? d['right'] as double : null,
-      child: Opacity(opacity: d['op'] as double,
-        child: Text('⭐', style: TextStyle(fontSize: d['size'] as double))),
-    )).toList();
+    final List<Widget> w = stars
+        .map<Widget>((d) => Positioned(
+              top: d['top'] as double,
+              left: d.containsKey('left') ? d['left'] as double : null,
+              right: d.containsKey('right') ? d['right'] as double : null,
+              child: Opacity(
+                  opacity: d['op'] as double,
+                  child: Text('⭐',
+                      style: TextStyle(fontSize: d['size'] as double))),
+            ))
+        .toList();
     w.addAll([
-      const Positioned(top: 54, left: 48,
-          child: Opacity(opacity: 0.45, child: Text('☁️', style: TextStyle(fontSize: 24)))),
-      const Positioned(top: 58, right: 52,
-          child: Opacity(opacity: 0.36, child: Text('☁️', style: TextStyle(fontSize: 18)))),
+      const Positioned(
+          top: 54,
+          left: 48,
+          child: Opacity(
+              opacity: 0.45,
+              child: Text('☁️', style: TextStyle(fontSize: 24)))),
+      const Positioned(
+          top: 58,
+          right: 52,
+          child: Opacity(
+              opacity: 0.36,
+              child: Text('☁️', style: TextStyle(fontSize: 18)))),
     ]);
     w.add(Positioned(
-      bottom: 0, left: 0, right: 0,
-      child: SizedBox(height: 26,
-        child: Row(crossAxisAlignment: CrossAxisAlignment.end,
-          children: List<Widget>.generate(18, (i) => Padding(
-            padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
-            child: Text(i % 3 == 0 ? '🌿' : i % 3 == 1 ? '🌱' : '🌸',
-                style: TextStyle(fontSize: i % 2 == 0 ? 17.0 : 13.0)))))),
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: SizedBox(
+          height: 26,
+          child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List<Widget>.generate(
+                  18,
+                  (i) => Padding(
+                      padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                      child: Text(
+                          i % 3 == 0
+                              ? '🌿'
+                              : i % 3 == 1
+                                  ? '🌱'
+                                  : '🌸',
+                          style: TextStyle(
+                              fontSize: i % 2 == 0 ? 17.0 : 13.0)))))),
     ));
     return w;
   }
 
   @override
   Widget build(BuildContext context) {
-    final total    = _COLORS.length;
+    final total = _COLORS.length;
     final progress = (_index + 1) / total;
-    final c        = _color;
-    final msg      = _mascotMsgs[_index % _mascotMsgs.length];
+    final c = _color;
+    final msg = _mascotMsgs[_index % _mascotMsgs.length];
 
     return Directionality(
       textDirection: TextDirection.ltr,
@@ -176,8 +259,12 @@ class _RangScreenState extends State<RangScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [c.color, c.color.withOpacity(0.60),
-                       const Color(0xFFFFF3E0), _kBg],
+              colors: [
+                c.color,
+                c.color.withOpacity(0.60),
+                const Color(0xFFFFF3E0),
+                _kBg
+              ],
               stops: const [0.0, 0.18, 0.48, 1.0],
             ),
           ),
@@ -188,7 +275,10 @@ class _RangScreenState extends State<RangScreen>
                 Column(
                   children: [
                     // ── Top bar ────────────────────────────────────────────
-                    _RangTopBar(index: _index, total: total, color: c.color,
+                    _RangTopBar(
+                        index: _index,
+                        total: total,
+                        color: c.color,
                         onBack: () => Navigator.pop(context)),
                     // ── Progress ───────────────────────────────────────────
                     Padding(
@@ -204,7 +294,8 @@ class _RangScreenState extends State<RangScreen>
                             const Text('🎨', style: TextStyle(fontSize: 12)),
                             const SizedBox(width: 4),
                             Text('${_index + 1} / $total',
-                                style: const TextStyle(fontSize: 12,
+                                style: const TextStyle(
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: Color(0xFF5D4037))),
                           ]),
@@ -214,23 +305,26 @@ class _RangScreenState extends State<RangScreen>
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
                             child: LinearProgressIndicator(
-                              value: progress, minHeight: 8,
-                              backgroundColor: Colors.white.withOpacity(0.30),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white)),
+                                value: progress,
+                                minHeight: 8,
+                                backgroundColor: Colors.white.withOpacity(0.30),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                    Colors.white)),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Text('${(progress * 100).round()}%',
-                            style: const TextStyle(fontSize: 12,
-                                fontWeight: FontWeight.w700, color: Colors.white)),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
                       ]),
                     ),
                     // ── Main: mascot | card | tip ──────────────────────────
                     Expanded(
                       child: LayoutBuilder(builder: (ctx, bc) {
                         final isWide = bc.maxWidth > 460;
-                        final sideW  = isWide ? 72.0 : 48.0;
+                        final sideW = isWide ? 72.0 : 48.0;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
@@ -241,18 +335,20 @@ class _RangScreenState extends State<RangScreen>
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  SizedBox(width: sideW,
+                                  SizedBox(
+                                      width: sideW,
                                       child: _MascotSide(message: msg)),
                                   Expanded(
                                     child: Center(
                                       child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 300),
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 300),
                                         child: _buildCard(c),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: sideW,
-                                      child: _TipSide(data: c)),
+                                  SizedBox(
+                                      width: sideW, child: _TipSide(data: c)),
                                 ],
                               ),
                             ),
@@ -266,13 +362,19 @@ class _RangScreenState extends State<RangScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _CircleBtn(icon: Icons.volume_up_rounded,
-                              label: 'Listen', color: _kTeal,
-                              active: _speaking, onTap: _speak),
+                          _CircleBtn(
+                              icon: Icons.volume_up_rounded,
+                              label: 'Listen',
+                              color: _kTeal,
+                              active: _speaking,
+                              onTap: _speak),
                           const SizedBox(width: 36),
-                          _CircleBtn(icon: Icons.mic_rounded,
-                              label: 'Speak', color: _kPurple,
-                              active: false, onTap: _openMic),
+                          _CircleBtn(
+                              icon: Icons.mic_rounded,
+                              label: 'Speak',
+                              color: _kPurple,
+                              active: false,
+                              onTap: _openMic),
                         ],
                       ),
                     ),
@@ -301,15 +403,17 @@ class _RangScreenState extends State<RangScreen>
 
   // ── Card ────────────────────────────────────────────────────────────────────
   Widget _buildCard(_ColorData c) {
-    final isLight = c.color.computeLuminance() > 0.55;
-    final fg = isLight ? Colors.black87 : Colors.white;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18),
-            blurRadius: 22, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 22,
+              offset: const Offset(0, 8))
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
@@ -322,13 +426,15 @@ class _RangScreenState extends State<RangScreen>
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [c.color, c.color.withOpacity(0.70)],
                   ),
                 ),
                 child: Center(
                   child: Container(
-                    width: 72, height: 72,
+                    width: 72,
+                    height: 72,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.25),
@@ -337,14 +443,17 @@ class _RangScreenState extends State<RangScreen>
                     ),
                     child: Center(
                       child: Container(
-                        width: 50, height: 50,
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: c.color,
                           border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: [BoxShadow(
-                              color: Colors.black.withOpacity(0.18),
-                              blurRadius: 8)],
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.18),
+                                blurRadius: 8)
+                          ],
                         ),
                       ),
                     ),
@@ -369,7 +478,8 @@ class _RangScreenState extends State<RangScreen>
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'NotoNastaliqUrdu',
-                        fontSize: 52, fontWeight: FontWeight.bold,
+                        fontSize: 52,
+                        fontWeight: FontWeight.bold,
                         color: Color(0xFF1E3A5F),
                         height: 1.0,
                         leadingDistribution: TextLeadingDistribution.even,
@@ -415,8 +525,11 @@ class _RangTopBar extends StatelessWidget {
   final int index, total;
   final Color color;
   final VoidCallback onBack;
-  const _RangTopBar({required this.index, required this.total,
-      required this.color, required this.onBack});
+  const _RangTopBar(
+      {required this.index,
+      required this.total,
+      required this.color,
+      required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -426,7 +539,8 @@ class _RangTopBar extends StatelessWidget {
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.25),
               borderRadius: BorderRadius.circular(12),
@@ -440,7 +554,9 @@ class _RangTopBar extends StatelessWidget {
             const Directionality(
               textDirection: TextDirection.rtl,
               child: Text('رنگ  Colors',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white)),
             ),
             Text('Color Lesson · ${index + 1} / $total',
@@ -454,8 +570,10 @@ class _RangTopBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text('🎨 ${index + 1}',
-              style: const TextStyle(fontSize: 13,
-                  fontWeight: FontWeight.w800, color: Colors.white)),
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white)),
         ),
       ]),
     );
@@ -479,66 +597,150 @@ class _MascotSide extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12), topRight: Radius.circular(12),
-              bottomRight: Radius.circular(12)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10),
-                blurRadius: 8, offset: const Offset(0, 2))],
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+                bottomRight: Radius.circular(12)),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
           ),
           child: Text(message,
-              style: const TextStyle(fontSize: 9.0, fontWeight: FontWeight.w800,
+              style: const TextStyle(
+                  fontSize: 9.0,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF5D4037)),
               textAlign: TextAlign.center),
         ),
         SizedBox(
-          height: 148, width: 80,
+          height: 148,
+          width: 80,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
             children: <Widget>[
-              Positioned(top: 0, left: 23, child: Container(width: 34, height: 15,
-                decoration: BoxDecoration(color: Colors.white,
-                  border: Border.all(color: const Color(0xFFD0D0D0)),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(17), topRight: Radius.circular(17))))),
-              Positioned(top: 13, left: 20, child: Container(width: 40, height: 5,
-                decoration: BoxDecoration(color: Colors.white,
-                  border: Border.all(color: const Color(0xFFD0D0D0)),
-                  borderRadius: BorderRadius.circular(3)))),
-              Positioned(top: 16, left: 22, child: Container(width: 36, height: 36,
-                decoration: const BoxDecoration(shape: BoxShape.circle,
-                    color: Color(0xFFFFCC80)),
-                child: const Center(child: Text('😊',
-                    style: TextStyle(fontSize: 20))))),
-              Positioned(top: 49, left: 36, child: Container(
-                  width: 8, height: 7, color: const Color(0xFFFFCC80))),
-              Positioned(top: 54, left: 14, child: Container(width: 52, height: 50,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(8)))),
-              Positioned(top: 54, left: 18, child: Container(width: 44, height: 46,
-                decoration: BoxDecoration(color: const Color(0xFF388E3C),
-                    borderRadius: BorderRadius.circular(7)))),
-              Positioned(top: 56, left: 32, child: Container(width: 16, height: 44,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(4)))),
-              Positioned(top: 58, right: 2, child: Transform.rotate(angle: -0.55,
-                child: Container(width: 24, height: 10,
-                  decoration: BoxDecoration(color: const Color(0xFFFFCC80),
-                      borderRadius: BorderRadius.circular(5))))),
-              Positioned(top: 65, left: 4, child: Container(width: 14, height: 10,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 101, left: 18, child: Container(width: 17, height: 38,
-                decoration: BoxDecoration(color: const Color(0xFFEEEEEE),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 101, left: 44, child: Container(width: 17, height: 38,
-                decoration: BoxDecoration(color: const Color(0xFFEEEEEE),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 134, left: 14, child: Container(width: 24, height: 9,
-                decoration: BoxDecoration(color: const Color(0xFF4E342E),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 134, left: 41, child: Container(width: 24, height: 9,
-                decoration: BoxDecoration(color: const Color(0xFF4E342E),
-                    borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 0,
+                  left: 23,
+                  child: Container(
+                      width: 34,
+                      height: 15,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFD0D0D0)),
+                          borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(17),
+                              topRight: Radius.circular(17))))),
+              Positioned(
+                  top: 13,
+                  left: 20,
+                  child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFD0D0D0)),
+                          borderRadius: BorderRadius.circular(3)))),
+              Positioned(
+                  top: 16,
+                  left: 22,
+                  child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                          shape: BoxShape.circle, color: Color(0xFFFFCC80)),
+                      child: const Center(
+                          child: Text('😊', style: TextStyle(fontSize: 20))))),
+              Positioned(
+                  top: 49,
+                  left: 36,
+                  child: Container(
+                      width: 8, height: 7, color: const Color(0xFFFFCC80))),
+              Positioned(
+                  top: 54,
+                  left: 14,
+                  child: Container(
+                      width: 52,
+                      height: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8)))),
+              Positioned(
+                  top: 54,
+                  left: 18,
+                  child: Container(
+                      width: 44,
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF388E3C),
+                          borderRadius: BorderRadius.circular(7)))),
+              Positioned(
+                  top: 56,
+                  left: 32,
+                  child: Container(
+                      width: 16,
+                      height: 44,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4)))),
+              Positioned(
+                  top: 58,
+                  right: 2,
+                  child: Transform.rotate(
+                      angle: -0.55,
+                      child: Container(
+                          width: 24,
+                          height: 10,
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFFFCC80),
+                              borderRadius: BorderRadius.circular(5))))),
+              Positioned(
+                  top: 65,
+                  left: 4,
+                  child: Container(
+                      width: 14,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 101,
+                  left: 18,
+                  child: Container(
+                      width: 17,
+                      height: 38,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFEEEEEE),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 101,
+                  left: 44,
+                  child: Container(
+                      width: 17,
+                      height: 38,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFEEEEEE),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 134,
+                  left: 14,
+                  child: Container(
+                      width: 24,
+                      height: 9,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF4E342E),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 134,
+                  left: 41,
+                  child: Container(
+                      width: 24,
+                      height: 9,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF4E342E),
+                          borderRadius: BorderRadius.circular(5)))),
             ],
           ),
         ),
@@ -562,33 +764,45 @@ class _TipSide extends StatelessWidget {
         color: const Color(0xFFF3E5F5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xCECE93D8), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.12),
-            blurRadius: 8, offset: const Offset(0, 3))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.purple.withOpacity(0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 3))
+        ],
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('💡', style: TextStyle(fontSize: 18)),
         const SizedBox(height: 3),
-        const Text('Tip', style: TextStyle(fontSize: 10,
-            fontWeight: FontWeight.w800, color: Color(0xFF6A1B9A))),
+        const Text('Tip',
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF6A1B9A))),
         const SizedBox(height: 5),
         Container(
-          width: 28, height: 28,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: data.color,
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [BoxShadow(color: data.color.withOpacity(0.4),
-                blurRadius: 6)],
+            boxShadow: [
+              BoxShadow(color: data.color.withOpacity(0.4), blurRadius: 6)
+            ],
           ),
         ),
         const SizedBox(height: 5),
         Text(data.roman,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900,
-                color: Color(0xFF4A148C), height: 1.3),
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF4A148C),
+                height: 1.3),
             textAlign: TextAlign.center),
         Text(data.english,
-            style: const TextStyle(fontSize: 9, color: Color(0xFF6A1B9A),
-                height: 1.3),
+            style: const TextStyle(
+                fontSize: 9, color: Color(0xFF6A1B9A), height: 1.3),
             textAlign: TextAlign.center),
       ]),
     );
@@ -605,7 +819,7 @@ class _ObjBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final parts = obj.split(' ');
     final emoji = parts.first;
-    final word  = parts.skip(1).join(' ');
+    final word = parts.skip(1).join(' ');
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -622,13 +836,15 @@ class _ObjBox extends StatelessWidget {
             child: Text(word,
                 style: const TextStyle(
                   fontFamily: 'NotoNastaliqUrdu',
-                  fontSize: 11, fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
                   color: Color(0xFF1a1a2e),
                   height: 1.0,
                   leadingDistribution: TextLeadingDistribution.even,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 2, overflow: TextOverflow.ellipsis),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis),
           ),
         ]),
       ),
@@ -643,8 +859,12 @@ class _CircleBtn extends StatelessWidget {
   final Color color;
   final bool active;
   final VoidCallback onTap;
-  const _CircleBtn({required this.icon, required this.label,
-      required this.color, required this.active, required this.onTap});
+  const _CircleBtn(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.active,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -653,19 +873,27 @@ class _CircleBtn extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          width: 58, height: 58,
+          width: 58,
+          height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: active ? color : color.withOpacity(0.14),
             border: Border.all(color: color, width: 2.5),
-            boxShadow: [BoxShadow(color: color.withOpacity(0.28),
-                blurRadius: 10, offset: const Offset(0, 3))],
+            boxShadow: [
+              BoxShadow(
+                  color: color.withOpacity(0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3))
+            ],
           ),
           child: Icon(icon, color: active ? Colors.white : color, size: 26),
         ),
         const SizedBox(height: 5),
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-            color: active ? color : color.withOpacity(0.7))),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: active ? color : color.withOpacity(0.7))),
       ]),
     );
   }
@@ -678,8 +906,12 @@ class _NavBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool hasBack;
   final VoidCallback onBack;
-  const _NavBtn({required this.label, required this.color,
-      required this.onTap, required this.hasBack, required this.onBack});
+  const _NavBtn(
+      {required this.label,
+      required this.color,
+      required this.onTap,
+      required this.hasBack,
+      required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -688,7 +920,8 @@ class _NavBtn extends StatelessWidget {
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 50, height: 54,
+            width: 50,
+            height: 54,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -706,12 +939,19 @@ class _NavBtn extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(30),
-              boxShadow: [BoxShadow(color: color.withOpacity(0.30),
-                  blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                    color: color.withOpacity(0.30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
             ),
-            child: Center(child: Text(label,
-                style: const TextStyle(fontSize: 16,
-                    fontWeight: FontWeight.w800, color: Colors.white))),
+            child: Center(
+                child: Text(label,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white))),
           ),
         ),
       ),

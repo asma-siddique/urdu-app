@@ -20,19 +20,27 @@ class WordCard extends StatelessWidget {
 
   Color get _levelColor {
     switch (word.level) {
-      case 'easy':   return Colors.green;
-      case 'medium': return Colors.orange;
-      case 'hard':   return Colors.red;
-      default:       return Colors.grey;
+      case 'easy':
+        return Colors.green;
+      case 'medium':
+        return Colors.orange;
+      case 'hard':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
   String get _levelLabel {
     switch (word.level) {
-      case 'easy':   return 'آسان';
-      case 'medium': return 'درمیانہ';
-      case 'hard':   return 'مشکل';
-      default:       return word.level;
+      case 'easy':
+        return 'آسان';
+      case 'medium':
+        return 'درمیانہ';
+      case 'hard':
+        return 'مشکل';
+      default:
+        return word.level;
     }
   }
 

@@ -27,14 +27,20 @@ class LessonCard {
 // ── Palette ───────────────────────────────────────────────────────────────────
 
 const _kCardTop = Color(0xFFFFF3D6);
-const _kTeal    = Color(0xFF26C6DA);
-const _kOrange  = Color(0xFFFF7043);
-const _kPurple  = Color(0xFF7C3AED);
+const _kTeal = Color(0xFF26C6DA);
+const _kOrange = Color(0xFFFF7043);
+const _kPurple = Color(0xFF7C3AED);
 
 const _mascotMsgs = [
-  'Wow!\nThis is',  'Great!\nMeet',   'Hello!\nI\'m',
-  'Look!\nIt\'s',   'Cool!\nThis is', 'Fun!\nMeet',
-  'Listen!\nIt\'s', 'Nice!\nThis is', 'Learn!\nMeet',
+  'Wow!\nThis is',
+  'Great!\nMeet',
+  'Hello!\nI\'m',
+  'Look!\nIt\'s',
+  'Cool!\nThis is',
+  'Fun!\nMeet',
+  'Listen!\nIt\'s',
+  'Nice!\nThis is',
+  'Learn!\nMeet',
   'Hey!\nI\'m',
 ];
 
@@ -86,7 +92,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
     super.initState();
     _anim = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 300));
-    _fadeAnim  = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(begin: const Offset(0.10, 0), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
     _anim.forward();
@@ -98,13 +104,19 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
   }
 
   @override
-  void dispose() { _anim.dispose(); super.dispose(); }
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
 
   LessonCard get _card => widget.cards[_index];
 
   void _goTo(int i) {
     if (i < 0 || i >= widget.cards.length) return;
-    setState(() { _index = i; _lastScore = null; });
+    setState(() {
+      _index = i;
+      _lastScore = null;
+    });
     _anim.forward(from: 0);
     if (!widget.isQuiz) {
       Future.delayed(const Duration(milliseconds: 400), () {
@@ -121,7 +133,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
 
   void _openMic() {
     final card = _card;
-    final idx  = _index;
+    final idx = _index;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -139,10 +151,11 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
           provider.recordResult(card.mainText, score);
           final route = _lessonRouteMap[widget.lessonNumber];
           if (route != null) {
-            provider.updateLessonProgress(route, (idx + 1) / widget.cards.length);
+            provider.updateLessonProgress(
+                route, (idx + 1) / widget.cards.length);
           }
-          TtsService.instance.speak(
-              score >= 70 ? 'شاباش! بہت اچھا!' : 'دوبارہ کوشش کریں۔');
+          TtsService.instance
+              .speak(score >= 70 ? 'شاباش! بہت اچھا!' : 'دوبارہ کوشش کریں۔');
         },
       ),
     );
@@ -150,33 +163,37 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
 
   void _showQuizResults() {
     final correct = _quizScores.values.where((s) => s >= 70).length;
-    Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (_) => _QuizResultPage(
-        correct: correct,
-        total: widget.cards.length,
-        color: widget.accentColor,
-        title: widget.title,
-        onRestart: () => Navigator.pushReplacement(context, MaterialPageRoute(
-          builder: (_) => LessonFlowScreen(
-            lessonNumber: widget.lessonNumber,
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _QuizResultPage(
+            correct: correct,
+            total: widget.cards.length,
+            color: widget.accentColor,
             title: widget.title,
-            subtitle: widget.subtitle,
-            accentColor: widget.accentColor,
-            cards: List.of(widget.cards)..shuffle(),
-            isQuiz: true,
+            onRestart: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LessonFlowScreen(
+                    lessonNumber: widget.lessonNumber,
+                    title: widget.title,
+                    subtitle: widget.subtitle,
+                    accentColor: widget.accentColor,
+                    cards: List.of(widget.cards)..shuffle(),
+                    isQuiz: true,
+                  ),
+                )),
           ),
-        )),
-      ),
-    ));
+        ));
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final total   = widget.cards.length;
-    final color   = widget.accentColor;
-    final stars   = context.watch<AppProvider>().currentUser?.totalStars ?? 0;
+    final total = widget.cards.length;
+    final color = widget.accentColor;
+    final stars = context.watch<AppProvider>().currentUser?.totalStars ?? 0;
     final progress = (_index + 1) / total;
     final msg = '${_mascotMsgs[_index % _mascotMsgs.length]} ${_card.name}!';
 
@@ -247,8 +264,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 8,
-                              backgroundColor:
-                                  Colors.white.withOpacity(0.35),
+                              backgroundColor: Colors.white.withOpacity(0.35),
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                   Colors.white),
                             ),
@@ -268,7 +284,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                     Expanded(
                       child: LayoutBuilder(builder: (ctx, bc) {
                         final isWide = bc.maxWidth > 460;
-                        final sideW  = isWide ? 72.0 : 48.0;
+                        final sideW = isWide ? 72.0 : 48.0;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
@@ -277,8 +293,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                             child: SlideTransition(
                               position: _slideAnim,
                               child: Row(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   // Mascot (left)
                                   SizedBox(
@@ -288,7 +303,8 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                                   Expanded(
                                     child: Center(
                                       child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 300),
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 300),
                                         child: _buildCard(color),
                                       ),
                                     ),
@@ -296,8 +312,8 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                                   // Tip (right)
                                   SizedBox(
                                       width: sideW,
-                                      child: _TipSide(
-                                          text: _card.transcription)),
+                                      child:
+                                          _TipSide(text: _card.transcription)),
                                 ],
                               ),
                             ),
@@ -309,8 +325,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                     // ── Speak score ───────────────────────────────────────
                     if (_lastScore != null)
                       Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(20, 0, 20, 4),
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
                         child: _ScoreRow(
                           score: _lastScore!,
                           scoreColor: _lastScore! >= 70
@@ -323,8 +338,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
 
                     // ── Listen + Speak circles ─────────────────────────────
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                      padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -349,13 +363,10 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
 
                     // ── Next button ────────────────────────────────────────
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                       child: _NextBtn(
                         label: _index == total - 1
-                            ? (widget.isQuiz
-                                ? '🏆  Results'
-                                : '✓  Finish')
+                            ? (widget.isQuiz ? '🏆  Results' : '✓  Finish')
                             : 'Next  →',
                         color: _kOrange,
                         onTap: _index == total - 1
@@ -382,48 +393,71 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
   List<Widget> _decorStars() {
     // Stars
     const stars = [
-      {'top': 82.0,  'left': 10.0,  'size': 18.0, 'op': 0.70},
-      {'top': 136.0, 'left': 28.0,  'size': 12.0, 'op': 0.50},
-      {'top': 220.0, 'left': 6.0,   'size': 22.0, 'op': 0.60},
-      {'top': 82.0,  'right': 8.0,  'size': 16.0, 'op': 0.70},
+      {'top': 82.0, 'left': 10.0, 'size': 18.0, 'op': 0.70},
+      {'top': 136.0, 'left': 28.0, 'size': 12.0, 'op': 0.50},
+      {'top': 220.0, 'left': 6.0, 'size': 22.0, 'op': 0.60},
+      {'top': 82.0, 'right': 8.0, 'size': 16.0, 'op': 0.70},
       {'top': 158.0, 'right': 24.0, 'size': 20.0, 'op': 0.55},
-      {'top': 250.0, 'right': 6.0,  'size': 14.0, 'op': 0.60},
+      {'top': 250.0, 'right': 6.0, 'size': 14.0, 'op': 0.60},
     ];
-    final List<Widget> widgets = stars.map<Widget>((d) => Positioned(
-      top:   d['top']   as double,
-      left:  d.containsKey('left')  ? d['left']  as double : null,
-      right: d.containsKey('right') ? d['right'] as double : null,
-      child: Opacity(
-        opacity: d['op'] as double,
-        child: Text('⭐', style: TextStyle(fontSize: d['size'] as double)),
-      ),
-    )).toList();
+    final List<Widget> widgets = stars
+        .map<Widget>((d) => Positioned(
+              top: d['top'] as double,
+              left: d.containsKey('left') ? d['left'] as double : null,
+              right: d.containsKey('right') ? d['right'] as double : null,
+              child: Opacity(
+                opacity: d['op'] as double,
+                child:
+                    Text('⭐', style: TextStyle(fontSize: d['size'] as double)),
+              ),
+            ))
+        .toList();
 
     // Clouds at top
     widgets.addAll([
-      const Positioned(top: 58, left: 50,
-          child: Opacity(opacity: 0.55, child: Text('☁️', style: TextStyle(fontSize: 28)))),
-      const Positioned(top: 62, right: 55,
-          child: Opacity(opacity: 0.45, child: Text('☁️', style: TextStyle(fontSize: 22)))),
-      const Positioned(top: 48, left: 130,
-          child: Opacity(opacity: 0.35, child: Text('☁️', style: TextStyle(fontSize: 18)))),
+      const Positioned(
+          top: 58,
+          left: 50,
+          child: Opacity(
+              opacity: 0.55,
+              child: Text('☁️', style: TextStyle(fontSize: 28)))),
+      const Positioned(
+          top: 62,
+          right: 55,
+          child: Opacity(
+              opacity: 0.45,
+              child: Text('☁️', style: TextStyle(fontSize: 22)))),
+      const Positioned(
+          top: 48,
+          left: 130,
+          child: Opacity(
+              opacity: 0.35,
+              child: Text('☁️', style: TextStyle(fontSize: 18)))),
     ]);
 
     // Grass strip at bottom
     widgets.add(
       Positioned(
-        bottom: 0, left: 0, right: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
         child: SizedBox(
           height: 28,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: List<Widget>.generate(18, (i) => Padding(
-              padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
-              child: Text(
-                i % 3 == 0 ? '🌿' : i % 3 == 1 ? '🌱' : '🌸',
-                style: TextStyle(fontSize: i % 2 == 0 ? 18.0 : 14.0),
-              ),
-            )),
+            children: List<Widget>.generate(
+                18,
+                (i) => Padding(
+                      padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                      child: Text(
+                        i % 3 == 0
+                            ? '🌿'
+                            : i % 3 == 1
+                                ? '🌱'
+                                : '🌸',
+                        style: TextStyle(fontSize: i % 2 == 0 ? 18.0 : 14.0),
+                      ),
+                    )),
           ),
         ),
       ),
@@ -435,9 +469,9 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
   // ── Adaptive font size for the cream text box ────────────────────────────────
   double _adaptiveFontSize(String text) {
     final len = text.replaceAll(' ', '').length; // ignore spaces
-    if (len <= 2)  return 64.0;
-    if (len <= 4)  return 52.0;
-    if (len <= 7)  return 38.0;
+    if (len <= 2) return 64.0;
+    if (len <= 4) return 52.0;
+    if (len <= 7) return 38.0;
     if (len <= 12) return 28.0;
     if (len <= 20) return 22.0;
     return 17.0;
@@ -478,8 +512,8 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                   ),
                 ),
                 child: Center(
-                  child: Text(_card.emoji,
-                      style: const TextStyle(fontSize: 72)),
+                  child:
+                      Text(_card.emoji, style: const TextStyle(fontSize: 72)),
                 ),
               ),
             ),
@@ -488,9 +522,9 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 12),
-              constraints: const BoxConstraints(minHeight: 80),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 30),
+              constraints: const BoxConstraints(minHeight: 140),
+              clipBehavior: Clip.none,
               decoration: BoxDecoration(
                 color: _kCardTop,
                 borderRadius: BorderRadius.circular(18),
@@ -508,7 +542,7 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
                       fontSize: _adaptiveFontSize(_card.mainText),
                       fontWeight: FontWeight.bold,
                       color: color,
-                      height: 1.1,
+                      height: 1.8,
                       leadingDistribution: TextLeadingDistribution.even,
                     ),
                   ),
@@ -537,17 +571,16 @@ class _LessonFlowScreenState extends State<LessonFlowScreen>
               ),
               child: Row(
                 children: [
-                  Expanded(child: _InfoCell(
-                      label: 'Name',
-                      value: _card.name,
-                      color: color)),
+                  Expanded(
+                      child: _InfoCell(
+                          label: 'Name', value: _card.name, color: color)),
                   Container(
-                      width: 1, height: 40,
-                      color: const Color(0xFFE5E7EB)),
-                  Expanded(child: _InfoCell(
-                      label: 'Transcription',
-                      value: _card.transcription,
-                      color: color)),
+                      width: 1, height: 40, color: const Color(0xFFE5E7EB)),
+                  Expanded(
+                      child: _InfoCell(
+                          label: 'Transcription',
+                          value: _card.transcription,
+                          color: color)),
                 ],
               ),
             ),
@@ -569,9 +602,12 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onBack;
 
   const _TopBar({
-    required this.lessonNumber, required this.title,
-    required this.subtitle, required this.stars,
-    required this.isQuiz, required this.color,
+    required this.lessonNumber,
+    required this.title,
+    required this.subtitle,
+    required this.stars,
+    required this.isQuiz,
+    required this.color,
     required this.onBack,
   });
 
@@ -584,7 +620,8 @@ class _TopBar extends StatelessWidget {
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.25),
               borderRadius: BorderRadius.circular(12),
@@ -657,13 +694,16 @@ class _MascotSide extends StatelessWidget {
               bottomRight: Radius.circular(12),
             ),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.10),
-                  blurRadius: 8, offset: const Offset(0, 2)),
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2)),
             ],
           ),
           child: Text(message,
               style: const TextStyle(
-                  fontSize: 9.5, fontWeight: FontWeight.w800,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF5D4037)),
               textAlign: TextAlign.center),
         ),
@@ -677,9 +717,11 @@ class _MascotSide extends StatelessWidget {
             children: <Widget>[
               // Topi (white cap)
               Positioned(
-                top: 0, left: 23,
+                top: 0,
+                left: 23,
                 child: Container(
-                  width: 34, height: 15,
+                  width: 34,
+                  height: 15,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(color: const Color(0xFFD0D0D0)),
@@ -692,9 +734,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Topi brim
               Positioned(
-                top: 13, left: 20,
+                top: 13,
+                left: 20,
                 child: Container(
-                  width: 40, height: 5,
+                  width: 40,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(color: const Color(0xFFD0D0D0)),
@@ -704,40 +748,55 @@ class _MascotSide extends StatelessWidget {
               ),
               // Head (skin)
               Positioned(
-                top: 16, left: 22,
+                top: 16,
+                left: 22,
                 child: Container(
-                  width: 36, height: 36,
+                  width: 36,
+                  height: 36,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color(0xFFFFCC80),
                   ),
                   child: Stack(children: [
                     // Eyes
-                    Positioned(top: 10, left: 7,
-                      child: Container(width: 6, height: 7,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3E2723),
-                          borderRadius: BorderRadius.circular(3),
-                        ))),
-                    Positioned(top: 10, right: 7,
-                      child: Container(width: 6, height: 7,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3E2723),
-                          borderRadius: BorderRadius.circular(3),
-                        ))),
+                    Positioned(
+                        top: 10,
+                        left: 7,
+                        child: Container(
+                            width: 6,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3E2723),
+                              borderRadius: BorderRadius.circular(3),
+                            ))),
+                    Positioned(
+                        top: 10,
+                        right: 7,
+                        child: Container(
+                            width: 6,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3E2723),
+                              borderRadius: BorderRadius.circular(3),
+                            ))),
                     // Smile
                     Positioned(
-                      bottom: 7, left: 8,
+                      bottom: 7,
+                      left: 8,
                       child: Container(
-                        width: 20, height: 10,
+                        width: 20,
+                        height: 10,
                         decoration: const BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(color: Color(0xFFBF360C), width: 2.5),
-                            left:   BorderSide(color: Color(0xFFBF360C), width: 2.5),
-                            right:  BorderSide(color: Color(0xFFBF360C), width: 2.5),
+                            bottom: BorderSide(
+                                color: Color(0xFFBF360C), width: 2.5),
+                            left: BorderSide(
+                                color: Color(0xFFBF360C), width: 2.5),
+                            right: BorderSide(
+                                color: Color(0xFFBF360C), width: 2.5),
                           ),
                           borderRadius: BorderRadius.only(
-                            bottomLeft:  Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
                             bottomRight: Radius.circular(10),
                           ),
                         ),
@@ -748,15 +807,18 @@ class _MascotSide extends StatelessWidget {
               ),
               // Neck
               Positioned(
-                top: 49, left: 36,
-                child: Container(width: 8, height: 7,
-                    color: const Color(0xFFFFCC80)),
+                top: 49,
+                left: 36,
+                child: Container(
+                    width: 8, height: 7, color: const Color(0xFFFFCC80)),
               ),
               // White kurta body
               Positioned(
-                top: 54, left: 14,
+                top: 54,
+                left: 14,
                 child: Container(
-                  width: 52, height: 50,
+                  width: 52,
+                  height: 50,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -765,9 +827,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Green vest
               Positioned(
-                top: 54, left: 18,
+                top: 54,
+                left: 18,
                 child: Container(
-                  width: 44, height: 46,
+                  width: 44,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: const Color(0xFF388E3C),
                     borderRadius: BorderRadius.circular(7),
@@ -776,9 +840,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // White kurta centre strip
               Positioned(
-                top: 56, left: 32,
+                top: 56,
+                left: 32,
                 child: Container(
-                  width: 16, height: 44,
+                  width: 16,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
@@ -787,11 +853,13 @@ class _MascotSide extends StatelessWidget {
               ),
               // Right arm pointing toward card
               Positioned(
-                top: 58, right: 2,
+                top: 58,
+                right: 2,
                 child: Transform.rotate(
                   angle: -0.55,
                   child: Container(
-                    width: 24, height: 10,
+                    width: 24,
+                    height: 10,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFCC80),
                       borderRadius: BorderRadius.circular(5),
@@ -801,9 +869,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Left arm down
               Positioned(
-                top: 65, left: 4,
+                top: 65,
+                left: 4,
                 child: Container(
-                  width: 14, height: 10,
+                  width: 14,
+                  height: 10,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(5),
@@ -812,9 +882,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Left leg (shalwar — light grey)
               Positioned(
-                top: 101, left: 18,
+                top: 101,
+                left: 18,
                 child: Container(
-                  width: 17, height: 38,
+                  width: 17,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEEEEE),
                     borderRadius: BorderRadius.circular(5),
@@ -823,9 +895,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Right leg
               Positioned(
-                top: 101, left: 44,
+                top: 101,
+                left: 44,
                 child: Container(
-                  width: 17, height: 38,
+                  width: 17,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEEEEE),
                     borderRadius: BorderRadius.circular(5),
@@ -834,9 +908,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Left shoe
               Positioned(
-                top: 134, left: 14,
+                top: 134,
+                left: 14,
                 child: Container(
-                  width: 24, height: 9,
+                  width: 24,
+                  height: 9,
                   decoration: BoxDecoration(
                     color: const Color(0xFF4E342E),
                     borderRadius: BorderRadius.circular(5),
@@ -845,9 +921,11 @@ class _MascotSide extends StatelessWidget {
               ),
               // Right shoe
               Positioned(
-                top: 134, left: 41,
+                top: 134,
+                left: 41,
                 child: Container(
-                  width: 24, height: 9,
+                  width: 24,
+                  height: 9,
                   decoration: BoxDecoration(
                     color: const Color(0xFF4E342E),
                     borderRadius: BorderRadius.circular(5),
@@ -902,9 +980,7 @@ class _TipSide extends StatelessWidget {
             maxLines: 6,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-                fontSize: 9.5,
-                color: Color(0xFF37474F),
-                height: 1.4),
+                fontSize: 9.5, color: Color(0xFF37474F), height: 1.4),
             textAlign: TextAlign.center,
           ),
         ],
@@ -923,8 +999,10 @@ class _CircleBtn extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CircleBtn({
-    required this.icon, required this.label,
-    required this.color, required this.active,
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.active,
     required this.onTap,
   });
 
@@ -937,7 +1015,8 @@ class _CircleBtn extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: 58, height: 58,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: active ? color : color.withOpacity(0.14),
@@ -949,15 +1028,12 @@ class _CircleBtn extends StatelessWidget {
                     offset: const Offset(0, 3))
               ],
             ),
-            child: Icon(icon,
-                color: active ? Colors.white : color, size: 26),
+            child: Icon(icon, color: active ? Colors.white : color, size: 26),
           ),
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: color)),
+                  fontSize: 11, fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );
@@ -1018,22 +1094,18 @@ class _InfoCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: color),
-                textAlign: TextAlign.center),
-          ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10,
+                color: Color(0xFF9CA3AF),
+                fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w800, color: color),
+            textAlign: TextAlign.center),
+      ]),
     );
   }
 }
@@ -1048,21 +1120,23 @@ class _NextBtn extends StatelessWidget {
   final VoidCallback? onBack;
 
   const _NextBtn({
-    required this.label, required this.color,
-    required this.onTap, required this.hasBack,
-    required this.accentColor, this.onBack,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    required this.hasBack,
+    required this.accentColor,
+    this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       if (hasBack) ...[
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 46, height: 46,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
@@ -1074,8 +1148,7 @@ class _NextBtn extends StatelessWidget {
                     offset: const Offset(0, 2))
               ],
             ),
-            child: Icon(Icons.arrow_back_rounded,
-                color: accentColor, size: 20),
+            child: Icon(Icons.arrow_back_rounded, color: accentColor, size: 20),
           ),
         ),
         const SizedBox(width: 10),
@@ -1110,7 +1183,6 @@ class _NextBtn extends StatelessWidget {
 
 // ── Quiz result page ──────────────────────────────────────────────────────────
 
-
 // ── Quiz result page ──────────────────────────────────────────────────────────
 
 class _QuizResultPage extends StatelessWidget {
@@ -1120,15 +1192,21 @@ class _QuizResultPage extends StatelessWidget {
   final VoidCallback onRestart;
 
   const _QuizResultPage({
-    required this.correct, required this.total,
-    required this.color, required this.title,
+    required this.correct,
+    required this.total,
+    required this.color,
+    required this.title,
     required this.onRestart,
   });
 
   @override
   Widget build(BuildContext context) {
-    final pct   = total == 0 ? 0 : (correct / total * 100).round();
-    final stars = pct >= 80 ? 3 : pct >= 50 ? 2 : 1;
+    final pct = total == 0 ? 0 : (correct / total * 100).round();
+    final stars = pct >= 80
+        ? 3
+        : pct >= 50
+            ? 2
+            : 1;
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(
@@ -1148,36 +1226,57 @@ class _QuizResultPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(title, style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white)),
                     const SizedBox(height: 24),
                     Container(
-                      width: 130, height: 130,
+                      width: 130,
+                      height: 130,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle, color: Colors.white,
+                        shape: BoxShape.circle,
+                        color: Colors.white,
                         border: Border.all(color: color, width: 4),
-                        boxShadow: [BoxShadow(color: color.withOpacity(0.25), blurRadius: 20)],
+                        boxShadow: [
+                          BoxShadow(
+                              color: color.withOpacity(0.25), blurRadius: 20)
+                        ],
                       ),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Text('$pct%', style: TextStyle(
-                            fontSize: 32, fontWeight: FontWeight.w900, color: color)),
-                        const Text('score', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      ]),
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('$pct%',
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: color)),
+                            const Text('score',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
+                          ]),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(3, (i) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(i < stars ? '⭐' : '☆',
-                            style: TextStyle(
-                                fontSize: i < stars ? 40 : 30,
-                                color: i < stars ? Colors.amber : Colors.grey.shade300)),
-                      )),
+                      children: List.generate(
+                          3,
+                          (i) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                child: Text(i < stars ? '⭐' : '☆',
+                                    style: TextStyle(
+                                        fontSize: i < stars ? 40 : 30,
+                                        color: i < stars
+                                            ? Colors.amber
+                                            : Colors.grey.shade300)),
+                              )),
                     ),
                     const SizedBox(height: 10),
                     Text('$correct / $total correct',
-                        style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280))),
+                        style: const TextStyle(
+                            fontSize: 16, color: Color(0xFF6B7280))),
                     const SizedBox(height: 36),
                     SizedBox(
                       width: double.infinity,
@@ -1188,18 +1287,24 @@ class _QuizResultPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: _kOrange,
                             borderRadius: BorderRadius.circular(30),
-                            boxShadow: [BoxShadow(
-                                color: _kOrange.withOpacity(0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                  color: _kOrange.withOpacity(0.35),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4))
+                            ],
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                              Icon(Icons.refresh_rounded,
+                                  color: Colors.white, size: 20),
                               SizedBox(width: 8),
-                              Text('Try Again', style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
+                              Text('Try Again',
+                                  style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white)),
                             ],
                           ),
                         ),
@@ -1207,9 +1312,11 @@ class _QuizResultPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
+                      onPressed: () =>
+                          Navigator.popUntil(context, (r) => r.isFirst),
                       child: const Text('Back to Home',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+                          style: TextStyle(
+                              fontSize: 14, color: Color(0xFF6B7280))),
                     ),
                   ],
                 ),

@@ -13,14 +13,14 @@ class ProgressScreen extends StatefulWidget {
 
 class _ProgressScreenState extends State<ProgressScreen> {
   static const _darkGreen = Color(0xFF1B4332);
-  static const _medGreen  = Color(0xFF2D6A4F);
-  static const _amber     = Color(0xFFD4A017);
+  static const _medGreen = Color(0xFF2D6A4F);
+  static const _amber = Color(0xFFD4A017);
 
   // Simulated daily usage minutes (Mon–Sun for current week)
   final List<int> _weeklyMinutes = [0, 0, 0, 0, 0, 0, 0];
   int _lessonsCompleted = 0;
   int _streak = 0;
-  DateTime? _lastSessionDate;
+  
 
   @override
   void initState() {
@@ -29,8 +29,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Future<void> _loadStats() async {
-    final prefs = await SharedPreferences.getInstance();
     final provider = context.read<AppProvider>();
+    final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       _lessonsCompleted = provider.currentUser?.sessionsCompleted ?? 0;
@@ -42,11 +42,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
       // Load streak
       _streak = prefs.getInt('streak_count') ?? 0;
-
-      final lastStr = prefs.getString('last_session_date');
-      if (lastStr != null) {
-        _lastSessionDate = DateTime.tryParse(lastStr);
-      }
     });
 
     // Record today's session (at least 1 min)
@@ -54,6 +49,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Future<void> _recordTodayUsage() async {
+    final provider = context.read<AppProvider>();
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final dayIndex = now.weekday - 1; // Mon=0 … Sun=6
@@ -61,7 +57,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     // Add some minutes for the current session
     final current = prefs.getInt('weekly_minutes_$dayIndex') ?? 0;
     // Only add if user has done something meaningful (has progress)
-    final provider = context.read<AppProvider>();
     if (provider.progressHistory.isNotEmpty) {
       await prefs.setInt('weekly_minutes_$dayIndex', current + 2);
     }
@@ -89,7 +84,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     if (mounted) {
       setState(() {
-        _weeklyMinutes[dayIndex] = prefs.getInt('weekly_minutes_$dayIndex') ?? 0;
+        _weeklyMinutes[dayIndex] =
+            prefs.getInt('weekly_minutes_$dayIndex') ?? 0;
         _streak = streak;
       });
     }
@@ -158,7 +154,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     children: [
                       const Text(
                         'Daily Average  ',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                        style:
+                            TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                       ),
                       Text(
                         _formatDuration(_dailyAverageMinutes),
@@ -213,7 +210,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 fontWeight: isToday
                                     ? FontWeight.bold
                                     : FontWeight.normal,
-                                color: isToday ? _amber : const Color(0xFF6B7280),
+                                color:
+                                    isToday ? _amber : const Color(0xFF6B7280),
                               ),
                             ),
                           ],
@@ -272,10 +270,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
               builder: (ctx, provider, _) {
                 final level = provider.profileLevel;
                 final levelEmoji = {
-                  'beginner': '🌱',
-                  'intermediate': '⚡',
-                  'advanced': '🏆',
-                }[level] ?? '🌱';
+                      'beginner': '🌱',
+                      'intermediate': '⚡',
+                      'advanced': '🏆',
+                    }[level] ??
+                    '🌱';
                 return _SectionCard(
                   child: Row(
                     children: [
@@ -312,7 +311,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // ── Recent sessions ───────────────────────────────────────────
             Consumer<AppProvider>(
               builder: (ctx, provider, _) {
-                final history = provider.progressHistory.reversed.take(5).toList();
+                final history =
+                    provider.progressHistory.reversed.take(5).toList();
                 if (history.isEmpty) return const SizedBox.shrink();
 
                 return _SectionCard(
@@ -431,7 +431,8 @@ class _SessionRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 8, height: 8,
+            width: 8,
+            height: 8,
             decoration: const BoxDecoration(
               color: Color(0xFF2D6A4F),
               shape: BoxShape.circle,

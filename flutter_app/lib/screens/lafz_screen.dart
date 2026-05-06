@@ -159,9 +159,8 @@ class _LafzScreenState extends State<LafzScreen> {
                           fontFamily: 'NotoNastaliqUrdu',
                           fontSize: 14,
                           color: selected ? Colors.white : AppTheme.navy,
-                          fontWeight: selected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          fontWeight:
+                              selected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       selected: selected,
@@ -263,8 +262,7 @@ class _WordCard extends StatelessWidget {
                     color: AppTheme.pink.withOpacity(0.3), width: 1.5),
               ),
               child: Center(
-                child:
-                    Text(word.emoji, style: const TextStyle(fontSize: 44)),
+                child: Text(word.emoji, style: const TextStyle(fontSize: 44)),
               ),
             ),
 
@@ -304,8 +302,7 @@ class _WordCard extends StatelessWidget {
 
             // ── Level badge ───────────────────────────────────────────
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
                 color: levelColor.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),

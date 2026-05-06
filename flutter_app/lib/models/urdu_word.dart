@@ -4,8 +4,8 @@ class UrduWord {
   final String english;
   final String emoji;
   final String category;
-  final String level;   // easy | medium | hard
-  final String target;  // romanized target for pronunciation scoring
+  final String level; // easy | medium | hard
+  final String target; // romanized target for pronunciation scoring
 
   const UrduWord({
     required this.urdu,

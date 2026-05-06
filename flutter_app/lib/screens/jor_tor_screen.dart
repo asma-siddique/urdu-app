@@ -7,15 +7,19 @@ import '../providers/app_provider.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _kCardTop = Color(0xFFFFF3D6);
-const _kTeal    = Color(0xFF26C6DA);
-const _kOrange  = Color(0xFFFF7043);
-const _kPurple  = Color(0xFF7C3AED);
-const _kPink    = Color(0xFFf15bb5);
-const _kBg      = Color(0xFFFFF8E8);
+const _kTeal = Color(0xFF26C6DA);
+const _kOrange = Color(0xFFFF7043);
+const _kPurple = Color(0xFF7C3AED);
+const _kPink = Color(0xFFf15bb5);
+const _kBg = Color(0xFFFFF8E8);
 
 const _mascotMsgs = [
-  'Look!\nJoin\nthem!', 'Cool!\nMix\nthem!', 'Fun!\nRead\nit!',
-  'Yes!\nSay\nit!',    'Wow!\nTry\nit!',   'Great!\nSpell\nit!',
+  'Look!\nJoin\nthem!',
+  'Cool!\nMix\nthem!',
+  'Fun!\nRead\nit!',
+  'Yes!\nSay\nit!',
+  'Wow!\nTry\nit!',
+  'Great!\nSpell\nit!',
 ];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -39,7 +43,7 @@ class _JorTorScreenState extends State<JorTorScreen>
     super.initState();
     _anim = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 300));
-    _fadeAnim  = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(begin: const Offset(0.10, 0), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
     _anim.forward();
@@ -49,7 +53,10 @@ class _JorTorScreenState extends State<JorTorScreen>
   }
 
   @override
-  void dispose() { _anim.dispose(); super.dispose(); }
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
 
   JorTorItem get _item => JOR_TOR[_index];
 
@@ -86,7 +93,8 @@ class _JorTorScreenState extends State<JorTorScreen>
           Navigator.pop(context);
           final provider = context.read<AppProvider>();
           provider.recordResult(item.result, score);
-          provider.updateLessonProgress('/jor-tor', (_index + 1) / JOR_TOR.length);
+          provider.updateLessonProgress(
+              '/jor-tor', (_index + 1) / JOR_TOR.length);
           TtsService.instance.speak(
             score >= 70 ? 'شاباش! بہت اچھا!' : 'دوبارہ کوشش کریں۔',
           );
@@ -98,41 +106,60 @@ class _JorTorScreenState extends State<JorTorScreen>
   // ── Decorative background ─────────────────────────────────────────────────
   List<Widget> _decorStars() {
     const stars = [
-      {'top': 80.0,  'left': 10.0,  'size': 16.0, 'op': 0.65},
-      {'top': 140.0, 'left': 28.0,  'size': 11.0, 'op': 0.45},
-      {'top': 220.0, 'left': 6.0,   'size': 18.0, 'op': 0.55},
-      {'top': 80.0,  'right': 8.0,  'size': 14.0, 'op': 0.65},
+      {'top': 80.0, 'left': 10.0, 'size': 16.0, 'op': 0.65},
+      {'top': 140.0, 'left': 28.0, 'size': 11.0, 'op': 0.45},
+      {'top': 220.0, 'left': 6.0, 'size': 18.0, 'op': 0.55},
+      {'top': 80.0, 'right': 8.0, 'size': 14.0, 'op': 0.65},
       {'top': 155.0, 'right': 24.0, 'size': 18.0, 'op': 0.50},
-      {'top': 240.0, 'right': 6.0,  'size': 13.0, 'op': 0.55},
+      {'top': 240.0, 'right': 6.0, 'size': 13.0, 'op': 0.55},
     ];
-    final List<Widget> w = stars.map<Widget>((d) => Positioned(
-      top:   d['top']   as double,
-      left:  d.containsKey('left')  ? d['left']  as double : null,
-      right: d.containsKey('right') ? d['right'] as double : null,
-      child: Opacity(
-        opacity: d['op'] as double,
-        child: Text('⭐', style: TextStyle(fontSize: d['size'] as double)),
-      ),
-    )).toList();
+    final List<Widget> w = stars
+        .map<Widget>((d) => Positioned(
+              top: d['top'] as double,
+              left: d.containsKey('left') ? d['left'] as double : null,
+              right: d.containsKey('right') ? d['right'] as double : null,
+              child: Opacity(
+                opacity: d['op'] as double,
+                child:
+                    Text('⭐', style: TextStyle(fontSize: d['size'] as double)),
+              ),
+            ))
+        .toList();
     w.addAll([
-      const Positioned(top: 56, left: 50,
-          child: Opacity(opacity: 0.50, child: Text('☁️', style: TextStyle(fontSize: 26)))),
-      const Positioned(top: 60, right: 55,
-          child: Opacity(opacity: 0.40, child: Text('☁️', style: TextStyle(fontSize: 20)))),
+      const Positioned(
+          top: 56,
+          left: 50,
+          child: Opacity(
+              opacity: 0.50,
+              child: Text('☁️', style: TextStyle(fontSize: 26)))),
+      const Positioned(
+          top: 60,
+          right: 55,
+          child: Opacity(
+              opacity: 0.40,
+              child: Text('☁️', style: TextStyle(fontSize: 20)))),
     ]);
     w.add(Positioned(
-      bottom: 0, left: 0, right: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
       child: SizedBox(
         height: 26,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: List<Widget>.generate(18, (i) => Padding(
-            padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
-            child: Text(
-              i % 3 == 0 ? '🌿' : i % 3 == 1 ? '🌱' : '🌸',
-              style: TextStyle(fontSize: i % 2 == 0 ? 17.0 : 13.0),
-            ),
-          )),
+          children: List<Widget>.generate(
+              18,
+              (i) => Padding(
+                    padding: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                    child: Text(
+                      i % 3 == 0
+                          ? '🌿'
+                          : i % 3 == 1
+                              ? '🌱'
+                              : '🌸',
+                      style: TextStyle(fontSize: i % 2 == 0 ? 17.0 : 13.0),
+                    ),
+                  )),
         ),
       ),
     ));
@@ -142,7 +169,7 @@ class _JorTorScreenState extends State<JorTorScreen>
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final total   = JOR_TOR.length;
+    final total = JOR_TOR.length;
     final progress = (_index + 1) / total;
     final msg = _mascotMsgs[_index % _mascotMsgs.length];
 
@@ -171,7 +198,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                   children: [
                     // ── Top bar ───────────────────────────────────────────
                     _JTTopBar(
-                      index: _index, total: total,
+                      index: _index,
+                      total: total,
                       onBack: () => Navigator.pop(context),
                     ),
                     // ── Progress bar ──────────────────────────────────────
@@ -190,7 +218,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                             const SizedBox(width: 4),
                             Text('${_index + 1} / $total',
                                 style: const TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
                                     color: Color(0xFF5D4037))),
                           ]),
                         ),
@@ -199,7 +228,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
                             child: LinearProgressIndicator(
-                              value: progress, minHeight: 8,
+                              value: progress,
+                              minHeight: 8,
                               backgroundColor: Colors.white.withOpacity(0.30),
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                   Colors.white),
@@ -209,7 +239,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                         const SizedBox(width: 10),
                         Text('${(progress * 100).round()}%',
                             style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: Colors.white)),
                       ]),
                     ),
@@ -217,7 +248,7 @@ class _JorTorScreenState extends State<JorTorScreen>
                     Expanded(
                       child: LayoutBuilder(builder: (ctx, bc) {
                         final isWide = bc.maxWidth > 460;
-                        final sideW  = isWide ? 72.0 : 48.0;
+                        final sideW = isWide ? 72.0 : 48.0;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 4),
@@ -228,17 +259,20 @@ class _JorTorScreenState extends State<JorTorScreen>
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  SizedBox(width: sideW,
+                                  SizedBox(
+                                      width: sideW,
                                       child: _MascotSide(message: msg)),
                                   Expanded(
                                     child: Center(
                                       child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 300),
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 300),
                                         child: _buildCard(),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: sideW,
+                                  SizedBox(
+                                      width: sideW,
                                       child: _TipSide(item: _item)),
                                 ],
                               ),
@@ -302,10 +336,13 @@ class _JorTorScreenState extends State<JorTorScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withOpacity(0.18),
-          blurRadius: 22, offset: const Offset(0, 8),
-        )],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          )
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
@@ -318,7 +355,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       _kPurple.withOpacity(0.18),
                       const Color(0xFFFFF3E0),
@@ -351,7 +389,8 @@ class _JorTorScreenState extends State<JorTorScreen>
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: 'NotoNastaliqUrdu',
-                      fontSize: 60, fontWeight: FontWeight.bold,
+                      fontSize: 60,
+                      fontWeight: FontWeight.bold,
                       color: _kPink,
                       height: 1.0,
                       leadingDistribution: TextLeadingDistribution.even,
@@ -376,11 +415,17 @@ class _JorTorScreenState extends State<JorTorScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Flexible(child: _SmallLetterBox(text: item.result,    color: _kPink,   bold: true)),
+                      Flexible(
+                          child: _SmallLetterBox(
+                              text: item.result, color: _kPink, bold: true)),
                       _OpLbl('='),
-                      Flexible(child: _SmallLetterBox(text: item.letter,    color: _kPurple)),
+                      Flexible(
+                          child: _SmallLetterBox(
+                              text: item.letter, color: _kPurple)),
                       _OpLbl('+'),
-                      Flexible(child: _SmallLetterBox(text: item.vowelMark, color: _kTeal)),
+                      Flexible(
+                          child: _SmallLetterBox(
+                              text: item.vowelMark, color: _kTeal)),
                     ],
                   ),
                 ),
@@ -396,13 +441,18 @@ class _JorTorScreenState extends State<JorTorScreen>
               ),
               child: Row(
                 children: [
-                  Expanded(child: _InfoCell(
-                      label: 'Sound', value: item.resultRoman, color: _kPink)),
-                  Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
-                  Expanded(child: _InfoCell(
-                      label: 'Example',
-                      value: '${item.exampleWord}  ${item.exampleMeaning}',
-                      color: _kPurple)),
+                  Expanded(
+                      child: _InfoCell(
+                          label: 'Sound',
+                          value: item.resultRoman,
+                          color: _kPink)),
+                  Container(
+                      width: 1, height: 40, color: const Color(0xFFE5E7EB)),
+                  Expanded(
+                      child: _InfoCell(
+                          label: 'Example',
+                          value: '${item.exampleWord}  ${item.exampleMeaning}',
+                          color: _kPurple)),
                 ],
               ),
             ),
@@ -417,7 +467,8 @@ class _JorTorScreenState extends State<JorTorScreen>
 class _JTTopBar extends StatelessWidget {
   final int index, total;
   final VoidCallback onBack;
-  const _JTTopBar({required this.index, required this.total, required this.onBack});
+  const _JTTopBar(
+      {required this.index, required this.total, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +478,8 @@ class _JTTopBar extends StatelessWidget {
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.25),
               borderRadius: BorderRadius.circular(12),
@@ -439,7 +491,9 @@ class _JTTopBar extends StatelessWidget {
         Expanded(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('جوڑ توڑ  Jor Tor',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white)),
             Text('Letter Combinations · ${index + 1} / $total',
                 style: const TextStyle(fontSize: 10, color: Colors.white70)),
@@ -452,8 +506,10 @@ class _JTTopBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text('🔗 ${index + 1}',
-              style: const TextStyle(fontSize: 13,
-                  fontWeight: FontWeight.w800, color: Colors.white)),
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white)),
         ),
       ]),
     );
@@ -477,66 +533,151 @@ class _MascotSide extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12), topRight: Radius.circular(12),
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
               bottomRight: Radius.circular(12),
             ),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10),
-                blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
           ),
           child: Text(message,
-              style: const TextStyle(fontSize: 9.0, fontWeight: FontWeight.w800,
+              style: const TextStyle(
+                  fontSize: 9.0,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF5D4037)),
               textAlign: TextAlign.center),
         ),
         SizedBox(
-          height: 148, width: 80,
+          height: 148,
+          width: 80,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
             children: <Widget>[
-              Positioned(top: 0, left: 23, child: Container(width: 34, height: 15,
-                decoration: BoxDecoration(color: Colors.white,
-                  border: Border.all(color: const Color(0xFFD0D0D0)),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(17), topRight: Radius.circular(17))))),
-              Positioned(top: 13, left: 20, child: Container(width: 40, height: 5,
-                decoration: BoxDecoration(color: Colors.white,
-                  border: Border.all(color: const Color(0xFFD0D0D0)),
-                  borderRadius: BorderRadius.circular(3)))),
-              Positioned(top: 16, left: 22, child: Container(width: 36, height: 36,
-                decoration: const BoxDecoration(shape: BoxShape.circle,
-                    color: Color(0xFFFFCC80)),
-                child: const Center(child: Text('😊', style: TextStyle(fontSize: 20))))),
-              Positioned(top: 49, left: 36, child: Container(width: 8, height: 7,
-                  color: const Color(0xFFFFCC80))),
-              Positioned(top: 54, left: 14, child: Container(width: 52, height: 50,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(8)))),
-              Positioned(top: 54, left: 18, child: Container(width: 44, height: 46,
-                decoration: BoxDecoration(color: const Color(0xFF388E3C),
-                    borderRadius: BorderRadius.circular(7)))),
-              Positioned(top: 56, left: 32, child: Container(width: 16, height: 44,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(4)))),
-              Positioned(top: 58, right: 2, child: Transform.rotate(angle: -0.55,
-                child: Container(width: 24, height: 10,
-                  decoration: BoxDecoration(color: const Color(0xFFFFCC80),
-                      borderRadius: BorderRadius.circular(5))))),
-              Positioned(top: 65, left: 4, child: Container(width: 14, height: 10,
-                decoration: BoxDecoration(color: Colors.white,
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 101, left: 18, child: Container(width: 17, height: 38,
-                decoration: BoxDecoration(color: const Color(0xFFEEEEEE),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 101, left: 44, child: Container(width: 17, height: 38,
-                decoration: BoxDecoration(color: const Color(0xFFEEEEEE),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 134, left: 14, child: Container(width: 24, height: 9,
-                decoration: BoxDecoration(color: const Color(0xFF4E342E),
-                    borderRadius: BorderRadius.circular(5)))),
-              Positioned(top: 134, left: 41, child: Container(width: 24, height: 9,
-                decoration: BoxDecoration(color: const Color(0xFF4E342E),
-                    borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 0,
+                  left: 23,
+                  child: Container(
+                      width: 34,
+                      height: 15,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFD0D0D0)),
+                          borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(17),
+                              topRight: Radius.circular(17))))),
+              Positioned(
+                  top: 13,
+                  left: 20,
+                  child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFD0D0D0)),
+                          borderRadius: BorderRadius.circular(3)))),
+              Positioned(
+                  top: 16,
+                  left: 22,
+                  child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                          shape: BoxShape.circle, color: Color(0xFFFFCC80)),
+                      child: const Center(
+                          child: Text('😊', style: TextStyle(fontSize: 20))))),
+              Positioned(
+                  top: 49,
+                  left: 36,
+                  child: Container(
+                      width: 8, height: 7, color: const Color(0xFFFFCC80))),
+              Positioned(
+                  top: 54,
+                  left: 14,
+                  child: Container(
+                      width: 52,
+                      height: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8)))),
+              Positioned(
+                  top: 54,
+                  left: 18,
+                  child: Container(
+                      width: 44,
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF388E3C),
+                          borderRadius: BorderRadius.circular(7)))),
+              Positioned(
+                  top: 56,
+                  left: 32,
+                  child: Container(
+                      width: 16,
+                      height: 44,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4)))),
+              Positioned(
+                  top: 58,
+                  right: 2,
+                  child: Transform.rotate(
+                      angle: -0.55,
+                      child: Container(
+                          width: 24,
+                          height: 10,
+                          decoration: BoxDecoration(
+                              color: const Color(0xFFFFCC80),
+                              borderRadius: BorderRadius.circular(5))))),
+              Positioned(
+                  top: 65,
+                  left: 4,
+                  child: Container(
+                      width: 14,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 101,
+                  left: 18,
+                  child: Container(
+                      width: 17,
+                      height: 38,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFEEEEEE),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 101,
+                  left: 44,
+                  child: Container(
+                      width: 17,
+                      height: 38,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFEEEEEE),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 134,
+                  left: 14,
+                  child: Container(
+                      width: 24,
+                      height: 9,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF4E342E),
+                          borderRadius: BorderRadius.circular(5)))),
+              Positioned(
+                  top: 134,
+                  left: 41,
+                  child: Container(
+                      width: 24,
+                      height: 9,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF4E342E),
+                          borderRadius: BorderRadius.circular(5)))),
             ],
           ),
         ),
@@ -560,18 +701,29 @@ class _TipSide extends StatelessWidget {
         color: const Color(0xFFF3E5F5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xCECE93D8), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.12),
-            blurRadius: 8, offset: const Offset(0, 3))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.purple.withOpacity(0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 3))
+        ],
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('🔗', style: TextStyle(fontSize: 18)),
         const SizedBox(height: 4),
-        const Text('Tip', style: TextStyle(fontSize: 10,
-            fontWeight: FontWeight.w800, color: Color(0xFF6A1B9A))),
+        const Text('Tip',
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF6A1B9A))),
         const SizedBox(height: 5),
-        Text('${item.letterRoman}\n+\n${item.vowelRoman}\n=\n${item.resultRoman}',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
-                color: Color(0xFF4A148C), height: 1.4),
+        Text(
+            '${item.letterRoman}\n+\n${item.vowelRoman}\n=\n${item.resultRoman}',
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF4A148C),
+                height: 1.4),
             textAlign: TextAlign.center),
       ]),
     );
@@ -585,8 +737,12 @@ class _CircleBtn extends StatelessWidget {
   final Color color;
   final bool active;
   final VoidCallback onTap;
-  const _CircleBtn({required this.icon, required this.label,
-      required this.color, required this.active, required this.onTap});
+  const _CircleBtn(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.active,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -595,19 +751,27 @@ class _CircleBtn extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          width: 58, height: 58,
+          width: 58,
+          height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: active ? color : color.withOpacity(0.14),
             border: Border.all(color: color, width: 2.5),
-            boxShadow: [BoxShadow(color: color.withOpacity(0.28),
-                blurRadius: 10, offset: const Offset(0, 3))],
+            boxShadow: [
+              BoxShadow(
+                  color: color.withOpacity(0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3))
+            ],
           ),
           child: Icon(icon, color: active ? Colors.white : color, size: 26),
         ),
         const SizedBox(height: 5),
-        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-            color: active ? color : color.withOpacity(0.7))),
+        Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: active ? color : color.withOpacity(0.7))),
       ]),
     );
   }
@@ -620,8 +784,12 @@ class _NavBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool hasBack;
   final VoidCallback onBack;
-  const _NavBtn({required this.label, required this.color,
-      required this.onTap, required this.hasBack, required this.onBack});
+  const _NavBtn(
+      {required this.label,
+      required this.color,
+      required this.onTap,
+      required this.hasBack,
+      required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -630,7 +798,8 @@ class _NavBtn extends StatelessWidget {
         GestureDetector(
           onTap: onBack,
           child: Container(
-            width: 50, height: 54,
+            width: 50,
+            height: 54,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -648,12 +817,19 @@ class _NavBtn extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(30),
-              boxShadow: [BoxShadow(color: color.withOpacity(0.30),
-                  blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                    color: color.withOpacity(0.30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
             ),
-            child: Center(child: Text(label,
-                style: const TextStyle(fontSize: 16,
-                    fontWeight: FontWeight.w800, color: Colors.white))),
+            child: Center(
+                child: Text(label,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white))),
           ),
         ),
       ),
@@ -666,8 +842,8 @@ class _SmallLetterBox extends StatelessWidget {
   final String text;
   final Color color;
   final bool bold;
-  const _SmallLetterBox({required this.text, required this.color,
-      this.bold = false});
+  const _SmallLetterBox(
+      {required this.text, required this.color, this.bold = false});
 
   @override
   Widget build(BuildContext context) {
@@ -684,8 +860,10 @@ class _SmallLetterBox extends StatelessWidget {
       child: Text(text,
           style: TextStyle(
             fontFamily: 'NotoNastaliqUrdu',
-            fontSize: 32, fontWeight: FontWeight.bold,
-            color: color, height: 1.0,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: color,
+            height: 1.0,
             leadingDistribution: TextLeadingDistribution.even,
           )),
     );
@@ -698,32 +876,35 @@ class _OpLbl extends StatelessWidget {
   const _OpLbl(this.text);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Text(text, style: const TextStyle(
-        fontSize: 20, color: Colors.grey, fontWeight: FontWeight.bold)),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 20, color: Colors.grey, fontWeight: FontWeight.bold)),
+      );
 }
 
 // ── Info cell ─────────────────────────────────────────────────────────────────
 class _InfoCell extends StatelessWidget {
   final String label, value;
   final Color color;
-  const _InfoCell({required this.label, required this.value, required this.color});
+  const _InfoCell(
+      {required this.label, required this.value, required this.color});
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(label, style: const TextStyle(
-            fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w600)),
         const SizedBox(height: 3),
         Text(value,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800,
-                color: color),
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w800, color: color),
             textAlign: TextAlign.center,
-            maxLines: 2, overflow: TextOverflow.ellipsis),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis),
       ]),
     );
   }
 }
-

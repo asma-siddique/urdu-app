@@ -13,7 +13,8 @@ class AppProvider extends ChangeNotifier {
 
   // ── Getters ──────────────────────────────────────────────────────────────
   UserModel? get currentUser => _currentUser;
-  List<ProgressModel> get progressHistory => List.unmodifiable(_progressHistory);
+  List<ProgressModel> get progressHistory =>
+      List.unmodifiable(_progressHistory);
   Map<String, double> get weaknessScores => Map.unmodifiable(_weaknessScores);
   Map<String, int> get srsIntervals => Map.unmodifiable(_srsIntervals);
   Map<String, double> get lessonProgress => Map.unmodifiable(_lessonProgress);
@@ -69,8 +70,7 @@ class AppProvider extends ChangeNotifier {
 
     if (weaknessJson != null) {
       final raw = jsonDecode(weaknessJson) as Map<String, dynamic>;
-      _weaknessScores =
-          raw.map((k, v) => MapEntry(k, (v as num).toDouble()));
+      _weaknessScores = raw.map((k, v) => MapEntry(k, (v as num).toDouble()));
     }
 
     if (srsJson != null) {

@@ -74,53 +74,53 @@ class UrduLearningApp extends StatelessWidget {
       },
       routes: {
         // ── Core lessons ───────────────────────────────────────────────
-        '/haroof':        (_) => const HaroofScreen(),
-        '/lafz':          (_) => const LafzScreen(),
-        '/jumlay':        (_) => const JumlaySreen(),
-        '/rang':          (_) => const RangScreen(),
-        '/jor-tor':       (_) => const JorTorScreen(),
-        '/counting':      (_) => const CountingScreen(),
-        '/grammar':       (_) => const GrammarScreen(),
+        '/haroof': (_) => const HaroofScreen(),
+        '/lafz': (_) => const LafzScreen(),
+        '/jumlay': (_) => const JumlaySreen(),
+        '/rang': (_) => const RangScreen(),
+        '/jor-tor': (_) => const JorTorScreen(),
+        '/counting': (_) => const CountingScreen(),
+        '/grammar': (_) => const GrammarScreen(),
 
         // ── Lesson flow entries ─────────────────────────────────────────
-        '/haroof-lesson':   (_) => const HaroofLessonScreen(),
-        '/ginti-lesson':    (_) => const GintiLessonScreen(),
-        '/alfaz-lesson':    (_) => const AlfazLessonScreen(),
-        '/jumla-lesson':    (_) => const JumlaLessonScreen(),
-        '/animals-lesson':  (_) => const JanwarLessonScreen(),
-        '/fruits-lesson':   (_) => const PhalLessonScreen(),
-        '/body-lesson':     (_) => const JismLessonScreen(),
+        '/haroof-lesson': (_) => const HaroofLessonScreen(),
+        '/ginti-lesson': (_) => const GintiLessonScreen(),
+        '/alfaz-lesson': (_) => const AlfazLessonScreen(),
+        '/jumla-lesson': (_) => const JumlaLessonScreen(),
+        '/animals-lesson': (_) => const JanwarLessonScreen(),
+        '/fruits-lesson': (_) => const PhalLessonScreen(),
+        '/body-lesson': (_) => const JismLessonScreen(),
 
         // ── Hubs ───────────────────────────────────────────────────────
-        '/lessons-hub':   (_) => const LessonsHubScreen(),
-        '/quiz-hub':      (_) => const QuizHubScreen(),
-        '/home':          (_) => const HomeScreen(),
-        '/progress':      (_) => const ProgressScreen(),
-        '/profile':       (_) => const ProfileScreen(),
+        '/lessons-hub': (_) => const LessonsHubScreen(),
+        '/quiz-hub': (_) => const QuizHubScreen(),
+        '/home': (_) => const HomeScreen(),
+        '/progress': (_) => const ProgressScreen(),
+        '/profile': (_) => const ProfileScreen(),
         '/vocabulary-bank': (_) => const VocabularyBankScreen(),
-        '/poetry-bank':   (_) => const PoetryBankScreen(),
+        '/poetry-bank': (_) => const PoetryBankScreen(),
 
         // ── Quizzes ────────────────────────────────────────────────────
-        '/quiz':          (_) => const QuizScreen(),
-        '/haroof-quiz':   (_) => const HaroofQuizEntry(), // flashcard quiz
-        '/words-quiz':    (_) => const QuizScreen(
+        '/quiz': (_) => const QuizScreen(),
+        '/haroof-quiz': (_) => const HaroofQuizEntry(), // flashcard quiz
+        '/words-quiz': (_) => const QuizScreen(
               screenTitle: 'الفاظ کوئز',
             ),
-        '/sentences-quiz':(_) => const SentenceQuizScreen(),
+        '/sentences-quiz': (_) => const SentenceQuizScreen(),
         '/matching-quiz': (_) => const MatchingQuizScreen(),
-        '/animals-quiz':  (_) => const QuizScreen(
+        '/animals-quiz': (_) => const QuizScreen(
               wordList: ANIMALS,
               screenTitle: 'جانور کوئز',
             ),
-        '/fruits-quiz':   (_) => const QuizScreen(
+        '/fruits-quiz': (_) => const QuizScreen(
               wordList: FRUITS,
               screenTitle: 'پھل کوئز',
             ),
-        '/body-quiz':     (_) => const QuizScreen(
+        '/body-quiz': (_) => const QuizScreen(
               wordList: BODY_PARTS,
               screenTitle: 'جسم کوئز',
             ),
-        '/colors-quiz':   (_) => const QuizScreen(
+        '/colors-quiz': (_) => const QuizScreen(
               wordList: COLORS_WORDS,
               screenTitle: 'رنگ کوئز',
             ),
@@ -172,18 +172,20 @@ class _AppWrapperState extends State<AppWrapper> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('اردو', style: TextStyle(
-                fontFamily: 'NotoNastaliqUrdu',
-                fontSize: 72,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              )),
+              Text('اردو',
+                  style: TextStyle(
+                    fontFamily: 'NotoNastaliqUrdu',
+                    fontSize: 72,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  )),
               SizedBox(height: 12),
-              Text('سیکھیں', style: TextStyle(
-                fontFamily: 'NotoNastaliqUrdu',
-                fontSize: 28,
-                color: Colors.white70,
-              )),
+              Text('سیکھیں',
+                  style: TextStyle(
+                    fontFamily: 'NotoNastaliqUrdu',
+                    fontSize: 28,
+                    color: Colors.white70,
+                  )),
               SizedBox(height: 40),
               CircularProgressIndicator(color: Color(0xFFf15bb5)),
             ],

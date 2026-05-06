@@ -99,7 +99,9 @@ class TtsService {
     if (kIsWeb) {
       WebTts.stop();
     } else {
-      try { await _mobileTts?.stop(); } catch (_) {}
+      try {
+        await _mobileTts?.stop();
+      } catch (_) {}
     }
   }
 }

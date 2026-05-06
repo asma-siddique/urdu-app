@@ -59,9 +59,8 @@ class BottomNavBar extends StatelessWidget {
                           color: isActive
                               ? const Color(0xFF7C3AED)
                               : const Color(0xFF9CA3AF),
-                          fontWeight: isActive
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              isActive ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
                     ],

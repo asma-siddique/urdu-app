@@ -1,56 +1,72 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/words.dart';
+
 import '../data/sentences.dart';
-import '../models/urdu_word.dart';
+import '../data/words.dart';
 import '../models/urdu_sentence.dart';
+import '../models/urdu_word.dart';
 import '../providers/app_provider.dart';
 import '../services/tts_service.dart';
 import '../widgets/mic_recorder_widget.dart';
 
-// ── Palette (matches lesson_flow_screen) ─────────────────────────────────────
-const _kBg      = Color(0xFFFFF8E8);
+const _kBg = Color(0xFFFFF8E8);
 const _kCardTop = Color(0xFFFFF3D6);
-const _kTeal    = Color(0xFF26C6DA);
-const _kOrange  = Color(0xFFFF7043);
-const _kPurple  = Color(0xFF7C3AED);
+const _kTeal = Color(0xFF26C6DA);
+const _kOrange = Color(0xFFFF7043);
+const _kPurple = Color(0xFF7C3AED);
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Generic quiz card model
-// ══════════════════════════════════════════════════════════════════════════════
+const _mascotMsgs = [
+  'Wow!\nThis is',
+  'Great!\nMeet',
+  'Hello!\nI\'m',
+  'Look!\nIt\'s',
+  'Cool!\nThis is',
+  'Fun!\nMeet',
+  'Listen!\nIt\'s',
+  'Nice!\nThis is',
+  'Learn!\nMeet',
+  'Hey!\nI\'m',
+];
 
-enum _QKind { multiChoice, speakWord, fillBlank }
-
-class _QuizCard {
+class _WordCard {
   final String mainText;
-  final String name;
+  final String roman;
   final String transcription;
   final String emoji;
   final String speakTarget;
-  final String romanTarget;
-  final _QKind kind;
   final List<String> choices;
   final int correctIndex;
-  final String? blankSentence;
+  final bool speakOnly;
 
-  const _QuizCard({
+  const _WordCard({
     required this.mainText,
-    required this.name,
+    required this.roman,
     required this.transcription,
     required this.emoji,
     required this.speakTarget,
-    required this.romanTarget,
-    required this.kind,
-    this.choices = const [],
-    this.correctIndex = 0,
-    this.blankSentence,
+    required this.choices,
+    required this.correctIndex,
+    required this.speakOnly,
   });
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// QuizScreen — works for words, letters, sentences
-// ══════════════════════════════════════════════════════════════════════════════
+class _SentenceCard {
+  final String sentence;
+  final String blankWord;
+  final String english;
+  final List<String> choices;
+  final int correctIndex;
+
+  const _SentenceCard({
+    required this.sentence,
+    required this.blankWord,
+    required this.english,
+    required this.choices,
+    required this.correctIndex,
+  });
+}
 
 class QuizScreen extends StatefulWidget {
   final List<UrduWord>? wordList;
@@ -62,293 +78,635 @@ class QuizScreen extends StatefulWidget {
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen>
-    with SingleTickerProviderStateMixin {
-  static const _totalQ = 10;
-  static const _accentColor = _kPurple;
+class _QuizScreenState extends State<QuizScreen> {
+  static const int _totalQ = 10;
 
   final Random _rng = Random();
-  late List<_QuizCard> _deck;
+  late final List<_WordCard> _deck;
 
   int _index = 0;
   int _score = 0;
   int? _chosen;
   bool _revealed = false;
-  double? _speakScore;
   bool _speaking = false;
-
-  late AnimationController _slideCtrl;
-  late Animation<Offset> _slideAnim;
-  late Animation<double> _fadeAnim;
+  double? _speakScore;
 
   @override
   void initState() {
     super.initState();
-    _slideCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _slideAnim = Tween<Offset>(
-            begin: const Offset(0.15, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
-    _fadeAnim = CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut);
-    _buildDeck();
-    _slideCtrl.forward();
-    Future.delayed(const Duration(milliseconds: 600), () {
+    _deck = _buildDeck();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _speakQuestion();
     });
   }
 
-  @override
-  void dispose() {
-    _slideCtrl.dispose();
-    super.dispose();
-  }
-
-  // ── Build randomised deck ──────────────────────────────────────────────────
-
-  void _buildDeck() {
+  List<_WordCard> _buildDeck() {
     final pool = widget.wordList ?? WORDS;
-    final shuffled = List.of(pool)..shuffle(_rng);
-    final selected = shuffled.take(_totalQ).toList();
+    if (pool.isEmpty) return const <_WordCard>[];
 
-    _deck = selected.asMap().entries.map((e) {
-      final i = e.key;
-      final w = e.value;
-      if (i % 3 == 2) return _makeSpeakCard(w, pool);
-      return _makeMultiChoice(w, pool);
+    final shuffled = List<UrduWord>.of(pool)..shuffle(_rng);
+    final selected = shuffled.take(min(_totalQ, shuffled.length)).toList();
+
+    return selected.asMap().entries.map((entry) {
+      final word = entry.value;
+      if (entry.key % 3 == 2) {
+        return _WordCard(
+          mainText: word.urdu,
+          roman: word.roman,
+          transcription: word.english,
+          emoji: word.emoji,
+          speakTarget: word.urdu,
+          choices: const [],
+          correctIndex: 0,
+          speakOnly: true,
+        );
+      }
+
+      final distractors = pool
+          .where((candidate) => candidate.urdu != word.urdu)
+          .map((candidate) => candidate.urdu)
+          .toList()
+        ..shuffle(_rng);
+
+      final choices = <String>[word.urdu, ...distractors.take(3)]..shuffle(_rng);
+      return _WordCard(
+        mainText: word.urdu,
+        roman: word.roman,
+        transcription: word.english,
+        emoji: word.emoji,
+        speakTarget: word.urdu,
+        choices: choices,
+        correctIndex: choices.indexOf(word.urdu),
+        speakOnly: false,
+      );
     }).toList();
   }
 
-  _QuizCard _makeMultiChoice(UrduWord w, List<UrduWord> pool) {
-    final others = pool.where((x) => x.urdu != w.urdu).toList()..shuffle(_rng);
-    final distractors = others.take(3).map((x) => x.urdu).toList();
-    final choices = [w.urdu, ...distractors]..shuffle(_rng);
-    return _QuizCard(
-      mainText: w.urdu, name: w.roman, transcription: w.english,
-      emoji: w.emoji, speakTarget: w.urdu, romanTarget: w.roman,
-      kind: _QKind.multiChoice,
-      choices: choices,
-      correctIndex: choices.indexOf(w.urdu),
+  void _speakQuestion() {
+    if (_deck.isEmpty) return;
+    TtsService.instance.speak(_deck[_index].speakTarget);
+  }
+
+  Future<void> _speakCurrentCard() async {
+    if (_speaking || _deck.isEmpty) return;
+    setState(() => _speaking = true);
+    try {
+      await TtsService.instance.speak(_deck[_index].speakTarget);
+    } finally {
+      if (mounted) setState(() => _speaking = false);
+    }
+  }
+
+  void _onChoice(int choiceIndex) {
+    if (_revealed || _deck.isEmpty) return;
+
+    final card = _deck[_index];
+    final isCorrect = choiceIndex == card.correctIndex;
+
+    if (isCorrect) _score++;
+
+    setState(() {
+      _chosen = choiceIndex;
+      _revealed = true;
+    });
+
+    context.read<AppProvider>().recordResult(card.mainText, isCorrect ? 100 : 0);
+
+    TtsService.instance.speak(
+      isCorrect ? 'شاباش! بہت اچھے!' : 'غلط! دوبارہ کوشش کریں',
     );
   }
 
-  _QuizCard _makeSpeakCard(UrduWord w, List<UrduWord> pool) {
-    return _QuizCard(
-      mainText: w.urdu, name: w.roman, transcription: w.english,
-      emoji: w.emoji, speakTarget: w.urdu, romanTarget: w.roman,
-      kind: _QKind.speakWord,
+  void _onSpeakScore(double score) {
+    if (_deck.isEmpty) return;
+
+    if (score >= 70) _score++;
+    setState(() {
+      _speakScore = score;
+      _revealed = true;
+    });
+
+    context.read<AppProvider>().recordResult(_deck[_index].mainText, score);
+
+    TtsService.instance.speak(
+      score >= 70 ? 'شاباش! تلفظ درست ہے!' : 'غلط تلفظ — دوبارہ کوشش کریں',
     );
   }
-
-  // ── Navigation ─────────────────────────────────────────────────────────────
 
   void _goNext() {
+    if (_deck.isEmpty) return;
+
     if (_index >= _deck.length - 1) {
       _showResults();
       return;
     }
+
     setState(() {
       _index++;
       _chosen = null;
       _revealed = false;
       _speakScore = null;
     });
-    _slideCtrl.forward(from: 0);
+
     _speakQuestion();
   }
 
-  void _speakQuestion() =>
-      TtsService.instance.speak(_deck[_index].speakTarget);
-
-  // ── Choice tap ─────────────────────────────────────────────────────────────
-
-  void _onChoice(int i) {
-    if (_revealed) return;
-    final correct = _deck[_index].correctIndex;
-    if (i == correct) _score++;
-    setState(() { _chosen = i; _revealed = true; });
-    context.read<AppProvider>()
-        .recordResult(_deck[_index].mainText, i == correct ? 100 : 0);
-    TtsService.instance.speak(
-        i == correct ? 'شاباش! بہت اچھے!' : 'غلط! دوبارہ کوشش کریں');
+  void _goBack() {
+    if (_index == 0) return;
+    setState(() {
+      _index--;
+      _chosen = null;
+      _revealed = false;
+      _speakScore = null;
+    });
+    _speakQuestion();
   }
-
-  // ── Mic score ──────────────────────────────────────────────────────────────
-
-  void _onSpeakScore(double score) {
-    if (score >= 70) _score++;
-    setState(() { _speakScore = score; _revealed = true; });
-    context.read<AppProvider>()
-        .recordResult(_deck[_index].mainText, score);
-    TtsService.instance.speak(
-        score >= 70 ? 'شاباش! تلفظ درست ہے!' : 'غلط تلفظ — دوبارہ کوشش کریں');
-  }
-
-  // ── Results ────────────────────────────────────────────────────────────────
 
   void _showResults() {
-    final pct = _score / _totalQ;
-    if (pct >= 0.8) {
-      TtsService.instance.speak('بہت اچھے! شاندار کارکردگی!');
-    } else if (pct >= 0.5) {
-      TtsService.instance.speak('اچھا! مزید مشق کریں');
-    } else {
-      TtsService.instance.speak('ہمت نہ ہاریں! دوبارہ کوشش کریں');
-    }
+    final total = _deck.isEmpty ? 1 : _deck.length;
+    const accentColor = _kPurple;
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => QuizResultsScreen(
           score: _score,
-          total: _totalQ,
+          total: total,
           title: widget.screenTitle ?? 'Quiz',
-          accentColor: _accentColor,
-          onRestart: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => QuizScreen(
-                    wordList: widget.wordList,
-                    screenTitle: widget.screenTitle),
-              ),
-            );
-          },
+          accentColor: accentColor,
+          restartBuilder: (_) => QuizScreen(
+            wordList: widget.wordList,
+            screenTitle: widget.screenTitle,
+          ),
         ),
       ),
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
+    if (_deck.isEmpty) {
+      return const Scaffold(
+        backgroundColor: _kBg,
+        body: Center(child: Text('No quiz items available')),
+      );
+    }
+
     final card = _deck[_index];
-    final progress = (_index + 1) / _totalQ;
+    final progress = (_index + 1) / _deck.length;
+    final message = '${_mascotMsgs[_index % _mascotMsgs.length]} ${card.roman}!';
 
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(
         backgroundColor: _kBg,
-        body: Column(
-          children: [
-            // ── Custom top bar ────────────────────────────────────────────
-            _QuizTopBar(
-              title: widget.screenTitle ?? 'Quiz',
-              index: _index,
-              total: _totalQ,
-              score: _score,
-              progress: progress,
-              accentColor: _accentColor,
-              onBack: () => Navigator.pop(context),
-              onSpeak: _speakQuestion,
-            ),
-
-            // ── Content ───────────────────────────────────────────────────
-            Expanded(
-              child: LayoutBuilder(builder: (ctx, bc) {
-                final w = bc.maxWidth;
-                final isWide = w > 600;
-                final cardWidth = isWide ? 480.0 : w - 32;
-
-                return Center(
-                  child: SizedBox(
-                    width: cardWidth,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-
-                        // ── Question card ─────────────────────────────────
-                        Expanded(
-                          child: SlideTransition(
-                            position: _slideAnim,
-                            child: FadeTransition(
-                              opacity: _fadeAnim,
-                              child: _QuizFlashCard(
-                                card: card,
-                                color: _accentColor,
-                                chosen: _chosen,
-                                revealed: _revealed,
-                                speakScore: _speakScore,
-                                speaking: _speaking,
-                                onChoice: _onChoice,
-                                onSpeak: () async {
-                                  setState(() => _speaking = true);
-                                  await TtsService.instance
-                                      .speak(card.speakTarget);
-                                  if (mounted) {
-                                    setState(() => _speaking = false);
-                                  }
-                                },
-                                onMic: () => showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => MicRecorderWidget(
-                                    targetText: card.mainText,
-                                    targetRoman: card.romanTarget,
-                                    onScore: (score, _) {
-                                      Navigator.pop(context);
-                                      _onSpeakScore(score);
-                                    },
+        body: SafeArea(
+          child: Stack(
+            children: [
+              const _DecorativeBackground(accentColor: _kPurple),
+              Column(
+                children: [
+                  _QuizTopBar(
+                    title: widget.screenTitle ?? 'Quiz',
+                    index: _index,
+                    total: _deck.length,
+                    score: _score,
+                    progress: progress,
+                    accentColor: _kPurple,
+                    onBack: Navigator.of(context).canPop() ? () => Navigator.pop(context) : null,
+                    onSpeak: _speakQuestion,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 640;
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: isWide ? 760 : 520,
+                              ),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        if (isWide)
+                                          SizedBox(
+                                            width: 88,
+                                            child: _MascotSide(message: message),
+                                          ),
+                                        Expanded(
+                                          child: _WordQuizCard(
+                                            card: card,
+                                            accentColor: _kPurple,
+                                            chosen: _chosen,
+                                            revealed: _revealed,
+                                            speakScore: _speakScore,
+                                            speaking: _speaking,
+                                            onChoice: _onChoice,
+                                            onSpeak: _speakCurrentCard,
+                                            onMic: () => MicRecorderWidget.show(
+                                              context,
+                                              targetText: card.mainText,
+                                              targetRoman: card.roman,
+                                              onScore: (score, _) {
+                                                Navigator.of(context).pop();
+                                                _onSpeakScore(score);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        if (isWide)
+                                          SizedBox(
+                                            width: 88,
+                                            child: _TipSide(text: card.transcription),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(0, 10, 0, 4),
+                                    child: Row(
+                                      children: [
+                                        if (_index > 0)
+                                          _PillButton(
+                                            label: 'Back',
+                                            color: Colors.white,
+                                            textColor: const Color(0xFF6B7280),
+                                            border: const Color(0xFFE5E7EB),
+                                            onTap: _goBack,
+                                          )
+                                        else
+                                          const SizedBox(width: 92),
+                                        const Spacer(),
+                                        _PillButton(
+                                          label: _revealed
+                                              ? (_index == _deck.length - 1 ? 'Finish' : 'Next')
+                                              : 'Skip',
+                                          color: _revealed ? _kOrange : Colors.grey.shade300,
+                                          textColor: _revealed ? Colors.white : Colors.grey.shade600,
+                                          onTap: _goNext,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ),
-
-                        // ── Navigation ────────────────────────────────────
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 8, 0, 20),
-                          child: Row(
-                            children: [
-                              if (_index > 0)
-                                _PillBtn(
-                                  label: '← Back',
-                                  color: Colors.white,
-                                  textColor: const Color(0xFF6B7280),
-                                  border: const Color(0xFFE5E7EB),
-                                  onTap: () {
-                                    setState(() {
-                                      _index--;
-                                      _chosen = null;
-                                      _revealed = false;
-                                      _speakScore = null;
-                                    });
-                                    _slideCtrl.forward(from: 0);
-                                  },
-                                )
-                              else
-                                const SizedBox(width: 100),
-                              const Spacer(),
-                              _PillBtn(
-                                label: _revealed
-                                    ? (_index == _totalQ - 1
-                                        ? 'Finish ✓'
-                                        : 'Next →')
-                                    : 'Skip →',
-                                color: _revealed ? _kOrange : Colors.grey.shade300,
-                                textColor: _revealed
-                                    ? Colors.white
-                                    : Colors.grey.shade600,
-                                onTap: _goNext,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
                   ),
-                );
-              }),
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Custom quiz top bar ───────────────────────────────────────────────────────
+class SentenceQuizScreen extends StatefulWidget {
+  const SentenceQuizScreen({super.key});
+
+  @override
+  State<SentenceQuizScreen> createState() => _SentenceQuizState();
+}
+
+class _SentenceQuizState extends State<SentenceQuizScreen> {
+  static const int _totalQ = 10;
+  static const Color _accentColor = Color(0xFF10B981);
+
+  final Random _rng = Random();
+  late final List<_SentenceCard> _deck;
+
+  int _index = 0;
+  int _score = 0;
+  int? _chosen;
+  bool _revealed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _deck = _buildDeck();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _speakCurrent();
+    });
+  }
+
+  List<_SentenceCard> _buildDeck() {
+    if (SENTENCES.isEmpty) return const <_SentenceCard>[];
+
+    final shuffled = List<UrduSentence>.of(SENTENCES)..shuffle(_rng);
+    final selected = shuffled.take(min(_totalQ, shuffled.length)).toList();
+    final allWords = WORDS.map((word) => word.urdu).toSet().toList()..shuffle(_rng);
+
+    return selected.map((sentence) {
+      final blank = sentence.blankWord;
+      final choices = <String>[blank];
+
+      for (final word in sentence.words) {
+        if (word != blank && !choices.contains(word)) {
+          choices.add(word);
+        }
+      }
+
+      for (final word in allWords) {
+        if (choices.length >= 4) break;
+        if (word != blank && !choices.contains(word)) {
+          choices.add(word);
+        }
+      }
+
+      choices.shuffle(_rng);
+
+      return _SentenceCard(
+        sentence: sentence.urdu,
+        blankWord: blank,
+        english: sentence.english,
+        choices: choices.take(4).toList(),
+        correctIndex: choices.indexOf(blank),
+      );
+    }).toList();
+  }
+
+  void _speakCurrent() {
+    if (_deck.isEmpty) return;
+    final card = _deck[_index];
+    TtsService.instance.speak('خالی جگہ بھریں: ${card.sentence.replaceFirst(card.blankWord, '۔۔۔')}');
+  }
+
+  void _onChoice(int choiceIndex) {
+    if (_revealed || _deck.isEmpty) return;
+
+    final card = _deck[_index];
+    final isCorrect = choiceIndex == card.correctIndex;
+
+    if (isCorrect) _score++;
+
+    setState(() {
+      _chosen = choiceIndex;
+      _revealed = true;
+    });
+
+    context.read<AppProvider>().recordResult(card.sentence, isCorrect ? 100 : 0);
+
+    TtsService.instance.speak(isCorrect ? 'شاباش! بہت اچھے!' : 'غلط!');
+  }
+
+  void _goNext() {
+    if (_deck.isEmpty) return;
+
+    if (_index >= _deck.length - 1) {
+      _showResults();
+      return;
+    }
+
+    setState(() {
+      _index++;
+      _chosen = null;
+      _revealed = false;
+    });
+
+    _speakCurrent();
+  }
+
+  void _showResults() {
+    final total = _deck.isEmpty ? 1 : _deck.length;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizResultsScreen(
+          score: _score,
+          total: total,
+          title: 'Sentence Quiz',
+          accentColor: _accentColor,
+          restartBuilder: (_) => const SentenceQuizScreen(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_deck.isEmpty) {
+      return const Scaffold(
+        backgroundColor: _kBg,
+        body: Center(child: Text('No sentence quiz items available')),
+      );
+    }
+
+    final card = _deck[_index];
+    final progress = (_index + 1) / _deck.length;
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: _kBg,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              const _DecorativeBackground(accentColor: _accentColor),
+              Column(
+                children: [
+                  _QuizTopBar(
+                    title: 'Sentence Quiz',
+                    index: _index,
+                    total: _deck.length,
+                    score: _score,
+                    progress: progress,
+                    accentColor: _accentColor,
+                    onBack: Navigator.of(context).canPop() ? () => Navigator.pop(context) : null,
+                    onSpeak: _speakCurrent,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: _SentenceQuizCard(
+                                  card: card,
+                                  accentColor: _accentColor,
+                                  chosen: _chosen,
+                                  revealed: _revealed,
+                                  onChoice: _onChoice,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    _PillButton(
+                                      label: _revealed
+                                          ? (_index == _deck.length - 1 ? 'Finish' : 'Next')
+                                          : 'Skip',
+                                      color: _revealed ? _kOrange : Colors.grey.shade300,
+                                      textColor: _revealed ? Colors.white : Colors.grey.shade600,
+                                      onTap: _goNext,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class QuizResultsScreen extends StatelessWidget {
+  final int score;
+  final int total;
+  final String title;
+  final Color accentColor;
+  final WidgetBuilder restartBuilder;
+
+  const QuizResultsScreen({
+    super.key,
+    required this.score,
+    required this.total,
+    required this.title,
+    required this.accentColor,
+    required this.restartBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = total == 0 ? 0.0 : score / total;
+    final stars = pct >= 0.8
+        ? 3
+        : pct >= 0.5
+            ? 2
+            : 1;
+    final color = pct >= 0.8
+        ? Colors.green
+        : pct >= 0.5
+            ? Colors.orange
+            : Colors.red;
+    final message = stars == 3
+        ? 'بہت اچھے! شاندار!'
+        : stars == 2
+            ? 'اچھا! مزید مشق کریں'
+            : 'ہمت نہ ہاریں! دوبارہ کوشش کریں';
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: _kBg,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        final filled = index < stars;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            filled ? '⭐' : '☆',
+                            style: TextStyle(
+                              fontSize: filled ? 42 : 32,
+                              color: filled ? Colors.amber : Colors.grey.shade300,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: color, width: 5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.18),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$score/$total',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: color,
+                            ),
+                          ),
+                          const Text(
+                            'score',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 20,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    _PillButton(
+                      label: 'Try Again',
+                      color: accentColor,
+                      textColor: Colors.white,
+                      onTap: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: restartBuilder),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _QuizTopBar extends StatelessWidget {
   final String title;
@@ -357,7 +715,7 @@ class _QuizTopBar extends StatelessWidget {
   final int score;
   final double progress;
   final Color accentColor;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final VoidCallback onSpeak;
 
   const _QuizTopBar({
@@ -387,33 +745,41 @@ class _QuizTopBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: onBack,
-                child: Container(
-                  width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+              if (onBack != null)
+                GestureDetector(
+                  onTap: onBack,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_back_rounded,
-                      color: Colors.white, size: 18),
-                ),
-              ),
+                )
+              else
+                const SizedBox(width: 34, height: 34),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        )),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                     Text(
                       '${index + 1} / $total  •  ✓ $score correct',
-                      style: const TextStyle(
-                          fontSize: 11, color: Colors.white70),
+                      style: const TextStyle(fontSize: 11, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -421,13 +787,17 @@ class _QuizTopBar extends StatelessWidget {
               GestureDetector(
                 onTap: onSpeak,
                 child: Container(
-                  width: 34, height: 34,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.volume_up_rounded,
-                      color: Colors.white, size: 18),
+                  child: const Icon(
+                    Icons.volume_up_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ],
@@ -448,22 +818,20 @@ class _QuizTopBar extends StatelessWidget {
   }
 }
 
-// ── Quiz flash card ───────────────────────────────────────────────────────────
-
-class _QuizFlashCard extends StatelessWidget {
-  final _QuizCard card;
-  final Color color;
+class _WordQuizCard extends StatelessWidget {
+  final _WordCard card;
+  final Color accentColor;
   final int? chosen;
   final bool revealed;
   final double? speakScore;
   final bool speaking;
-  final Function(int) onChoice;
+  final ValueChanged<int> onChoice;
   final VoidCallback onSpeak;
   final VoidCallback onMic;
 
-  const _QuizFlashCard({
+  const _WordQuizCard({
     required this.card,
-    required this.color,
+    required this.accentColor,
     required this.chosen,
     required this.revealed,
     required this.speakScore,
@@ -475,6 +843,8 @@ class _QuizFlashCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSpeakCard = card.speakOnly;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
@@ -482,19 +852,19 @@ class _QuizFlashCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.13),
+            color: accentColor.withOpacity(0.12),
             blurRadius: 18,
             offset: const Offset(0, 7),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // ── Card top (warm peach) ─────────────────────────────────────
-          Flexible(
-            flex: 4,
-            child: Container(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            Container(
               width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               decoration: const BoxDecoration(
                 color: _kCardTop,
                 borderRadius: BorderRadius.only(
@@ -502,22 +872,180 @@ class _QuizFlashCard extends StatelessWidget {
                   topRight: Radius.circular(24),
                 ),
               ),
-              child: LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                  // Prompt label
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('💭', style: TextStyle(fontSize: 26)),
+                  const SizedBox(height: 8),
                   Directionality(
                     textDirection: TextDirection.rtl,
                     child: Text(
-                      card.kind == _QKind.speakWord
-                          ? 'یہ لفظ بولیں'
-                          : 'یہ کیا ہے؟',
+                      isSpeakCard ? 'یہ لفظ بولیں' : 'یہ کیا ہے؟',
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: 12,
+                        color: Colors.brown.shade400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    card.emoji,
+                    style: TextStyle(fontSize: isSpeakCard ? 48 : 54),
+                  ),
+                  const SizedBox(height: 8),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      card.mainText,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'NotoNastaliqUrdu',
+                        fontSize: isSpeakCard ? 28 : 21,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    card.roman,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _CircularButton(
+                        icon: Icons.volume_up_rounded,
+                        label: 'Listen',
+                        color: _kTeal,
+                        filled: speaking,
+                        onTap: onSpeak,
+                      ),
+                      const SizedBox(width: 20),
+                      _CircularButton(
+                        icon: Icons.mic_rounded,
+                        label: 'Speak',
+                        color: _kPurple,
+                        filled: false,
+                        onTap: revealed ? null : onMic,
+                      ),
+                    ],
+                  ),
+                  if (speakScore != null) ...[
+                    const SizedBox(height: 10),
+                    _ScoreBadge(score: speakScore!),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              child: isSpeakCard
+                  ? const SizedBox.shrink()
+                  : Column(
+                      children: [
+                        for (int i = 0; i < card.choices.length; i++) ...[
+                          _ChoiceTile(
+                            text: card.choices[i],
+                            accentColor: accentColor,
+                            isSelected: chosen == i,
+                            isCorrect: revealed && i == card.correctIndex,
+                            isWrongChoice: revealed && chosen == i && i != card.correctIndex,
+                            onTap: () => onChoice(i),
+                          ),
+                          if (i != card.choices.length - 1) const SizedBox(height: 10),
+                        ],
+                        if (revealed && chosen != null && chosen != card.correctIndex) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green),
+                            ),
+                            child: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text(
+                                'درست جواب: ${card.choices[card.correctIndex]}  (${card.transcription})',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'NotoNastaliqUrdu',
+                                  fontSize: 14,
+                                  height: 1.35,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SentenceQuizCard extends StatelessWidget {
+  final _SentenceCard card;
+  final Color accentColor;
+  final int? chosen;
+  final bool revealed;
+  final ValueChanged<int> onChoice;
+
+  const _SentenceQuizCard({
+    required this.card,
+    required this.accentColor,
+    required this.chosen,
+    required this.revealed,
+    required this.onChoice,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              decoration: const BoxDecoration(
+                color: _kCardTop,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('💬', style: TextStyle(fontSize: 34)),
+                  const SizedBox(height: 8),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Text(
+                      'خالی جگہ بھریں',
                       style: TextStyle(
                         fontFamily: 'NotoNastaliqUrdu',
                         fontSize: 14,
@@ -525,170 +1053,221 @@ class _QuizFlashCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // Emoji
-                  Text(card.emoji,
-                      style: const TextStyle(fontSize: 52)),
-                  const SizedBox(height: 6),
-                  // For speak cards also show the Urdu word
-                  if (card.kind == _QKind.speakWord) ...[
-                    Directionality(
+                  const SizedBox(height: 10),
+                  Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: RichText(
+                      textAlign: TextAlign.center,
                       textDirection: TextDirection.rtl,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(card.mainText,
-                            style: TextStyle(
-                              fontFamily: 'NotoNastaliqUrdu',
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                              height: 1.2,
-                            )),
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontFamily: 'NotoNastaliqUrdu',
+                          fontSize: 18,
+                          color: Color(0xFF1C1917),
+                          height: 1.5,
+                        ),
+                        children: _buildSentenceSpans(),
                       ),
                     ),
-                    Text(card.name,
-                        style: const TextStyle(
-                            fontSize: 14, color: Colors.grey)),
-                    const SizedBox(height: 6),
-                    // Listen + Speak buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _CircBtn(
-                            icon: Icons.volume_up_rounded,
-                            color: _kTeal,
-                            filled: speaking,
-                            onTap: onSpeak),
-                        const SizedBox(width: 14),
-                        _CircBtn(
-                            icon: Icons.mic_rounded,
-                            color: _kPurple,
-                            filled: false,
-                            onTap: revealed ? null : onMic),
-                      ],
-                    ),
-                    if (speakScore != null) ...[
-                      const SizedBox(height: 8),
-                      _ScoreBadge(score: speakScore!),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    card.english,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                child: Column(
+                  children: [
+                    for (int i = 0; i < card.choices.length; i++) ...[
+                      _ChoiceTile(
+                        text: card.choices[i],
+                        accentColor: accentColor,
+                        isSelected: chosen == i,
+                        isCorrect: revealed && i == card.correctIndex,
+                        isWrongChoice: revealed && chosen == i && i != card.correctIndex,
+                        onTap: () => onChoice(i),
+                      ),
+                      if (i != card.choices.length - 1) const SizedBox(height: 10),
                     ],
                   ],
-                ],
-                    ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<InlineSpan> _buildSentenceSpans() {
+    final spans = <InlineSpan>[];
+    final parts = card.sentence.split(card.blankWord);
+
+    for (int i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        spans.add(
+          TextSpan(
+            text: revealed ? card.blankWord : '______',
+            style: TextStyle(
+              fontFamily: 'NotoNastaliqUrdu',
+              fontWeight: FontWeight.bold,
+              color: revealed ? accentColor : Colors.grey.shade600,
+              decoration: TextDecoration.underline,
+              height: 1.2,
+            ),
+          ),
+        );
+      }
+      if (parts[i].isNotEmpty) {
+        spans.add(TextSpan(text: parts[i]));
+      }
+    }
+
+    return spans;
+  }
+}
+
+class _ChoiceTile extends StatelessWidget {
+  final String text;
+  final Color accentColor;
+  final bool isSelected;
+  final bool isCorrect;
+  final bool isWrongChoice;
+  final VoidCallback onTap;
+
+  const _ChoiceTile({
+    required this.text,
+    required this.accentColor,
+    required this.isSelected,
+    required this.isCorrect,
+    required this.isWrongChoice,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color backgroundColor = Colors.white;
+    Color borderColor = const Color(0xFFE5E7EB);
+    Color textColor = const Color(0xFF1C1917);
+
+    if (isCorrect) {
+      backgroundColor = Colors.green.shade50;
+      borderColor = Colors.green;
+      textColor = Colors.green.shade800;
+    } else if (isWrongChoice) {
+      backgroundColor = Colors.red.shade50;
+      borderColor = Colors.red;
+      textColor = Colors.red.shade800;
+    } else if (isSelected) {
+      backgroundColor = accentColor.withOpacity(0.08);
+      borderColor = accentColor;
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 2),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'NotoNastaliqUrdu',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
                   ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(width: 8),
+            if (isCorrect)
+              const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20)
+            else if (isWrongChoice)
+              const Icon(Icons.cancel_rounded, color: Colors.red, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-          // ── Card bottom (white — choices) ─────────────────────────────
-          Flexible(
-            flex: 6,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Multiple-choice options
-                  if (card.kind == _QKind.multiChoice)
-                    ...List.generate(card.choices.length, (i) {
-                      Color btnColor = Colors.white;
-                      Color borderColor = const Color(0xFFE5E7EB);
-                      Color textColor = const Color(0xFF1C1917);
+class _CircularButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool filled;
+  final VoidCallback? onTap;
 
-                      if (revealed) {
-                        if (i == card.correctIndex) {
-                          btnColor = Colors.green.shade50;
-                          borderColor = Colors.green;
-                          textColor = Colors.green.shade800;
-                        } else if (i == chosen) {
-                          btnColor = Colors.red.shade50;
-                          borderColor = Colors.red;
-                          textColor = Colors.red.shade800;
-                        }
-                      } else if (chosen == i) {
-                        btnColor = color.withOpacity(0.08);
-                        borderColor = color;
-                      }
+  const _CircularButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.filled,
+    required this.onTap,
+  });
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 9),
-                        child: GestureDetector(
-                          onTap: () => onChoice(i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 13, horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: btnColor,
-                              borderRadius: BorderRadius.circular(14),
-                              border:
-                                  Border.all(color: borderColor, width: 2),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Directionality(
-                                    textDirection: TextDirection.rtl,
-                                    child: Text(
-                                      card.choices[i],
-                                      style: TextStyle(
-                                        fontFamily: 'NotoNastaliqUrdu',
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: textColor,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.right,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (revealed && i == card.correctIndex)
-                                  const Icon(Icons.check_circle_rounded,
-                                      color: Colors.green, size: 20),
-                                if (revealed &&
-                                    i == chosen &&
-                                    i != card.correctIndex)
-                                  const Icon(Icons.cancel_rounded,
-                                      color: Colors.red, size: 20),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
 
-                  // Correct answer hint (when wrong)
-                  if (revealed &&
-                      card.kind == _QKind.multiChoice &&
-                      chosen != null &&
-                      chosen != card.correctIndex) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green),
-                      ),
-                      child: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          'درست جواب: ${card.choices[card.correctIndex]}  (${card.transcription})',
-                          style: const TextStyle(
-                              fontFamily: 'NotoNastaliqUrdu',
-                              fontSize: 14,
-                              color: Colors.green),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: disabled
+                  ? Colors.grey.shade200
+                  : filled
+                      ? color
+                      : color.withOpacity(0.12),
+              border: Border.all(
+                color: disabled ? Colors.grey.shade300 : color,
+                width: 2,
               ),
+            ),
+            child: Icon(
+              icon,
+              color: disabled
+                  ? Colors.grey
+                  : filled
+                      ? Colors.white
+                      : color,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
@@ -697,10 +1276,57 @@ class _QuizFlashCard extends StatelessWidget {
   }
 }
 
-// ── Score badge ───────────────────────────────────────────────────────────────
+class _PillButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color textColor;
+  final Color? border;
+  final VoidCallback onTap;
+
+  const _PillButton({
+    required this.label,
+    required this.color,
+    required this.textColor,
+    this.border,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(30),
+          border: border != null ? Border.all(color: border!, width: 1.5) : null,
+          boxShadow: border == null
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _ScoreBadge extends StatelessWidget {
   final double score;
+
   const _ScoreBadge({required this.score});
 
   Color get _color {
@@ -711,667 +1337,175 @@ class _ScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      SizedBox(
-        width: 38, height: 38,
-        child: Stack(alignment: Alignment.center, children: [
-          CircularProgressIndicator(
-            value: score / 100,
-            strokeWidth: 4,
-            backgroundColor: _color.withOpacity(0.2),
-            valueColor: AlwaysStoppedAnimation<Color>(_color),
-          ),
-          Text('${score.toInt()}',
-              style: TextStyle(
+    final label = score >= 70
+        ? '🌟 شاباش!'
+        : score >= 45
+            ? '🔸 قریب!'
+            : '❌ غلط';
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 38,
+          height: 38,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: score / 100,
+                strokeWidth: 4,
+                backgroundColor: _color.withOpacity(0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(_color),
+              ),
+              Text(
+                '${score.toInt()}',
+                style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
-                  color: _color)),
-        ]),
-      ),
-      const SizedBox(width: 8),
-      Text(
-        score >= 70 ? '🌟 شاباش!' : score >= 45 ? '🔸 قریب!' : '❌ غلط',
-        style: TextStyle(
-          fontFamily: 'NotoNastaliqUrdu',
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: _color,
-        ),
-      ),
-    ]);
-  }
-}
-
-// ── Circle button ─────────────────────────────────────────────────────────────
-
-class _CircBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final bool filled;
-  final VoidCallback? onTap;
-  const _CircBtn(
-      {required this.icon,
-      required this.color,
-      required this.filled,
-      this.onTap});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: 50, height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: onTap == null
-                ? Colors.grey.shade200
-                : filled
-                    ? color
-                    : color.withOpacity(0.12),
-            border: Border.all(
-              color: onTap == null ? Colors.grey.shade300 : color,
-              width: 2,
-            ),
-          ),
-          child: Icon(icon,
-              color: onTap == null
-                  ? Colors.grey
-                  : filled
-                      ? Colors.white
-                      : color,
-              size: 22),
-        ),
-      );
-}
-
-// ── Pill button ───────────────────────────────────────────────────────────────
-
-class _PillBtn extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color textColor;
-  final Color? border;
-  final VoidCallback onTap;
-
-  const _PillBtn({
-    required this.label,
-    required this.color,
-    required this.textColor,
-    this.border,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(30),
-            border: border != null
-                ? Border.all(color: border!, width: 1.5)
-                : null,
-            boxShadow: border == null
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    )
-                  ]
-                : null,
-          ),
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: textColor)),
-        ),
-      );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Sentence fill-in-blank quiz
-// ══════════════════════════════════════════════════════════════════════════════
-
-class SentenceQuizScreen extends StatefulWidget {
-  const SentenceQuizScreen({super.key});
-  @override
-  State<SentenceQuizScreen> createState() => _SentenceQuizState();
-}
-
-class _SentenceQuizState extends State<SentenceQuizScreen>
-    with SingleTickerProviderStateMixin {
-  static const _total = 10;
-  static const _color = Color(0xFF10B981); // emerald
-
-  final Random _rng = Random();
-  late List<_FillCard> _deck;
-
-  int _index = 0, _score = 0;
-  int? _chosen;
-  bool _revealed = false;
-
-  late AnimationController _slideCtrl;
-  late Animation<Offset> _slideAnim;
-  late Animation<double> _fadeAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _slideCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _slideAnim = Tween<Offset>(
-            begin: const Offset(0.15, 0), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut));
-    _fadeAnim = CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut);
-    _buildDeck();
-    _slideCtrl.forward();
-    _speakCurrent();
-  }
-
-  @override
-  void dispose() {
-    _slideCtrl.dispose();
-    super.dispose();
-  }
-
-  void _buildDeck() {
-    final shuffled = List.of(SENTENCES)..shuffle(_rng);
-    _deck = shuffled.take(_total).map((s) {
-      final blank = s.blankWord;
-      final others =
-          s.words.where((w) => w != blank).toList()..shuffle(_rng);
-      final distractors = others.take(3).toList();
-      if (distractors.length < 3) {
-        final extra = WORDS
-            .where((w) => !distractors.contains(w.urdu))
-            .toList()
-          ..shuffle(_rng);
-        while (distractors.length < 3) {
-          distractors.add(extra[distractors.length].urdu);
-        }
-      }
-      final choices = [blank, ...distractors.take(3)]..shuffle(_rng);
-      return _FillCard(
-        sentence: s.urdu,
-        blank: blank,
-        english: s.english,
-        choices: choices,
-        correctIndex: choices.indexOf(blank),
-      );
-    }).toList();
-  }
-
-  void _speakCurrent() {
-    final card = _deck[_index];
-    final spoken = card.sentence.replaceFirst(card.blank, '۔۔۔');
-    TtsService.instance.speak('خالی جگہ بھریں: $spoken');
-  }
-
-  void _onChoice(int i) {
-    if (_revealed) return;
-    if (i == _deck[_index].correctIndex) _score++;
-    setState(() {
-      _chosen = i;
-      _revealed = true;
-    });
-    TtsService.instance.speak(
-        i == _deck[_index].correctIndex ? 'شاباش! بہت اچھے!' : 'غلط!');
-  }
-
-  void _goNext() {
-    if (_index >= _deck.length - 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuizResultsScreen(
-            score: _score,
-            total: _total,
-            title: 'Sentence Quiz',
-            accentColor: _color,
-            onRestart: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const SentenceQuizScreen()),
-            ),
+                  color: _color,
+                ),
+              ),
+            ],
           ),
         ),
-      );
-      return;
-    }
-    setState(() {
-      _index++;
-      _chosen = null;
-      _revealed = false;
-    });
-    _slideCtrl.forward(from: 0);
-    _speakCurrent();
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'NotoNastaliqUrdu',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: _color,
+          ),
+        ),
+      ],
+    );
   }
+}
+
+class _MascotSide extends StatelessWidget {
+  final String message;
+
+  const _MascotSide({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    final card = _deck[_index];
-    final progress = (_index + 1) / _total;
-
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Scaffold(
-        backgroundColor: _kBg,
-        body: Column(
-          children: [
-            _QuizTopBar(
-              title: 'Sentence Quiz',
-              index: _index,
-              total: _total,
-              score: _score,
-              progress: progress,
-              accentColor: _color,
-              onBack: () => Navigator.pop(context),
-              onSpeak: _speakCurrent,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          margin: const EdgeInsets.only(bottom: 5),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+              bottomRight: Radius.circular(12),
             ),
-            Expanded(
-              child: LayoutBuilder(builder: (ctx, bc) {
-                final cardWidth =
-                    bc.maxWidth > 600 ? 480.0 : bc.maxWidth - 32;
-                return Center(
-                  child: SizedBox(
-                    width: cardWidth,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: SlideTransition(
-                            position: _slideAnim,
-                            child: FadeTransition(
-                              opacity: _fadeAnim,
-                              child: Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: _color.withOpacity(0.12),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 7),
-                                    )
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Top warm section
-                                    Flexible(
-                                      flex: 3,
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.fromLTRB(
-                                            16, 18, 16, 14),
-                                        decoration: const BoxDecoration(
-                                          color: _kCardTop,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(24),
-                                            topRight: Radius.circular(24),
-                                          ),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Text('💬',
-                                                style: TextStyle(
-                                                    fontSize: 40)),
-                                            const SizedBox(height: 8),
-                                            Directionality(
-                                              textDirection:
-                                                  TextDirection.rtl,
-                                              child: Text(
-                                                'خالی جگہ بھریں',
-                                                style: TextStyle(
-                                                  fontFamily:
-                                                      'NotoNastaliqUrdu',
-                                                  fontSize: 16,
-                                                  color: Colors
-                                                      .brown.shade400,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            // Sentence with blank
-                                            Directionality(
-                                              textDirection:
-                                                  TextDirection.rtl,
-                                              child: RichText(
-                                                textAlign:
-                                                    TextAlign.center,
-                                                textDirection:
-                                                    TextDirection.rtl,
-                                                text: TextSpan(
-                                                  style: const TextStyle(
-                                                    fontFamily:
-                                                        'NotoNastaliqUrdu',
-                                                    fontSize: 22,
-                                                    color:
-                                                        Color(0xFF1C1917),
-                                                    height: 1.8,
-                                                  ),
-                                                  children:
-                                                      _buildSentenceSpan(
-                                                          card),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              card.english,
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // Bottom white — choices
-                                    Flexible(
-                                      flex: 5,
-                                      child: SingleChildScrollView(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            16, 14, 16, 12),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: List.generate(
-                                              card.choices.length, (i) {
-                                            Color btnColor = Colors.white;
-                                            Color borderColor =
-                                                const Color(0xFFE5E7EB);
-                                            Color textColor =
-                                                const Color(0xFF1C1917);
-                                            if (_revealed) {
-                                              if (i ==
-                                                  card.correctIndex) {
-                                                btnColor =
-                                                    Colors.green.shade50;
-                                                borderColor = Colors.green;
-                                                textColor =
-                                                    Colors.green.shade800;
-                                              } else if (i == _chosen) {
-                                                btnColor =
-                                                    Colors.red.shade50;
-                                                borderColor = Colors.red;
-                                                textColor =
-                                                    Colors.red.shade800;
-                                              }
-                                            }
-                                            return Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
-                                                      bottom: 9),
-                                              child: GestureDetector(
-                                                onTap: () => _onChoice(i),
-                                                child: AnimatedContainer(
-                                                  duration: const Duration(
-                                                      milliseconds: 200),
-                                                  width: double.infinity,
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      vertical: 13,
-                                                      horizontal: 14),
-                                                  decoration: BoxDecoration(
-                                                    color: btnColor,
-                                                    borderRadius:
-                                                        BorderRadius
-                                                            .circular(14),
-                                                    border: Border.all(
-                                                        color: borderColor,
-                                                        width: 2),
-                                                  ),
-                                                  child: Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Directionality(
-                                                          textDirection:
-                                                              TextDirection.rtl,
-                                                          child: Text(
-                                                            card.choices[i],
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                                  'NotoNastaliqUrdu',
-                                                              fontSize: 18,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                              color:
-                                                                  textColor,
-                                                            ),
-                                                            maxLines: 2,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            textAlign:
-                                                                TextAlign.right,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      if (_revealed &&
-                                                          i ==
-                                                              card.correctIndex)
-                                                        const Icon(
-                                                            Icons
-                                                                .check_circle_rounded,
-                                                            color:
-                                                                Colors.green,
-                                                            size: 20),
-                                                      if (_revealed &&
-                                                          i == _chosen &&
-                                                          i !=
-                                                              card.correctIndex)
-                                                        const Icon(
-                                                            Icons
-                                                                .cancel_rounded,
-                                                            color:
-                                                                Colors.red,
-                                                            size: 20),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          }),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Nav row
-                        Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(0, 8, 0, 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              _PillBtn(
-                                label: _revealed
-                                    ? (_index == _total - 1
-                                        ? 'Finish ✓'
-                                        : 'Next →')
-                                    : 'Skip →',
-                                color: _revealed
-                                    ? _kOrange
-                                    : Colors.grey.shade300,
-                                textColor: _revealed
-                                    ? Colors.white
-                                    : Colors.grey.shade600,
-                                onTap: _goNext,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF5D4037),
             ),
-          ],
+          ),
         ),
+      ],
+    );
+  }
+}
+
+class _TipSide extends StatelessWidget {
+  final String text;
+
+  const _TipSide({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E5F5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xCECE93D8), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('💡', style: TextStyle(fontSize: 20)),
+          const SizedBox(height: 4),
+          const Text(
+            'Tip',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF6A1B9A),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            text,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 9.5,
+              color: Color(0xFF37474F),
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  List<InlineSpan> _buildSentenceSpan(_FillCard card) {
-    final parts = card.sentence.split(card.blank);
-    final spans = <InlineSpan>[];
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0) {
-        final fill = _revealed ? card.blank : '______';
-        final fillColor = _revealed ? _color : Colors.grey.shade600;
-        spans.add(TextSpan(
-          text: fill,
-          style: TextStyle(
-            fontFamily: 'NotoNastaliqUrdu',
-            fontWeight: FontWeight.bold,
-            color: fillColor,
-            decoration: TextDecoration.underline,
-          ),
-        ));
-      }
-      if (parts[i].isNotEmpty) spans.add(TextSpan(text: parts[i]));
-    }
-    return spans;
-  }
 }
 
-class _FillCard {
-  final String sentence;
-  final String blank;
-  final String english;
-  final List<String> choices;
-  final int correctIndex;
-  const _FillCard({
-    required this.sentence, required this.blank,
-    required this.english, required this.choices,
-    required this.correctIndex,
-  });
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Shared results screen
-// ══════════════════════════════════════════════════════════════════════════════
-
-class QuizResultsScreen extends StatelessWidget {
-  final int score;
-  final int total;
-  final String title;
+class _DecorativeBackground extends StatelessWidget {
   final Color accentColor;
-  final VoidCallback onRestart;
 
-  const QuizResultsScreen({
-    super.key,
-    required this.score, required this.total,
-    required this.title, required this.accentColor,
-    required this.onRestart,
-  });
+  const _DecorativeBackground({required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
-    final pct = score / total;
-    final stars = pct >= 0.8 ? 3 : pct >= 0.5 ? 2 : 1;
-    final color = pct >= 0.8 ? Colors.green : pct >= 0.5 ? Colors.orange : Colors.red;
-    final topMsg = stars == 3
-        ? 'بہت اچھے! شاندار! U0001F389'
-        : stars == 2
-            ? 'اچھا! مزید مشق کریں U0001F4AA'
-            : 'ہمت نہ ہاریں! دوبارہ کوشش کریں U0001F4DA';
-
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Scaffold(
-        backgroundColor: _kBg,
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (i) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Text(i < stars ? '⭐' : '☆',
-                        style: TextStyle(
-                            fontSize: i < stars ? 44 : 34,
-                            color: i < stars ? Colors.amber : Colors.grey.shade300)),
-                  )),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  width: 110, height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle, color: Colors.white,
-                    border: Border.all(color: color, width: 5),
-                    boxShadow: [BoxShadow(color: color.withOpacity(0.20), blurRadius: 20)],
-                  ),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text('$score/$total',
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: color)),
-                    const Text('score', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  ]),
-                ),
-                const SizedBox(height: 16),
-                Directionality(textDirection: TextDirection.rtl,
-                  child: Text(topMsg,
-                      style: TextStyle(fontFamily: 'NotoNastaliqUrdu',
-                          fontSize: 20, color: Colors.grey[700]),
-                      textAlign: TextAlign.center)),
-                const SizedBox(height: 36),
-                GestureDetector(
-                  onTap: onRestart,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(color: accentColor,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [BoxShadow(
-                            color: accentColor.withOpacity(0.25),
-                            blurRadius: 10, offset: const Offset(0, 4))]),
-                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text('Try Again', style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
-                    ]),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => Navigator.popUntil(context, (r) => r.isFirst),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFFE5E7EB), width: 2)),
-                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.home_rounded, color: Color(0xFF6B7280), size: 20),
-                      SizedBox(width: 8),
-                      Text('Home', style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF6B7280))),
-                    ]),
-                  ),
-                ),
-              ]),
-            ),
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 80,
+            left: 18,
+            child: Text('⭐', style: TextStyle(fontSize: 18, color: accentColor.withOpacity(0.65))),
           ),
-        ),
+          Positioned(
+            top: 140,
+            right: 22,
+            child: Text('⭐', style: TextStyle(fontSize: 14, color: accentColor.withOpacity(0.45))),
+          ),
+          Positioned(
+            top: 220,
+            left: 8,
+            child: Text('⭐', style: TextStyle(fontSize: 20, color: accentColor.withOpacity(0.55))),
+          ),
+        ],
       ),
     );
   }

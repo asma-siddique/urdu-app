@@ -117,12 +117,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               return AnimatedBuilder(
                 animation: _starCtrl,
                 builder: (ctx, _) {
-                  final yOffset = sin(_starCtrl.value * pi * 2 * star.speed) * 10;
+                  final yOffset =
+                      sin(_starCtrl.value * pi * 2 * star.speed) * 10;
                   return Positioned(
                     left: star.x * size.width,
                     top: star.y * size.height + yOffset,
                     child: Opacity(
-                      opacity: 0.5 + 0.5 * sin(_starCtrl.value * pi * star.speed),
+                      opacity:
+                          0.5 + 0.5 * sin(_starCtrl.value * pi * star.speed),
                       child: Text(star.emoji,
                           style: TextStyle(fontSize: star.size)),
                     ),
@@ -253,7 +255,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     vertical: 16, horizontal: 20),
                                 prefixIcon: const Padding(
                                   padding: EdgeInsets.all(12),
-                                  child: Text('🌟', style: TextStyle(fontSize: 24)),
+                                  child: Text('🌟',
+                                      style: TextStyle(fontSize: 24)),
                                 ),
                               ),
                               validator: (v) {
@@ -389,7 +392,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: Opacity(
               opacity: 0.85,
               child: Text(
-                ['⭐','🌟','✨','💫','⚡','🎯'][i],
+                ['⭐', '🌟', '✨', '💫', '⚡', '🎯'][i],
                 style: const TextStyle(fontSize: 20),
               ),
             ),

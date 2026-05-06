@@ -24,9 +24,9 @@ class ProfessorAvatar extends StatefulWidget {
 class ProfessorAvatarState extends State<ProfessorAvatar>
     with TickerProviderStateMixin {
   // ── Animations ────────────────────────────────────────────────────────
-  late AnimationController _pulseCtrl;   // speaking pulse
-  late AnimationController _bounceCtrl;  // happy bounce
-  late AnimationController _shakeCtrl;   // sad shake
+  late AnimationController _pulseCtrl; // speaking pulse
+  late AnimationController _bounceCtrl; // happy bounce
+  late AnimationController _shakeCtrl; // sad shake
 
   late Animation<double> _pulseAnim;
   late Animation<double> _bounceAnim;
@@ -102,7 +102,8 @@ class ProfessorAvatarState extends State<ProfessorAvatar>
 
   /// Call from outside via GlobalKey to show a speech bubble.
   void speak(String text) {
-    setState(() => _bubble = text.length > 35 ? '${text.substring(0, 33)}…' : text);
+    setState(
+        () => _bubble = text.length > 35 ? '${text.substring(0, 33)}…' : text);
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _bubble = '');
     });
@@ -119,24 +120,34 @@ class ProfessorAvatarState extends State<ProfessorAvatar>
   // ── Helpers ───────────────────────────────────────────────────────────
   String get _emoji {
     switch (widget.emotion) {
-      case AvatarEmotion.happy:    return '😄';
-      case AvatarEmotion.excited:  return '🤩';
-      case AvatarEmotion.sad:      return '😔';
-      case AvatarEmotion.thinking: return '🤔';
-      case AvatarEmotion.speaking: return '🗣️';
+      case AvatarEmotion.happy:
+        return '😄';
+      case AvatarEmotion.excited:
+        return '🤩';
+      case AvatarEmotion.sad:
+        return '😔';
+      case AvatarEmotion.thinking:
+        return '🤔';
+      case AvatarEmotion.speaking:
+        return '🗣️';
       case AvatarEmotion.neutral:
-      default:                     return '🧑‍🏫';
+        return '🧑‍🏫';
     }
   }
 
   Color get _ringColor {
     switch (widget.emotion) {
       case AvatarEmotion.happy:
-      case AvatarEmotion.excited:  return AppTheme.green;
-      case AvatarEmotion.sad:      return Colors.redAccent;
-      case AvatarEmotion.speaking: return AppTheme.teal;
-      case AvatarEmotion.thinking: return AppTheme.yellow;
-      default:                     return AppTheme.purple;
+      case AvatarEmotion.excited:
+        return AppTheme.green;
+      case AvatarEmotion.sad:
+        return Colors.redAccent;
+      case AvatarEmotion.speaking:
+        return AppTheme.teal;
+      case AvatarEmotion.thinking:
+        return AppTheme.yellow;
+      default:
+        return AppTheme.purple;
     }
   }
 

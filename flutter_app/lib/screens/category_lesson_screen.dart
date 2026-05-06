@@ -23,8 +23,7 @@ class CategoryLessonScreen extends StatefulWidget {
   });
 
   @override
-  State<CategoryLessonScreen> createState() =>
-      _CategoryLessonScreenState();
+  State<CategoryLessonScreen> createState() => _CategoryLessonScreenState();
 }
 
 class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
@@ -49,12 +48,11 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
           Navigator.pop(context);
           setState(() {
             _scores[index] = score;
-            _emotion =
-                score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
+            _emotion = score >= 70 ? AvatarEmotion.happy : AvatarEmotion.sad;
           });
           context.read<AppProvider>().recordResult(word.urdu, score);
-          TtsService.instance.speak(
-              score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
+          TtsService.instance
+              .speak(score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
         },
       ),
     );
@@ -91,8 +89,7 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
               ),
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Center(
-                child: ProfessorAvatar(emotion: _emotion, size: 80)),
+            child: Center(child: ProfessorAvatar(emotion: _emotion, size: 80)),
           ),
           // Word list
           Expanded(
@@ -128,14 +125,12 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
                     child: Row(
                       children: [
                         // Emoji
-                        Text(word.emoji,
-                            style: const TextStyle(fontSize: 40)),
+                        Text(word.emoji, style: const TextStyle(fontSize: 40)),
                         const SizedBox(width: 14),
                         // Urdu + English
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Directionality(
                                 textDirection: TextDirection.rtl,
@@ -149,12 +144,10 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
                               ),
                               Text(word.english,
                                   style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey)),
+                                      fontSize: 13, color: Colors.grey)),
                               Text(word.roman,
                                   style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blueGrey)),
+                                      fontSize: 12, color: Colors.blueGrey)),
                             ],
                           ),
                         ),
@@ -169,11 +162,9 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
                                 CircularProgressIndicator(
                                   value: score / 100,
                                   strokeWidth: 4,
-                                  backgroundColor:
-                                      scoreColor.withOpacity(0.2),
+                                  backgroundColor: scoreColor.withOpacity(0.2),
                                   valueColor:
-                                      AlwaysStoppedAnimation<Color>(
-                                          scoreColor),
+                                      AlwaysStoppedAnimation<Color>(scoreColor),
                                 ),
                                 Text('${score.toInt()}%',
                                     style: TextStyle(
@@ -189,15 +180,13 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
                         Column(
                           children: [
                             GestureDetector(
-                              onTap: () => _speak(
-                                  '${word.urdu}۔ ${word.english}'),
+                              onTap: () =>
+                                  _speak('${word.urdu}۔ ${word.english}'),
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.teal
-                                      .withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(10),
+                                  color: AppTheme.teal.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text('🔊',
                                     style: TextStyle(fontSize: 20)),
@@ -209,10 +198,8 @@ class _CategoryLessonScreenState extends State<CategoryLessonScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.purple
-                                      .withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(10),
+                                  color: AppTheme.purple.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text('🎤',
                                     style: TextStyle(fontSize: 20)),

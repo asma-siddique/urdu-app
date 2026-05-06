@@ -40,18 +40,25 @@ class _CountingScreenState extends State<CountingScreen> {
           });
           final provider = context.read<AppProvider>();
           provider.recordResult(num.urdu, score);
-          provider.updateLessonProgress('/ginti-lesson', _scores.length / COUNTING.length);
-          TtsService.instance.speak(
-              score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
+          provider.updateLessonProgress(
+              '/ginti-lesson', _scores.length / COUNTING.length);
+          TtsService.instance
+              .speak(score >= 70 ? 'شاباش!' : 'دوبارہ کوشش کریں۔');
         },
       ),
     );
   }
 
   static const List<Color> _cardColors = [
-    Color(0xFF0d9488), Color(0xFF0090c7), Color(0xFF9b5de5),
-    Color(0xFFf15bb5), Color(0xFFff6d00), Color(0xFF059669),
-    Color(0xFF3a86ff), Color(0xFFdc2626), Color(0xFF7c3aed),
+    Color(0xFF0d9488),
+    Color(0xFF0090c7),
+    Color(0xFF9b5de5),
+    Color(0xFFf15bb5),
+    Color(0xFFff6d00),
+    Color(0xFF059669),
+    Color(0xFF3a86ff),
+    Color(0xFFdc2626),
+    Color(0xFF7c3aed),
     Color(0xFFd97706),
   ];
 
@@ -83,15 +90,13 @@ class _CountingScreenState extends State<CountingScreen> {
               ),
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Center(
-                child: ProfessorAvatar(emotion: _emotion, size: 80)),
+            child: Center(child: ProfessorAvatar(emotion: _emotion, size: 80)),
           ),
           // Number grid
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
@@ -101,8 +106,7 @@ class _CountingScreenState extends State<CountingScreen> {
               itemBuilder: (ctx, i) {
                 final num = COUNTING[i];
                 final score = _scores[i];
-                final cardColor =
-                    _cardColors[i % _cardColors.length];
+                final cardColor = _cardColors[i % _cardColors.length];
                 final scoreColor = score == null
                     ? Colors.grey
                     : score >= 70
@@ -134,8 +138,7 @@ class _CountingScreenState extends State<CountingScreen> {
                           decoration: BoxDecoration(
                             color: cardColor.withOpacity(0.12),
                             shape: BoxShape.circle,
-                            border: Border.all(
-                                color: cardColor, width: 2),
+                            border: Border.all(color: cardColor, width: 2),
                           ),
                           child: Center(
                             child: Text(
@@ -180,9 +183,8 @@ class _CountingScreenState extends State<CountingScreen> {
                                     strokeWidth: 3,
                                     backgroundColor:
                                         scoreColor.withOpacity(0.2),
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(
-                                            scoreColor),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        scoreColor),
                                   ),
                                   Text('${score.toInt()}',
                                       style: TextStyle(
@@ -196,18 +198,15 @@ class _CountingScreenState extends State<CountingScreen> {
                         const SizedBox(height: 6),
                         // Listen + Speak row
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             GestureDetector(
                               onTap: () => _speak(num),
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.teal
-                                      .withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                  color: AppTheme.teal.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text('🔊',
                                     style: TextStyle(fontSize: 18)),
@@ -218,10 +217,8 @@ class _CountingScreenState extends State<CountingScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.purple
-                                      .withOpacity(0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                  color: AppTheme.purple.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text('🎤',
                                     style: TextStyle(fontSize: 18)),
