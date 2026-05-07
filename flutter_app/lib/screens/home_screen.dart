@@ -127,15 +127,15 @@ class _TileGrid extends StatelessWidget {
           Row(
             children: [
               _Tile(data: _tiles[0], width: tileW, height: tileH),
-              SizedBox(width: gap),
+              const SizedBox(width: gap),
               _Tile(data: _tiles[1], width: tileW, height: tileH),
             ],
           ),
-          SizedBox(height: gap),
+          const SizedBox(height: gap),
           Row(
             children: [
               _Tile(data: _tiles[2], width: tileW, height: tileH),
-              SizedBox(width: gap),
+              const SizedBox(width: gap),
               _Tile(data: _tiles[3], width: tileW, height: tileH),
             ],
           ),

@@ -123,11 +123,11 @@ class _QuizHeader extends StatelessWidget {
                 const Text("Let's test your Urdu!",
                     style: TextStyle(fontSize: 12, color: Colors.white70)),
               ])),
-              SizedBox(width: 72, height: 72, child: Stack(children: [
-                const Positioned(bottom: 0,  left: 4,  child: Text('🏆', style: TextStyle(fontSize: 38))),
-                const Positioned(top: 0,     left: 26, child: Text('⭐', style: TextStyle(fontSize: 18))),
-                const Positioned(top: 4,     right: 0, child: Text('✨', style: TextStyle(fontSize: 16))),
-                const Positioned(bottom: 14, right: 4, child: Text('🌟', style: TextStyle(fontSize: 11))),
+              const SizedBox(width: 72, height: 72, child: Stack(children: [
+                Positioned(bottom: 0,  left: 4,  child: Text('🏆', style: TextStyle(fontSize: 38))),
+                Positioned(top: 0,     left: 26, child: Text('⭐', style: TextStyle(fontSize: 18))),
+                Positioned(top: 4,     right: 0, child: Text('✨', style: TextStyle(fontSize: 16))),
+                Positioned(bottom: 14, right: 4, child: Text('🌟', style: TextStyle(fontSize: 11))),
               ])),
             ]),
             const SizedBox(height: 14),

@@ -148,7 +148,7 @@ class _VocabHeader extends StatelessWidget {
                       fontFamily: 'NotoNastaliqUrdu', fontSize: 13, color: Colors.white70,
                       height: 1.2, leadingDistribution: TextLeadingDistribution.even))),
               ])),
-              SizedBox(width: 72, height: 72, child: Stack(children: [
+              const SizedBox(width: 72, height: 72, child: Stack(children: [
                 Positioned(bottom: 0, left: 6, child: Text('📖', style: TextStyle(fontSize: 38))),
                 Positioned(top: 0, left: 24,  child: Text('✏️', style: TextStyle(fontSize: 20))),
                 Positioned(top: 2, right: 0,  child: Text('✨', style: TextStyle(fontSize: 16))),

@@ -44,7 +44,6 @@ class _QuizCard {
     required this.kind,
     this.choices = const [],
     this.correctIndex = 0,
-    this.blankSentence,
   });
 }
 

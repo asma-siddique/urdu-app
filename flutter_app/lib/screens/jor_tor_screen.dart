@@ -377,9 +377,9 @@ class _JorTorScreenState extends State<JorTorScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Flexible(child: _SmallLetterBox(text: item.result,    color: _kPink,   bold: true)),
-                      _OpLbl('='),
+                      const _OpLbl('='),
                       Flexible(child: _SmallLetterBox(text: item.letter,    color: _kPurple)),
-                      _OpLbl('+'),
+                      const _OpLbl('+'),
                       Flexible(child: _SmallLetterBox(text: item.vowelMark, color: _kTeal)),
                     ],
                   ),
